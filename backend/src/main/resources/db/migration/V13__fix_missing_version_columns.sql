@@ -1,0 +1,1 @@
+ALTER TABLE calendar_integrations ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;

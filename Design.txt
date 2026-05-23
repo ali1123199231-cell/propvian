@@ -1,0 +1,341 @@
+Build a **production-ready, enterprise-grade SaaS web application** for short-term rental smart lock automation.
+
+The application should be architected and implemented like a real commercial SaaS product that could be deployed to production and scaled to thousands of properties and users.
+
+The UI/UX must look highly polished, modern, and professional — comparable to high-quality SaaS platforms such as Stripe, Linear, Notion, Airbnb Host Dashboard, or modern property management software.
+
+The frontend does NOT need to match my exact page ideas perfectly. You may improve layouts, flows, UX, navigation, information architecture, and overall design wherever beneficial.
+
+You are encouraged to proactively suggest and implement additional features, architectural improvements, UX enhancements, automations, dashboards, analytics, workflows, or SaaS best practices that would improve this type of application.
+
+The goal is to build a platform that feels like a real venture-backed SaaS product.
+
+# Tech Stack
+
+Backend:
+
+* Java 21
+* Spring Boot 3
+* Maven
+* PostgreSQL
+* Spring Data JPA + Hibernate
+* JWT Authentication + Refresh Tokens
+* Redis
+* RabbitMQ or Spring Async
+* Flyway migrations
+* Swagger/OpenAPI
+
+Frontend:
+
+* React
+* TypeScript
+* Modern component architecture
+* Responsive SaaS dashboard UI
+* Dark mode support
+
+Infrastructure / DevOps:
+
+* Docker
+* Docker Compose
+* CI/CD-ready structure
+* Environment-based configuration
+* Production-ready deployment architecture
+
+# Application Purpose
+
+This platform automates guest access management for Airbnb and Booking.com properties using TTLock smart locks.
+
+The system should:
+
+* synchronize reservations from iCal feeds
+* automatically generate temporary access PINs
+* create TTLock access codes
+* notify guests automatically
+* revoke codes after checkout
+* notify cleaners after guest departure
+
+# Core Features
+
+1. User registration/login
+2. Multi-tenant architecture
+3. Organization/team support
+4. Property management
+5. TTLock integration
+6. iCal reservation synchronization
+7. Automatic PIN generation
+8. Guest email notifications
+9. Cleaner task notifications
+10. Reservation dashboard
+11. Audit logs
+12. Subscription-ready billing architecture
+13. Role-based permissions
+14. Admin dashboard
+15. Activity history
+16. Error monitoring/logging
+17. Webhook/event system
+18. Notification center
+
+# Main Workflow
+
+1. Host creates account
+2. Host creates organization/workspace
+3. Host adds property
+4. Host connects TTLock smart lock
+5. Host uploads Airbnb/Booking iCal URL
+6. System periodically syncs reservations
+7. When a new reservation appears:
+
+   * generate temporary PIN
+   * create TTLock access code
+   * configure validity dates
+   * email guest instructions
+   * create cleaner task
+8. After checkout:
+
+   * automatically revoke PIN
+   * notify cleaner
+   * archive reservation activity
+
+# Backend Requirements
+
+Use clean, scalable enterprise architecture.
+
+Use layered architecture:
+
+* controller
+* service
+* repository
+* domain/entity
+* DTO
+* mapper
+* configuration
+* security
+* integrations
+* scheduler
+* events
+* exceptions
+
+Requirements:
+
+* DTO pattern
+* Global exception handling
+* Validation annotations
+* Flyway migrations
+* Secure password hashing
+* RBAC authorization
+* Optimistic locking
+* Transaction management
+* Structured logging
+* Retry logic for TTLock API failures
+* Webhook-ready architecture
+* API versioning
+* API rate limiting
+* Idempotent sync operations
+* Event-driven patterns where appropriate
+* Soft deletes where useful
+* Audit trails
+* Centralized configuration management
+
+# Database Schema
+
+Create entities/tables for:
+
+* users
+* organizations
+* organization_members
+* properties
+* locks
+* reservations
+* access_codes
+* guests
+* calendar_integrations
+* audit_logs
+* notifications
+* cleaner_tasks
+* subscription_plans
+* subscriptions
+* refresh_tokens
+* webhooks
+* activity_events
+
+Reservation fields:
+
+* external reservation id
+* source platform
+* check-in date
+* check-out date
+* guest name
+* guest email
+* status
+* sync timestamps
+* timezone
+* notes
+
+# TTLock Integration
+
+Implement:
+
+* create keyboard passcode
+* delete passcode
+* fetch lock info
+* token refresh handling
+* API client abstraction
+* retry handling
+* scheduled token refresh
+* webhook/event-ready design
+* resilient failure handling
+* exponential backoff retries
+
+# iCal Integration
+
+Implement:
+
+* Parse iCal feeds
+* Detect new reservations
+* Detect cancellations
+* Avoid duplicates
+* Periodic synchronization
+* Timezone handling
+* Conflict detection
+* Incremental sync optimization
+
+# Security Requirements
+
+Implement:
+
+* JWT authentication
+* Refresh token flow
+* Role-based authorization
+* Rate limiting
+* CSRF considerations
+* Secure secrets handling
+* SQL injection prevention
+* XSS protection
+* Input validation
+* Secure HTTP headers
+* CORS configuration
+* Token revocation strategy
+* Session/device tracking
+
+# Frontend Requirements
+
+Build a highly polished, professional SaaS frontend.
+
+The frontend should look production-ready with strong UI/UX design, modern spacing, typography, animations, loading states, and responsive layouts.
+
+Use a clean design system and consistent component library.
+
+Suggested pages:
+
+* login/register
+* onboarding flow
+* dashboard
+* properties
+* reservations
+* lock management
+* integrations
+* notifications
+* billing/subscription
+* organization/team management
+* settings
+* audit logs
+* analytics dashboard
+
+UI requirements:
+
+* modern SaaS dashboard aesthetic
+* responsive/mobile-friendly
+* dark mode
+* loading skeletons
+* toast notifications
+* filtering/search
+* pagination
+* charts/analytics
+* empty states
+* optimistic UI updates
+* modal/dialog system
+* reusable component system
+* accessibility best practices
+
+You may improve the frontend UX and page structure however you think is best.
+
+# DevOps
+
+Implement:
+
+* docker-compose setup
+* PostgreSQL container
+* Redis container
+* application profiles
+* environment variables
+* health checks
+* centralized logging
+* CI/CD-ready setup
+* production-ready Dockerfiles
+* reverse proxy recommendations
+* scalable deployment architecture
+
+# Testing
+
+Implement:
+
+* unit tests
+* integration tests
+* repository tests
+* controller tests
+* service tests
+* mock TTLock API tests
+* security tests
+
+
+
+# Generate
+
+Provide:
+
+1. Full project architecture
+2. Folder structure
+3. Database schema
+4. Entity classes
+5. API endpoints
+6. Service layer implementation
+7. Security configuration
+8. JWT implementation
+9. TTLock integration layer
+10. iCal parser implementation
+11. Docker setup
+12. Frontend architecture
+13. Sample frontend pages/components
+14. Example REST requests
+15. Deployment recommendations
+16. Scalability recommendations
+17. Future improvement ideas
+
+Use:
+
+* enterprise-level code quality
+* clean code principles
+* production-ready patterns
+* maintainable architecture
+* scalable SaaS best practices
+* realistic implementation details
+* professional frontend design standards
+
+Do not generate toy examples or simplified demo architecture. Build this like a real commercial SaaS product.
+
+Use the following details:
+SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smartlock3
+SPRING_DATASOURCE_USERNAME:ali
+SPRING_DATASOURCE_PASSWORD:123
+
+SPRING_DATA_REDIS_HOST:localhost
+SPRING_DATA_REDIS_PORT:6379
+
+SPRING_MAIL_HOST:localhost
+SPRING_MAIL_PORT:1025
+SPRING_MAIL_USERNAME:
+SPRING_MAIL_PASSWORD:
+
+TTLOCK_BASE_URL:https://api.sciener.com
+TTLOCK_CLIENT_ID:3c90aef0945340a88ef76a876b8b0600
+TTLOCK_CLIENT_SECRET:d0a5dac24e6da24a3bce4d0d5ef77a90

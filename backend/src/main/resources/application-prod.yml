@@ -1,0 +1,27 @@
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        generate_statistics: false
+
+  thymeleaf:
+    cache: true
+
+logging:
+  level:
+    com.smartlock: WARN
+    org.springframework: WARN
+    root: ERROR
+  file:
+    name: /var/log/smartlock/application.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 30
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never

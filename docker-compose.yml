@@ -1,0 +1,106 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smartlock-postgres
+    environment:
+      POSTGRES_DB: smartlock3
+      POSTGRES_USER: ali
+      POSTGRES_PASSWORD: "123"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ali -d smartlock3"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - smartlock-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartlock-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - smartlock-net
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: smartlock-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - smartlock-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smartlock-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartlock3
+      SPRING_DATASOURCE_USERNAME: ali
+      SPRING_DATASOURCE_PASSWORD: "123"
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_MAIL_HOST: mailhog
+      SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_USERNAME: ""
+      SPRING_MAIL_PASSWORD: ""
+      TTLOCK_BASE_URL: https://api.sciener.com
+      TTLOCK_CLIENT_ID: 3c90aef0945340a88ef76a876b8b0600
+      TTLOCK_CLIENT_SECRET: d0a5dac24e6da24a3bce4d0d5ef77a90
+      JWT_SECRET: ${JWT_SECRET:-smartlock-super-secret-jwt-key-min-256-bits-long-for-hs512}
+      JWT_ACCESS_EXPIRATION_MS: 900000
+      JWT_REFRESH_EXPIRATION_MS: 2592000000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - smartlock-net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: smartlock-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - smartlock-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  smartlock-net:
+    driver: bridge
