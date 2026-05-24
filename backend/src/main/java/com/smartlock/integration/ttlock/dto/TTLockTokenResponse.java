@@ -25,4 +25,10 @@ public class TTLockTokenResponse {
 
     @JsonProperty("expires_in")
     private long expiresIn;
+
+    @JsonProperty("errcode")
+    private Integer errCode;
+
+    @JsonProperty("errmsg")
+    private String errMsg;
 }

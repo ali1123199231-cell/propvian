@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+record TTLockLoginRequest(String username, String password) {}
+
 @RestController
 @RequestMapping("/api/v1/ttlock/oauth")
 @RequiredArgsConstructor
@@ -65,6 +67,35 @@ public class TTLockOAuthController {
                 "oauthUrl", oauthUrl,
                 "state", state.getId().toString()
         )));
+    }
+
+    /**
+     * Alternative Step 1: Authenticate with TTLock username/password directly (password grant).
+     * Used instead of the authorization code flow when TTLock's web authorize page is unavailable.
+     */
+    @PostMapping("/login")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Connect TTLock account via username/password (password grant)")
+    public ResponseEntity<ApiResponse<Map<String, String>>> loginWithCredentials(
+            @RequestBody TTLockLoginRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
+
+        stateRepository.deleteExpired(Instant.now());
+
+        TTLockTokenResponse tokenResponse = ttlockClient.loginWithPassword(request.username(), request.password());
+
+        TtlockOAuthState state = TtlockOAuthState.builder()
+                .userId(currentUser.getUserId())
+                .accessToken(tokenResponse.getAccessToken())
+                .refreshToken(tokenResponse.getRefreshToken())
+                .ttlockUid(tokenResponse.getUid())
+                .expiresIn(tokenResponse.getExpiresIn())
+                .expiresAt(Instant.now().plusSeconds(900))
+                .build();
+        state = stateRepository.save(state);
+
+        log.info("TTLock password login successful for user {} | state={}", currentUser.getUserId(), state.getId());
+        return ResponseEntity.ok(ApiResponse.success(Map.of("state", state.getId().toString())));
     }
 
     /**

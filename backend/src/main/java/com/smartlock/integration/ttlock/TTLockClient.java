@@ -224,6 +224,51 @@ public class TTLockClient {
         }
     }
 
+    /**
+     * Authenticate with TTLock using the resource owner password credentials grant.
+     * TTLock requires the password to be MD5-hashed before transmission.
+     */
+    public TTLockTokenResponse loginWithPassword(String username, String password) {
+        try {
+            String hashedPassword = md5(password);
+            log.info("TTLock password login | username={} | tokenUrl={}/oauth2/token",
+                    username, properties.getBaseUrl());
+
+            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add("clientId", properties.getClientId());
+            params.add("clientSecret", properties.getClientSecret());
+            params.add("username", username);
+            params.add("password", hashedPassword);
+            params.add("grant_type", "password");
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+            ResponseEntity<TTLockTokenResponse> response = restTemplate.postForEntity(
+                    properties.getBaseUrl() + "/oauth2/token",
+                    new HttpEntity<>(params, headers),
+                    TTLockTokenResponse.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                TTLockTokenResponse body = response.getBody();
+                if (body.getAccessToken() == null) {
+                    String errDetail = body.getErrCode() != null
+                            ? "[" + body.getErrCode() + "] " + body.getErrMsg()
+                            : "no access_token in response";
+                    throw new TTLockException("TTLock login failed: " + errDetail);
+                }
+                log.info("TTLock password login success | username={} | uid={}", username, body.getUid());
+                return body;
+            }
+            throw new TTLockException("TTLock login failed: empty response");
+        } catch (TTLockException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new TTLockException("TTLock login error: " + e.getMessage(), e);
+        }
+    }
+
     public String buildOAuthUrl(String state) {
         String encodedRedirectUri = URLEncoder.encode(properties.getRedirectUri(), StandardCharsets.UTF_8);
         String url = properties.getOauthBaseUrl() + "/oauth2/authorize"
