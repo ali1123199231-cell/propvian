@@ -50,7 +50,7 @@ export function LoginPage() {
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <Lock size={14} className="text-white" />
           </div>
-          <span className="font-bold text-gray-900">SmartLock</span>
+          <span className="font-bold text-gray-900">Propvian</span>
         </div>
         <h2 className="text-2xl font-bold text-gray-900">Sign in to your account</h2>
         <p className="text-gray-500 mt-1 text-sm">

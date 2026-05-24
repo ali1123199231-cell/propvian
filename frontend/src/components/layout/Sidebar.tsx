@@ -42,7 +42,7 @@ export function Sidebar() {
         <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
           <LockIcon size={16} className="text-white" />
         </div>
-        <span className="font-semibold text-gray-900 text-lg">SmartLock</span>
+        <span className="font-semibold text-gray-900 text-lg">Propvian</span>
       </div>
 
       {/* Org switcher */}

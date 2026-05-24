@@ -37,7 +37,7 @@ export function RegisterPage() {
       setActiveOrg(org)
 
       navigate('/dashboard')
-      toast.success('Account created! Welcome to SmartLock.')
+      toast.success('Account created! Welcome to Propvian.')
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed'
       toast.error(message)

@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>()(
         }),
     }),
     {
-      name: 'smartlock-auth',
+      name: 'propvian-auth',
       partialize: (state) => ({
         user: state.user,
         accessToken: state.accessToken,

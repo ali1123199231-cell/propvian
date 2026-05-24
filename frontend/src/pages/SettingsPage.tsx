@@ -35,7 +35,7 @@ type ProfileFormData = z.infer<typeof profileSchema>
 type PasswordFormData = z.infer<typeof passwordSchema>
 type AccessSettingsData = z.infer<typeof accessSettingsSchema>
 
-const ACCESS_SETTINGS_KEY = 'smartlock_access_settings'
+const ACCESS_SETTINGS_KEY = 'propvian_access_settings'
 
 function loadAccessSettings(): AccessSettingsData {
   try {

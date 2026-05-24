@@ -18,7 +18,7 @@ export function AuthLayout() {
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
             <Lock size={20} className="text-white" />
           </div>
-          <span className="text-xl font-bold text-white">SmartLock</span>
+          <span className="text-xl font-bold text-white">Propvian</span>
         </div>
 
         <div>
@@ -46,7 +46,7 @@ export function AuthLayout() {
         </div>
 
         <p className="text-primary-200 text-sm">
-          © 2025 SmartLock. Enterprise-grade access automation.
+          © 2025 Propvian. Enterprise-grade access automation.
         </p>
       </div>
 

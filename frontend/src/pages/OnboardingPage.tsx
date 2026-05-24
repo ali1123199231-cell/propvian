@@ -323,7 +323,7 @@ function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void 
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your TTLock</h2>
       <p className="text-gray-500 mb-8">
-        Sign in to your TTLock account to authorize access. This allows SmartLock to
+        Sign in to your TTLock account to authorize access. This allows Propvian to
         create and revoke guest codes automatically.
       </p>
 
@@ -510,7 +510,7 @@ function CalendarSetupStep({
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Sync your calendar</h2>
       <p className="text-gray-500 mb-6">
-        Connect your Airbnb, Booking.com, or other iCal feed so SmartLock can sync
+        Connect your Airbnb, Booking.com, or other iCal feed so Propvian can sync
         reservations and manage access codes automatically.
       </p>
 
@@ -656,7 +656,7 @@ export function OnboardingPage() {
   const handleComplete = () => {
     updateUser({ onboardingCompleted: true, onboardingStep: 'COMPLETED' })
     navigate('/dashboard')
-    toast.success('Setup complete! Welcome to SmartLock.')
+    toast.success('Setup complete! Welcome to Propvian.')
   }
 
   if (loadingState) {
@@ -676,7 +676,7 @@ export function OnboardingPage() {
             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
               <Lock size={14} className="text-white" />
             </div>
-            <span className="font-bold text-gray-900">SmartLock</span>
+            <span className="font-bold text-gray-900">Propvian</span>
           </div>
           <span className="text-sm text-gray-400">Setting up your account</span>
         </div>
