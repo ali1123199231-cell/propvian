@@ -129,7 +129,7 @@ jwt:
 
 ttlock:
   base-url: ${TTLOCK_BASE_URL:https://euopen.sciener.com}
-  oauth-base-url: ${TTLOCK_OAUTH_BASE_URL:https://open.sciener.com}
+  oauth-base-url: ${TTLOCK_OAUTH_BASE_URL:https://euopen.sciener.com}
   client-id: ${TTLOCK_CLIENT_ID}
   client-secret: ${TTLOCK_CLIENT_SECRET}
   redirect-uri: ${TTLOCK_REDIRECT_URI:http://localhost:8080/api/v1/ttlock/oauth/callback}

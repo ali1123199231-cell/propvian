@@ -20,11 +20,6 @@ export const locksApi = {
     return data.data
   },
 
-  loginWithCredentials: async (username: string, password: string): Promise<{ state: string }> => {
-    const { data } = await apiClient.post('/ttlock/oauth/login', { username, password })
-    return data.data
-  },
-
   getOAuthLocks: async (state: string): Promise<OAuthLockItem[]> => {
     const { data } = await apiClient.get(`/ttlock/oauth/locks?state=${state}`)
     return data.data

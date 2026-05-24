@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   Lock, Mail, Check, ChevronRight, Loader2, RefreshCw,
-  Building2, Calendar, Plus, Trash2, Globe,
+  Building2, Calendar, Plus, Trash2, Globe, ExternalLink,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authApi } from '@/api/auth'
@@ -177,22 +177,58 @@ function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void 
   const [customName, setCustomName] = useState('')
   const [loading, setLoading]       = useState(false)
   const [saving, setSaving]         = useState(false)
-  const [username, setUsername]     = useState('')
-  const [password, setPassword]     = useState('')
+  const popupRef = useRef<Window | null>(null)
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!username.trim() || !password) return
+  const startOAuth = async () => {
     setLoading(true)
     try {
-      const { state } = await locksApi.loginWithCredentials(username.trim(), password)
+      const { oauthUrl, state } = await locksApi.startOAuth()
       setOauthState(state)
-      await loadLocks(state)
+      const popup = window.open(oauthUrl, 'ttlock-oauth', 'width=620,height=700,left=300,top=100')
+      popupRef.current = popup
+
+      const checkPopup = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkPopup)
+          setLoading(false)
+        }
+      }, 500)
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Invalid TTLock credentials')
+      toast.error(err.response?.data?.message || 'Could not start TTLock connection')
       setLoading(false)
     }
   }
+
+  const handleMessage = useCallback(async (e: MessageEvent) => {
+    if (e.data?.type === 'ttlock-oauth-success' || e.data?.type === 'ttlock-oauth-error') {
+      const state = e.data.state || oauthState
+      if (e.data?.type === 'ttlock-oauth-error') {
+        toast.error('TTLock authorization failed')
+        setLoading(false)
+        return
+      }
+      if (state) {
+        setOauthState(state)
+        await loadLocks(state)
+      }
+    }
+  }, [oauthState])
+
+  useEffect(() => {
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [handleMessage])
+
+  // Also check URL params (TTLock may redirect to this page)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const stateParam = params.get('ttlock_state')
+    if (stateParam) {
+      setOauthState(stateParam)
+      loadLocks(stateParam)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   const loadLocks = async (state: string) => {
     setLoading(true)
@@ -286,52 +322,22 @@ function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void 
         <Lock size={28} className="text-primary-600" />
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your TTLock</h2>
-      <p className="text-gray-500 mb-6">
-        Enter your TTLock app credentials to link your account. This lets Propvian
+      <p className="text-gray-500 mb-8">
+        Sign in to your TTLock account to authorize access. This allows Propvian to
         create and revoke guest codes automatically.
       </p>
 
-      <form onSubmit={handleLogin} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            TTLock username
-          </label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="input-base"
-            placeholder="Email or phone number"
-            autoComplete="username"
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            TTLock password
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-base"
-            placeholder="Your TTLock app password"
-            autoComplete="current-password"
-            disabled={loading}
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading || !username.trim() || !password}
-          className="btn-primary w-full justify-center py-3"
-        >
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
-          {loading ? 'Connecting…' : 'Connect TTLock account'}
-        </button>
-      </form>
+      <button
+        onClick={startOAuth}
+        disabled={loading}
+        className="btn-primary w-full justify-center py-3"
+      >
+        {loading ? <Loader2 size={16} className="animate-spin" /> : <ExternalLink size={16} />}
+        {loading ? 'Opening TTLock…' : 'Connect with TTLock'}
+      </button>
 
       <p className="text-xs text-gray-400 text-center mt-4">
-        Use the same credentials you use to log in to the TTLock app.
+        A popup will open to the TTLock website. Allow popups if prompted.
       </p>
     </div>
   )
