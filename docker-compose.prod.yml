@@ -84,7 +84,6 @@ services:
       RESEND_API_KEY: "${RESEND_API_KEY}"
       MAIL_FROM: "${MAIL_FROM:-noreply@propvian.com}"
       MAIL_FROM_NAME: "${MAIL_FROM_NAME:-Propvian}"
-    tty: true
     expose:
       - "8080"
     depends_on:
