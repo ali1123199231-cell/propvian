@@ -5,6 +5,7 @@ import com.smartlock.integration.ttlock.dto.TTLockLockInfoResponse;
 import com.smartlock.integration.ttlock.dto.TTLockLockListResponse;
 import com.smartlock.integration.ttlock.dto.TTLockPasscodeResponse;
 import com.smartlock.integration.ttlock.dto.TTLockTokenResponse;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -15,6 +16,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -30,6 +32,13 @@ public class TTLockClient {
 
     private final TTLockProperties properties;
     private final RestTemplate restTemplate;
+
+    @PostConstruct
+    public void logConfig() {
+        log.info("TTLock config | baseUrl={} | oauthBaseUrl={} | clientId={} | redirectUri={}",
+                properties.getBaseUrl(), properties.getOauthBaseUrl(),
+                properties.getClientId(), properties.getRedirectUri());
+    }
 
     /**
      * Exchange an OAuth authorization code for access/refresh tokens.
@@ -216,11 +225,15 @@ public class TTLockClient {
     }
 
     public String buildOAuthUrl(String state) {
-        return properties.getOauthBaseUrl() + "/oauth2/authorize"
+        String encodedRedirectUri = URLEncoder.encode(properties.getRedirectUri(), StandardCharsets.UTF_8);
+        String url = properties.getOauthBaseUrl() + "/oauth2/authorize"
                 + "?client_id=" + properties.getClientId()
                 + "&response_type=code"
-                + "&redirect_uri=" + properties.getRedirectUri()
+                + "&redirect_uri=" + encodedRedirectUri
                 + "&state=" + state;
+        log.info("TTLock OAuth URL built | oauthBaseUrl={} | clientId={} | redirectUri={} | state={} | fullUrl={}",
+                properties.getOauthBaseUrl(), properties.getClientId(), properties.getRedirectUri(), state, url);
+        return url;
     }
 
     private String md5(String input) {
