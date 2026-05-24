@@ -107,10 +107,23 @@ public class TTLockOAuthController {
     @Operation(summary = "TTLock OAuth callback — public endpoint")
     public ResponseEntity<Void> handleCallback(
             @RequestParam(required = false) String code,
-            @RequestParam(required = false) String state) {
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String error,
+            @RequestParam(required = false) String error_description) {
 
         // TTLock developer console tests this URL with no params — return 200 so validation passes
-        if (code == null || state == null) {
+        if (code == null && error == null) {
+            return ResponseEntity.ok().build();
+        }
+
+        // TTLock redirected back with an error (e.g. user denied, invalid params)
+        if (error != null) {
+            log.warn("TTLock OAuth error callback: error={} description={}", error, error_description);
+            String errorUrl = frontendUrl + "/onboarding?ttlock_error=" + error;
+            return ResponseEntity.status(302).location(URI.create(errorUrl)).build();
+        }
+
+        if (state == null) {
             return ResponseEntity.ok().build();
         }
 

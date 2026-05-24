@@ -223,9 +223,14 @@ function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const stateParam = params.get('ttlock_state')
+    const errorParam = params.get('ttlock_error')
     if (stateParam) {
       setOauthState(stateParam)
       loadLocks(stateParam)
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (errorParam) {
+      toast.error('TTLock authorization failed: ' + errorParam.replace(/_/g, ' '))
+      setLoading(false)
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
