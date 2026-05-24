@@ -25,6 +25,7 @@ jobs:
             cd /opt/smartlock
 
             echo "==> Pulling latest code..."
+            git reset --hard HEAD
             git pull origin main
 
             echo "==> Rebuilding and restarting app services..."
