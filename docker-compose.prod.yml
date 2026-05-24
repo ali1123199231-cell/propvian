@@ -76,6 +76,8 @@ services:
       TTLOCK_BASE_URL: https://api.sciener.com
       TTLOCK_CLIENT_ID: "${TTLOCK_CLIENT_ID}"
       TTLOCK_CLIENT_SECRET: "${TTLOCK_CLIENT_SECRET}"
+      TTLOCK_REDIRECT_URI: https://propvian.com/api/v1/ttlock/oauth/callback
+      FRONTEND_URL: https://propvian.com
       JWT_SECRET: "${JWT_SECRET}"
       JWT_ACCESS_EXPIRATION_MS: 900000
       JWT_REFRESH_EXPIRATION_MS: 2592000000

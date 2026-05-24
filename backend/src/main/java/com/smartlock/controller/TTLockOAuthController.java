@@ -87,17 +87,19 @@ public class TTLockOAuthController {
         try {
             stateId = UUID.fromString(state);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        TtlockOAuthState oauthState = stateRepository.findById(stateId).orElse(null);
-        if (oauthState == null || oauthState.isExpired()) {
-            log.warn("TTLock OAuth callback: state {} not found or expired", state);
-            String errorUrl = frontendUrl + "/locks?ttlock_error=expired";
+            // Non-UUID state means this is a test/invalid request — redirect rather than 4xx
+            String errorUrl = frontendUrl + "/locks?ttlock_error=invalid_state";
             return ResponseEntity.status(302).location(URI.create(errorUrl)).build();
         }
 
         try {
+            TtlockOAuthState oauthState = stateRepository.findById(stateId).orElse(null);
+            if (oauthState == null || oauthState.isExpired()) {
+                log.warn("TTLock OAuth callback: state {} not found or expired", state);
+                String errorUrl = frontendUrl + "/locks?ttlock_error=expired";
+                return ResponseEntity.status(302).location(URI.create(errorUrl)).build();
+            }
+
             TTLockTokenResponse tokenResponse = ttlockClient.exchangeAuthCode(
                     code, ttlockProperties.getRedirectUri()
             );
