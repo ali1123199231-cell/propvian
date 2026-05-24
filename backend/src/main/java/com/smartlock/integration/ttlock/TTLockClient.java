@@ -49,7 +49,7 @@ public class TTLockClient {
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             ResponseEntity<TTLockTokenResponse> response = restTemplate.postForEntity(
-                    properties.getBaseUrl() + "/oauth2/token",
+                    properties.getOauthBaseUrl() + "/oauth2/token",
                     new HttpEntity<>(params, headers),
                     TTLockTokenResponse.class
             );
@@ -109,7 +109,7 @@ public class TTLockClient {
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
             ResponseEntity<TTLockTokenResponse> response = restTemplate.postForEntity(
-                    properties.getBaseUrl() + "/oauth2/token",
+                    properties.getOauthBaseUrl() + "/oauth2/token",
                     new HttpEntity<>(params, headers),
                     TTLockTokenResponse.class
             );
