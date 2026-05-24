@@ -7,6 +7,7 @@ import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -24,11 +25,14 @@ public class User extends SoftDeletableEntity {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(name = "first_name", nullable = false, length = 100)
+    @Column(name = "first_name", length = 100)
     private String firstName;
 
-    @Column(name = "last_name", nullable = false, length = 100)
+    @Column(name = "last_name", length = 100)
     private String lastName;
+
+    @Column(length = 200)
+    private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -54,7 +58,26 @@ public class User extends SoftDeletableEntity {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
-    public String getFullName() {
-        return firstName + " " + lastName;
+    @Column(name = "onboarding_step", length = 50)
+    @Builder.Default
+    private String onboardingStep = "COMPLETED";
+
+    @Column(name = "onboarding_completed")
+    @Builder.Default
+    private boolean onboardingCompleted = true;
+
+    @Column(name = "pending_ttlock_state_id")
+    private UUID pendingTtlockStateId;
+
+    @Column(name = "pending_ttlock_lock_id")
+    private Long pendingTtlockLockId;
+
+    @Column(name = "pending_ttlock_lock_name", length = 200)
+    private String pendingTtlockLockName;
+
+    public String getDisplayName() {
+        if (name != null && !name.isBlank()) return name;
+        if (firstName != null && !firstName.isBlank()) return firstName;
+        return email.split("@")[0];
     }
 }

@@ -23,9 +23,10 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final LockRepository lockRepository;
     private final ReservationRepository reservationRepository;
+    private final OnboardingService onboardingService;
 
     @Transactional
-    public PropertyResponse createProperty(UUID orgId, CreatePropertyRequest request) {
+    public PropertyResponse createProperty(UUID orgId, CreatePropertyRequest request, UUID userId) {
         Property property = Property.builder()
                 .organizationId(orgId)
                 .name(request.getName())
@@ -44,7 +45,13 @@ public class PropertyService {
                 .status(PropertyStatus.ACTIVE)
                 .build();
 
-        return toResponse(propertyRepository.save(property));
+        PropertyResponse response = toResponse(propertyRepository.save(property));
+
+        if (userId != null) {
+            onboardingService.advanceStepIfCurrent(userId, "PROPERTY_SETUP");
+        }
+
+        return response;
     }
 
     @Transactional(readOnly = true)

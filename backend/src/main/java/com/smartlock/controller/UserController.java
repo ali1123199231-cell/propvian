@@ -1,8 +1,10 @@
 package com.smartlock.controller;
 
+import com.smartlock.domain.OrganizationMember;
 import com.smartlock.domain.User;
 import com.smartlock.dto.response.auth.AuthResponse;
 import com.smartlock.dto.response.common.ApiResponse;
+import com.smartlock.repository.OrganizationMemberRepository;
 import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final OrganizationMemberRepository memberRepository;
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> getMe(
@@ -54,13 +57,21 @@ public class UserController {
     }
 
     private AuthResponse.UserInfo toUserInfo(User user) {
-        return new AuthResponse.UserInfo(
-                user.getId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getRole().name(),
-                user.getAvatarUrl());
+        java.util.List<OrganizationMember> memberships = memberRepository.findByUserId(user.getId());
+        java.util.UUID orgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
+        return AuthResponse.UserInfo.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole().name())
+                .avatarUrl(user.getAvatarUrl())
+                .emailVerified(user.isEmailVerified())
+                .onboardingStep(user.getOnboardingStep())
+                .onboardingCompleted(user.isOnboardingCompleted())
+                .organizationId(orgId)
+                .build();
     }
 
     @Data

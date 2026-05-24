@@ -25,9 +25,14 @@ public class AuthResponse {
     public static class UserInfo {
         private UUID id;
         private String email;
+        private String name;
         private String firstName;
         private String lastName;
         private String role;
         private String avatarUrl;
+        private boolean emailVerified;
+        private String onboardingStep;
+        private boolean onboardingCompleted;
+        private UUID organizationId;
     }
 }

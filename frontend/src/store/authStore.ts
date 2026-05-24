@@ -11,6 +11,7 @@ interface AuthState {
   setAuth: (user: User, accessToken: string, refreshToken: string) => void
   setTokens: (accessToken: string, refreshToken: string) => void
   setActiveOrg: (org: Organization) => void
+  updateUser: (updates: Partial<User>) => void
   logout: () => void
 }
 
@@ -31,6 +32,9 @@ export const useAuthStore = create<AuthState>()(
 
       setActiveOrg: (org) =>
         set({ activeOrg: org }),
+
+      updateUser: (updates) =>
+        set((state) => ({ user: state.user ? { ...state.user, ...updates } : state.user })),
 
       logout: () =>
         set({

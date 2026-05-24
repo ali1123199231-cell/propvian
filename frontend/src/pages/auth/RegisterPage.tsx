@@ -30,7 +30,7 @@ export function RegisterPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const authResponse = await authApi.register(data.email, data.password, data.firstName, data.lastName)
+      const authResponse = await authApi.register(data.email, data.password, `${data.firstName} ${data.lastName}`.trim())
       setAuth(authResponse.user, authResponse.accessToken, authResponse.refreshToken)
 
       const org = await organizationsApi.create(data.orgName)

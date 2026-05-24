@@ -1,10 +1,15 @@
 export interface User {
   id: string
   email: string
-  firstName: string
-  lastName: string
+  name?: string
+  firstName?: string
+  lastName?: string
   role: string
   avatarUrl?: string
+  emailVerified?: boolean
+  onboardingStep?: string
+  onboardingCompleted?: boolean
+  organizationId?: string
 }
 
 export interface AuthResponse {
@@ -13,6 +18,15 @@ export interface AuthResponse {
   tokenType: string
   expiresIn: number
   user: User
+}
+
+export interface OnboardingState {
+  step: string
+  completed: boolean
+  pendingTtlockLockId?: number
+  pendingTtlockLockName?: string
+  pendingTtlockStateId?: string
+  organizationId?: string
 }
 
 export interface Organization {

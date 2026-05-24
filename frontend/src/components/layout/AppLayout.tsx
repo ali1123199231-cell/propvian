@@ -4,10 +4,14 @@ import { useAuthStore } from '@/store/authStore'
 import { Sidebar } from './Sidebar'
 
 export function AppLayout() {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/" replace />
+  }
+
+  if (user && user.onboardingCompleted === false) {
+    return <Navigate to="/onboarding" replace />
   }
 
   return (

@@ -31,9 +31,10 @@ public class PropertyController {
     @PostMapping
     public ResponseEntity<ApiResponse<PropertyResponse>> create(
             @PathVariable UUID orgId,
-            @Valid @RequestBody CreatePropertyRequest request) {
+            @Valid @RequestBody CreatePropertyRequest request,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(propertyService.createProperty(orgId, request)));
+                .body(ApiResponse.success(propertyService.createProperty(orgId, request, currentUser.getUserId())));
     }
 
     @GetMapping

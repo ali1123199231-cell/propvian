@@ -1,18 +1,17 @@
 package com.smartlock.service;
 
-import com.smartlock.domain.Lock;
-import com.smartlock.domain.TtlockOAuthState;
+import com.smartlock.domain.*;
 import com.smartlock.domain.enums.LockStatus;
 import com.smartlock.dto.request.lock.ConnectLockRequest;
 import com.smartlock.dto.response.lock.LockResponse;
+import com.smartlock.exception.AppException;
 import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.integration.ttlock.TTLockClient;
 import com.smartlock.integration.ttlock.dto.TTLockLockInfoResponse;
-import com.smartlock.repository.LockRepository;
-import com.smartlock.repository.PropertyRepository;
-import com.smartlock.repository.TtlockOAuthStateRepository;
+import com.smartlock.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,13 +27,30 @@ public class LockService {
 
     private final LockRepository lockRepository;
     private final PropertyRepository propertyRepository;
+    private final OrganizationRepository organizationRepository;
     private final TTLockClient ttlockClient;
     private final TtlockOAuthStateRepository oauthStateRepository;
+    private final DuplicateLockAttemptRepository duplicateLockAttemptRepository;
+    private final OnboardingService onboardingService;
 
     @Transactional
     public LockResponse connectLock(UUID propertyId, ConnectLockRequest request, UUID userId) {
         propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
+
+        // Duplicate lock check — a lock can only belong to one account
+        lockRepository.findFirstByTtlockLockId(request.getTtlockLockId()).ifPresent(existing -> {
+            UUID existingOwnerId = resolveOwner(existing.getPropertyId());
+            duplicateLockAttemptRepository.save(DuplicateLockAttempt.builder()
+                    .attemptedUserId(userId)
+                    .existingOwnerUserId(existingOwnerId != null ? existingOwnerId : userId)
+                    .ttlockLockId(request.getTtlockLockId())
+                    .provider("TTLOCK")
+                    .build());
+            throw new AppException(
+                    "This lock is already registered to another account. Contact support if you believe this is an error.",
+                    HttpStatus.CONFLICT, "LOCK_ALREADY_REGISTERED");
+        });
 
         UUID stateId = UUID.fromString(request.getOauthState());
         TtlockOAuthState oauthState = oauthStateRepository.findById(stateId)
@@ -51,7 +67,7 @@ public class LockService {
                 request.getTtlockLockId(), oauthState.getAccessToken()
         );
 
-        long tokenTtl = oauthState.getExpiresIn() != null ? oauthState.getExpiresIn() : 7776000L;
+        long tokenTtl = oauthState.getExpiresIn() != null ? oauthState.getExpiresIn() : 7_776_000L;
 
         Lock lock = Lock.builder()
                 .propertyId(propertyId)
@@ -70,7 +86,10 @@ public class LockService {
 
         lock = lockRepository.save(lock);
         oauthStateRepository.delete(oauthState);
-        log.info("Lock connected via OAuth: {} (TTLock ID: {})", lock.getId(), request.getTtlockLockId());
+
+        onboardingService.advanceStepIfCurrent(userId, "TTLOCK_CONNECT");
+
+        log.info("Lock connected: {} (TTLock ID: {})", lock.getId(), request.getTtlockLockId());
         return toResponse(lock);
     }
 
@@ -103,7 +122,6 @@ public class LockService {
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
         lock.softDelete();
         lockRepository.save(lock);
-        log.info("Lock deleted: {}", lockId);
     }
 
     @Transactional
@@ -112,10 +130,8 @@ public class LockService {
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
 
         try {
-            TTLockLockInfoResponse lockInfo = ttlockClient.getLockInfo(
-                    lock.getTtlockLockId(), lock.getTtlockAccessToken()
-            );
-            lock.setBatteryLevel(lockInfo.getElectricQuantity());
+            TTLockLockInfoResponse info = ttlockClient.getLockInfo(lock.getTtlockLockId(), lock.getTtlockAccessToken());
+            lock.setBatteryLevel(info.getElectricQuantity());
             lock.setLastSyncAt(Instant.now());
             lock.setStatus(LockStatus.CONNECTED);
         } catch (Exception e) {
@@ -124,6 +140,14 @@ public class LockService {
         }
 
         return toResponse(lockRepository.save(lock));
+    }
+
+    private UUID resolveOwner(UUID propertyId) {
+        if (propertyId == null) return null;
+        return propertyRepository.findById(propertyId)
+                .flatMap(p -> organizationRepository.findById(p.getOrganizationId()))
+                .map(Organization::getOwnerId)
+                .orElse(null);
     }
 
     private LockResponse toResponse(Lock lock) {

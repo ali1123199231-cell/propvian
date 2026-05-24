@@ -1,33 +1,31 @@
 package com.smartlock.service;
 
-import com.smartlock.domain.Organization;
-import com.smartlock.domain.OrganizationMember;
-import com.smartlock.domain.RefreshToken;
-import com.smartlock.domain.User;
+import com.smartlock.domain.*;
 import com.smartlock.domain.enums.MemberRole;
 import com.smartlock.domain.enums.Role;
 import com.smartlock.dto.request.auth.LoginRequest;
 import com.smartlock.dto.request.auth.RefreshTokenRequest;
 import com.smartlock.dto.request.auth.RegisterRequest;
+import com.smartlock.dto.request.auth.VerifyEmailRequest;
 import com.smartlock.dto.response.auth.AuthResponse;
+import com.smartlock.exception.AppException;
 import com.smartlock.exception.DuplicateResourceException;
 import com.smartlock.exception.InvalidTokenException;
-import com.smartlock.repository.OrganizationMemberRepository;
-import com.smartlock.repository.OrganizationRepository;
-import com.smartlock.repository.RefreshTokenRepository;
-import com.smartlock.repository.UserRepository;
+import com.smartlock.repository.*;
 import com.smartlock.security.JwtTokenProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.util.List;
@@ -44,9 +42,13 @@ public class AuthService {
     private final OrganizationRepository organizationRepository;
     private final OrganizationMemberRepository memberRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailVerificationCodeRepository verificationCodeRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final EmailService emailService;
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Value("${jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
@@ -57,22 +59,98 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail().toLowerCase())) {
-            throw new DuplicateResourceException("Email already registered");
+            throw new DuplicateResourceException("An account with this email already exists");
         }
 
         User user = User.builder()
                 .email(request.getEmail().toLowerCase())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
+                .name(request.getName())
+                .firstName(request.getName())
                 .role(Role.USER)
                 .emailVerified(false)
+                .onboardingStep("EMAIL_VERIFICATION")
+                .onboardingCompleted(false)
                 .build();
-
         user = userRepository.save(user);
-        log.info("New user registered: {}", user.getEmail());
 
-        return buildAuthResponse(user, null);
+        // Auto-create a default organization
+        String baseSlug = slugify(request.getEmail().split("@")[0]);
+        String slug = baseSlug + "-" + UUID.randomUUID().toString().substring(0, 8);
+        while (organizationRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + UUID.randomUUID().toString().substring(0, 8);
+        }
+        Organization org = Organization.builder()
+                .name("My Organization")
+                .slug(slug)
+                .ownerId(user.getId())
+                .timezone("UTC")
+                .build();
+        org = organizationRepository.save(org);
+
+        memberRepository.save(OrganizationMember.builder()
+                .organizationId(org.getId())
+                .userId(user.getId())
+                .role(MemberRole.OWNER)
+                .acceptedAt(Instant.now())
+                .build());
+
+        sendVerificationCode(user);
+        log.info("New user registered: {} (org: {})", user.getEmail(), org.getId());
+
+        return buildAuthResponse(user, org.getId());
+    }
+
+    @Transactional
+    public AuthResponse verifyEmail(VerifyEmailRequest request, UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+
+        if (user.isEmailVerified()) {
+            List<OrganizationMember> memberships = memberRepository.findByUserId(userId);
+            UUID orgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
+            return buildAuthResponse(user, orgId);
+        }
+
+        EmailVerificationCode code = verificationCodeRepository
+                .findFirstByUserIdAndCodeAndUsedAtIsNull(userId, request.getCode())
+                .orElseThrow(() -> new AppException("Invalid verification code", HttpStatus.BAD_REQUEST, "INVALID_CODE"));
+
+        if (code.isExpired()) {
+            throw new AppException("Verification code has expired. Please request a new one.", HttpStatus.BAD_REQUEST, "CODE_EXPIRED");
+        }
+
+        code.setUsedAt(Instant.now());
+        verificationCodeRepository.save(code);
+
+        user.setEmailVerified(true);
+        user.setOnboardingStep("TTLOCK_CONNECT");
+        userRepository.save(user);
+
+        List<OrganizationMember> memberships = memberRepository.findByUserId(userId);
+        UUID orgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
+        return buildAuthResponse(user, orgId);
+    }
+
+    @Transactional
+    public void resendVerification(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+
+        if (user.isEmailVerified()) {
+            throw new AppException("Email already verified", HttpStatus.BAD_REQUEST, "ALREADY_VERIFIED");
+        }
+
+        // Rate limit: check if a code was sent in the last 60 seconds
+        verificationCodeRepository
+                .findFirstByUserIdAndUsedAtIsNullOrderByCreatedAtDesc(userId)
+                .ifPresent(existing -> {
+                    if (existing.getCreatedAt().isAfter(Instant.now().minusSeconds(60))) {
+                        throw new AppException("Please wait before requesting another code", HttpStatus.TOO_MANY_REQUESTS, "RATE_LIMITED");
+                    }
+                });
+
+        sendVerificationCode(user);
     }
 
     @Transactional
@@ -128,18 +206,30 @@ public class AuthService {
         refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
     }
 
+    private void sendVerificationCode(User user) {
+        verificationCodeRepository.deleteAllByUserId(user.getId());
+
+        String code = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
+        verificationCodeRepository.save(EmailVerificationCode.builder()
+                .userId(user.getId())
+                .code(code)
+                .expiresAt(Instant.now().plusSeconds(900))
+                .build());
+
+        emailService.sendVerificationCodeEmail(user.getEmail(), user.getDisplayName(), code);
+    }
+
     private AuthResponse buildAuthResponse(User user, UUID activeOrgId) {
         String accessToken = jwtTokenProvider.generateAccessToken(
                 user.getId(), user.getEmail(), user.getRole().name(), activeOrgId
         );
 
         String rawRefreshToken = UUID.randomUUID().toString();
-        RefreshToken refreshToken = RefreshToken.builder()
+        refreshTokenRepository.save(RefreshToken.builder()
                 .token(rawRefreshToken)
                 .userId(user.getId())
                 .expiresAt(Instant.now().plusMillis(refreshExpirationMs))
-                .build();
-        refreshTokenRepository.save(refreshToken);
+                .build());
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -149,10 +239,15 @@ public class AuthService {
                 .user(AuthResponse.UserInfo.builder()
                         .id(user.getId())
                         .email(user.getEmail())
+                        .name(user.getDisplayName())
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())
                         .role(user.getRole().name())
                         .avatarUrl(user.getAvatarUrl())
+                        .emailVerified(user.isEmailVerified())
+                        .onboardingStep(user.getOnboardingStep())
+                        .onboardingCompleted(user.isOnboardingCompleted())
+                        .organizationId(activeOrgId)
                         .build())
                 .build();
     }

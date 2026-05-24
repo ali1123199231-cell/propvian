@@ -5,19 +5,15 @@ import lombok.Data;
 
 @Data
 public class RegisterRequest {
-    @Email
+
     @NotBlank
+    @Email
     private String email;
 
     @NotBlank
     @Size(min = 8, max = 128)
     private String password;
 
-    @NotBlank
-    @Size(min = 1, max = 100)
-    private String firstName;
-
-    @NotBlank
-    @Size(min = 1, max = 100)
-    private String lastName;
+    @Size(max = 200)
+    private String name;
 }

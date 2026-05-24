@@ -29,6 +29,10 @@ public class CalendarIntegrationService {
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
 
+        if (calendarIntegrationRepository.existsByPropertyIdAndIcalUrlAndDeletedAtIsNull(propertyId, request.getIcalUrl())) {
+            throw new com.smartlock.exception.DuplicateResourceException("This iCal URL is already added for this property");
+        }
+
         CalendarIntegration integration = CalendarIntegration.builder()
                 .propertyId(propertyId)
                 .platform(request.getPlatform())

@@ -7,9 +7,18 @@ export const authApi = {
     return data.data
   },
 
-  register: async (email: string, password: string, firstName: string, lastName: string): Promise<AuthResponse> => {
-    const { data } = await apiClient.post('/auth/register', { email, password, firstName, lastName })
+  register: async (email: string, password: string, name?: string): Promise<AuthResponse> => {
+    const { data } = await apiClient.post('/auth/register', { email, password, name })
     return data.data
+  },
+
+  verifyEmail: async (code: string): Promise<AuthResponse> => {
+    const { data } = await apiClient.post('/auth/verify-email', { code })
+    return data.data
+  },
+
+  resendVerification: async (): Promise<void> => {
+    await apiClient.post('/auth/resend-verification')
   },
 
   logout: async (): Promise<void> => {

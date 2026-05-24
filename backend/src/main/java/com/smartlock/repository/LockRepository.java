@@ -1,6 +1,7 @@
 package com.smartlock.repository;
 
 import com.smartlock.domain.Lock;
+import java.util.Optional;
 import com.smartlock.domain.enums.LockStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,8 @@ public interface LockRepository extends JpaRepository<Lock, UUID> {
     List<Lock> findByPropertyId(UUID propertyId);
     List<Lock> findByPropertyIdAndStatus(UUID propertyId, LockStatus status);
     long countByPropertyId(UUID propertyId);
+
+    Optional<Lock> findFirstByTtlockLockId(Long ttlockLockId);
 
     @Query("SELECT l FROM Lock l WHERE l.tokenExpiresAt < :threshold AND l.status = 'CONNECTED' AND l.deletedAt IS NULL")
     List<Lock> findLocksWithExpiringTokens(Instant threshold);

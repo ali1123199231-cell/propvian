@@ -52,6 +52,14 @@ public class EmailService {
     }
 
     @Async
+    public void sendVerificationCodeEmail(String toEmail, String name, String code) {
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("code", code);
+        sendHtmlEmail(toEmail, "Your SmartLock verification code: " + code, "email/verification-code", context);
+    }
+
+    @Async
     public void sendWelcomeEmail(String toEmail, String firstName) {
         Context context = new Context();
         context.setVariable("firstName", firstName);
