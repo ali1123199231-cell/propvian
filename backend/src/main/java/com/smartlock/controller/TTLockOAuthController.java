@@ -75,8 +75,13 @@ public class TTLockOAuthController {
     @GetMapping("/callback")
     @Operation(summary = "TTLock OAuth callback — public endpoint")
     public ResponseEntity<Void> handleCallback(
-            @RequestParam String code,
-            @RequestParam String state) {
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String state) {
+
+        // TTLock developer console tests this URL with no params — return 200 so validation passes
+        if (code == null || state == null) {
+            return ResponseEntity.ok().build();
+        }
 
         UUID stateId;
         try {
