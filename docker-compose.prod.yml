@@ -81,6 +81,9 @@ services:
       JWT_SECRET: "${JWT_SECRET}"
       JWT_ACCESS_EXPIRATION_MS: 900000
       JWT_REFRESH_EXPIRATION_MS: 2592000000
+      RESEND_API_KEY: "${RESEND_API_KEY}"
+      MAIL_FROM: "${MAIL_FROM:-noreply@propvian.com}"
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME:-Propvian}"
     expose:
       - "8080"
     depends_on:
