@@ -274,7 +274,7 @@ public class TTLockClient {
         String url = properties.getOauthBaseUrl() + "/oauth2/authorize"
                 + "?clientId=" + properties.getClientId()
                 + "&response_type=code"
-                + "&redirectUri=" + encodedRedirectUri
+                + "&redirect_uri=" + encodedRedirectUri
                 + "&state=" + state;
         log.info("TTLock OAuth URL built | oauthBaseUrl={} | clientId={} | redirectUri={} | state={} | fullUrl={}",
                 properties.getOauthBaseUrl(), properties.getClientId(), properties.getRedirectUri(), state, url);
