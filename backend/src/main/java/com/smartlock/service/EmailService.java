@@ -1,12 +1,10 @@
 package com.smartlock.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import com.resend.Resend;
+import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.CreateEmailResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -15,18 +13,22 @@ import org.thymeleaf.context.Context;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final Resend resend;
+    private final String fromAddress;
 
-    @Value("${app.mail.from}")
-    private String fromEmail;
-
-    @Value("${app.mail.from-name}")
-    private String fromName;
+    public EmailService(
+            TemplateEngine templateEngine,
+            @Value("${resend.api-key:}") String apiKey,
+            @Value("${app.mail.from-name:Propvian}") String fromName,
+            @Value("${app.mail.from:noreply@propvian.com}") String fromEmail) {
+        this.templateEngine = templateEngine;
+        this.resend = apiKey.isBlank() ? null : new Resend(apiKey);
+        this.fromAddress = fromName + " <" + fromEmail + ">";
+    }
 
     @Async
     public void sendGuestAccessEmail(String toEmail, String guestName, String propertyName,
@@ -56,14 +58,14 @@ public class EmailService {
         Context context = new Context();
         context.setVariable("name", name);
         context.setVariable("code", code);
-        sendHtmlEmail(toEmail, "Your SmartLock verification code: " + code, "email/verification-code", context);
+        sendHtmlEmail(toEmail, "Your Propvian verification code: " + code, "email/verification-code", context);
     }
 
     @Async
     public void sendWelcomeEmail(String toEmail, String firstName) {
         Context context = new Context();
         context.setVariable("firstName", firstName);
-        sendHtmlEmail(toEmail, "Welcome to SmartLock!", "email/welcome", context);
+        sendHtmlEmail(toEmail, "Welcome to Propvian!", "email/welcome", context);
     }
 
     @Async
@@ -74,18 +76,24 @@ public class EmailService {
     }
 
     private void sendHtmlEmail(String to, String subject, String templateName, Context context) {
+        String html = templateEngine.process(templateName, context);
+
+        if (resend == null) {
+            log.info("Email skipped (no RESEND_API_KEY) — to={} subject={}", to, subject);
+            return;
+        }
+
         try {
-            String html = templateEngine.process(templateName, context);
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail, fromName);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-            mailSender.send(message);
-            log.debug("Email sent to {}: {}", to, subject);
-        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
+            CreateEmailOptions params = CreateEmailOptions.builder()
+                    .from(fromAddress)
+                    .to(to)
+                    .subject(subject)
+                    .html(html)
+                    .build();
+            CreateEmailResponse response = resend.emails().send(params);
+            log.debug("Email sent to={} subject={} id={}", to, subject, response.getId());
+        } catch (Exception e) {
+            log.error("Failed to send email to={} subject={}: {}", to, subject, e.getMessage());
         }
     }
 }
