@@ -1,0 +1,51 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.SERVER_HOST }} << 'ENDSSH'
+            set -e
+            cd /opt/smartlock
+
+            echo "==> Pulling latest code..."
+            git pull origin main
+
+            echo "==> Rebuilding and restarting app services..."
+            docker compose -f docker-compose.prod.yml --env-file .env.prod \
+              up -d --build --remove-orphans backend frontend
+
+            echo "==> Waiting for backend to become healthy..."
+            for i in $(seq 1 20); do
+              STATUS=$(docker inspect smartlock-backend --format='{{.State.Health.Status}}' 2>/dev/null)
+              echo "  attempt $i/20: $STATUS"
+              if [ "$STATUS" = "healthy" ]; then
+                echo "==> Backend is healthy"
+                break
+              fi
+              if [ $i -eq 20 ]; then
+                echo "ERROR: Backend did not become healthy in time"
+                docker logs smartlock-backend --tail=50
+                exit 1
+              fi
+              sleep 15
+            done
+
+            echo "==> Deploy complete"
+          ENDSSH

@@ -123,14 +123,14 @@ management:
       enabled: true
 
 jwt:
-  secret: ${JWT_SECRET:smartlock-super-secret-jwt-key-must-be-at-least-512-bits-long-for-hs512-algorithm}
+  secret: ${JWT_SECRET}
   access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:900000}
   refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:2592000000}
 
 ttlock:
   base-url: ${TTLOCK_BASE_URL:https://api.sciener.com}
-  client-id: ${TTLOCK_CLIENT_ID:3c90aef0945340a88ef76a876b8b0600}
-  client-secret: ${TTLOCK_CLIENT_SECRET:d0a5dac24e6da24a3bce4d0d5ef77a90}
+  client-id: ${TTLOCK_CLIENT_ID}
+  client-secret: ${TTLOCK_CLIENT_SECRET}
   redirect-uri: ${TTLOCK_REDIRECT_URI:http://localhost:8080/api/v1/ttlock/oauth/callback}
   retry:
     max-attempts: 3
