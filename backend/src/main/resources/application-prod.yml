@@ -11,15 +11,11 @@ spring:
 
 logging:
   level:
-    com.smartlock: WARN
+    com.smartlock: INFO
     org.springframework: WARN
-    root: ERROR
-  file:
-    name: /var/log/smartlock/application.log
-  logback:
-    rollingpolicy:
-      max-file-size: 100MB
-      max-history: 30
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    root: WARN
 
 server:
   error:
