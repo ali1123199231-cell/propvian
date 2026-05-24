@@ -72,7 +72,7 @@ public class TTLockOAuthController {
      * This endpoint is PUBLIC — no JWT required (browser redirect from TTLock).
      * It exchanges the code for tokens, stores them, then redirects to the frontend.
      */
-    @GetMapping("/callback")
+    @RequestMapping(value = "/callback", method = {RequestMethod.GET, RequestMethod.POST})
     @Operation(summary = "TTLock OAuth callback — public endpoint")
     public ResponseEntity<Void> handleCallback(
             @RequestParam(required = false) String code,
