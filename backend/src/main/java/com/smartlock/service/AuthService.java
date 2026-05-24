@@ -58,12 +58,28 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail().toLowerCase())) {
-            throw new DuplicateResourceException("An account with this email already exists");
+        String email = request.getEmail().toLowerCase();
+
+        User existingUser = userRepository.findByEmail(email).orElse(null);
+        if (existingUser != null) {
+            if (existingUser.isOnboardingCompleted()) {
+                throw new DuplicateResourceException("An account with this email already exists");
+            }
+            // Incomplete onboarding — verify password then resume where they left off
+            if (!passwordEncoder.matches(request.getPassword(), existingUser.getPasswordHash())) {
+                throw new DuplicateResourceException("An account with this email already exists");
+            }
+            if ("EMAIL_VERIFICATION".equals(existingUser.getOnboardingStep())) {
+                sendVerificationCode(existingUser);
+            }
+            List<OrganizationMember> memberships = memberRepository.findByUserId(existingUser.getId());
+            UUID orgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
+            log.info("Resuming incomplete registration for user: {}", email);
+            return buildAuthResponse(existingUser, orgId);
         }
 
         User user = User.builder()
-                .email(request.getEmail().toLowerCase())
+                .email(email)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
                 .firstName(request.getName())
@@ -75,7 +91,7 @@ public class AuthService {
         user = userRepository.save(user);
 
         // Auto-create a default organization
-        String baseSlug = slugify(request.getEmail().split("@")[0]);
+        String baseSlug = slugify(email.split("@")[0]);
         String slug = baseSlug + "-" + UUID.randomUUID().toString().substring(0, 8);
         while (organizationRepository.existsBySlug(slug)) {
             slug = baseSlug + "-" + UUID.randomUUID().toString().substring(0, 8);
