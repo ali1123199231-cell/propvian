@@ -272,7 +272,7 @@ public class TTLockClient {
     public String buildOAuthUrl(String state) {
         String encodedRedirectUri = URLEncoder.encode(properties.getRedirectUri(), StandardCharsets.UTF_8);
         String url = properties.getOauthBaseUrl() + "/oauth2/authorize"
-                + "?clientId=" + properties.getClientId()
+                + "?client_id=" + properties.getClientId()
                 + "&response_type=code"
                 + "&redirect_uri=" + encodedRedirectUri
                 + "&state=" + state;
