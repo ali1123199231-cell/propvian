@@ -3,8 +3,12 @@ package com.smartlock.service;
 import com.resend.Resend;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -17,17 +21,22 @@ import java.util.Map;
 public class EmailService {
 
     private final TemplateEngine templateEngine;
+    private final JavaMailSender mailSender;
     private final Resend resend;
-    private final String fromAddress;
+    private final String fromEmail;
+    private final String fromName;
 
     public EmailService(
             TemplateEngine templateEngine,
+            JavaMailSender mailSender,
             @Value("${resend.api-key:}") String apiKey,
             @Value("${app.mail.from-name:Propvian}") String fromName,
             @Value("${app.mail.from:noreply@propvian.com}") String fromEmail) {
         this.templateEngine = templateEngine;
+        this.mailSender = mailSender;
         this.resend = apiKey.isBlank() ? null : new Resend(apiKey);
-        this.fromAddress = fromName + " <" + fromEmail + ">";
+        this.fromName = fromName;
+        this.fromEmail = fromEmail;
     }
 
     @Async
@@ -78,22 +87,40 @@ public class EmailService {
     private void sendHtmlEmail(String to, String subject, String templateName, Context context) {
         String html = templateEngine.process(templateName, context);
 
-        if (resend == null) {
-            log.info("Email skipped (no RESEND_API_KEY) — to={} subject={}", to, subject);
-            return;
+        if (resend != null) {
+            sendViaResend(to, subject, html);
+        } else {
+            sendViaSmtp(to, subject, html);
         }
+    }
 
+    private void sendViaResend(String to, String subject, String html) {
         try {
             CreateEmailOptions params = CreateEmailOptions.builder()
-                    .from(fromAddress)
+                    .from(fromName + " <" + fromEmail + ">")
                     .to(to)
                     .subject(subject)
                     .html(html)
                     .build();
             CreateEmailResponse response = resend.emails().send(params);
-            log.debug("Email sent to={} subject={} id={}", to, subject, response.getId());
+            log.debug("Email sent via Resend to={} subject={} id={}", to, subject, response.getId());
         } catch (Exception e) {
-            log.error("Failed to send email to={} subject={}: {}", to, subject, e.getMessage());
+            log.error("Failed to send email via Resend to={} subject={}: {}", to, subject, e.getMessage());
+        }
+    }
+
+    private void sendViaSmtp(String to, String subject, String html) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(fromEmail, fromName);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            mailSender.send(message);
+            log.debug("Email sent via SMTP (MailHog) to={} subject={}", to, subject);
+        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+            log.error("Failed to send email via SMTP to={} subject={}: {}", to, subject, e.getMessage());
         }
     }
 }

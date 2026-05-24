@@ -52,7 +52,18 @@ spring:
           min-idle: 1
           max-wait: 2000ms
 
-  # mail block removed — email is now sent via Resend SDK (see resend.api-key below)
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_AUTH:false}
+          starttls:
+            enable: ${SPRING_MAIL_STARTTLS:false}
+        debug: false
 
   cache:
     type: redis
@@ -105,6 +116,8 @@ management:
       show-details: when-authorized
   health:
     redis:
+      enabled: false
+    mail:
       enabled: false
     db:
       enabled: true
