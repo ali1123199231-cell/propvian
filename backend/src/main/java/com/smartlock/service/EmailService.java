@@ -1,8 +1,10 @@
 package com.smartlock.service;
 
 import com.resend.Resend;
+import com.resend.core.exception.ResendException;
 import com.resend.services.emails.model.CreateEmailOptions;
 import com.resend.services.emails.model.CreateEmailResponse;
+import jakarta.annotation.PostConstruct;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,15 @@ public class EmailService {
         this.resend = apiKey.isBlank() ? null : new Resend(apiKey);
         this.fromName = fromName;
         this.fromEmail = fromEmail;
+    }
+
+    @PostConstruct
+    public void logEmailConfig() {
+        if (resend != null) {
+            log.info("Email provider: Resend SDK | from={} | fromName={}", fromEmail, fromName);
+        } else {
+            log.info("Email provider: SMTP (MailHog/dev) | from={} | fromName={} | RESEND_API_KEY not set", fromEmail, fromName);
+        }
     }
 
     @Async
@@ -85,6 +96,9 @@ public class EmailService {
     }
 
     private void sendHtmlEmail(String to, String subject, String templateName, Context context) {
+        log.info("Sending email | provider={} | to={} | subject={} | template={}",
+                resend != null ? "Resend" : "SMTP", to, subject, templateName);
+
         String html = templateEngine.process(templateName, context);
 
         if (resend != null) {
@@ -96,21 +110,29 @@ public class EmailService {
 
     private void sendViaResend(String to, String subject, String html) {
         try {
+            String from = fromName + " <" + fromEmail + ">";
+            log.info("Resend API call | from={} | to={} | subject={}", from, to, subject);
+
             CreateEmailOptions params = CreateEmailOptions.builder()
-                    .from(fromName + " <" + fromEmail + ">")
+                    .from(from)
                     .to(to)
                     .subject(subject)
                     .html(html)
                     .build();
+
             CreateEmailResponse response = resend.emails().send(params);
-            log.debug("Email sent via Resend to={} subject={} id={}", to, subject, response.getId());
+            log.info("Resend success | to={} | subject={} | messageId={}", to, subject, response.getId());
+
+        } catch (ResendException e) {
+            log.error("Resend API error | to={} | subject={} | error={}", to, subject, e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Failed to send email via Resend to={} subject={}: {}", to, subject, e.getMessage());
+            log.error("Unexpected error sending via Resend | to={} | subject={} | error={}", to, subject, e.getMessage(), e);
         }
     }
 
     private void sendViaSmtp(String to, String subject, String html) {
         try {
+            log.info("SMTP send | to={} | subject={}", to, subject);
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(fromEmail, fromName);
@@ -118,9 +140,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(message);
-            log.debug("Email sent via SMTP (MailHog) to={} subject={}", to, subject);
+            log.info("SMTP success | to={} | subject={}", to, subject);
         } catch (MessagingException | java.io.UnsupportedEncodingException e) {
-            log.error("Failed to send email via SMTP to={} subject={}: {}", to, subject, e.getMessage());
+            log.error("SMTP error | to={} | subject={} | error={}", to, subject, e.getMessage(), e);
         }
     }
 }
