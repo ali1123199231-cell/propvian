@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
-  Lock, Mail, Check, ChevronRight, Loader2, RefreshCw,
-  Building2, Calendar, Plus, Trash2, Globe, ExternalLink,
+  Lock, Mail, Check, ChevronRight, Loader2,
+  Building2, Calendar, Plus, Trash2, Globe, Smartphone, Eye, EyeOff, X,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { authApi } from '@/api/auth'
@@ -170,75 +170,37 @@ interface PendingLock {
   lockName: string
 }
 
+const ttlockSchema = z.object({
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(1, 'Password is required'),
+})
+type TTLockCredentials = z.infer<typeof ttlockSchema>
+
 function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void }) {
+  const [phase, setPhase]           = useState<'initial' | 'select'>('initial')
+  const [showModal, setShowModal]   = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [oauthState, setOauthState] = useState<string | null>(null)
   const [availableLocks, setAvailableLocks] = useState<any[]>([])
   const [selected, setSelected]     = useState<any | null>(null)
   const [customName, setCustomName] = useState('')
-  const [loading, setLoading]       = useState(false)
   const [saving, setSaving]         = useState(false)
-  const popupRef = useRef<Window | null>(null)
 
-  const startOAuth = async () => {
-    setLoading(true)
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<TTLockCredentials>({
+    resolver: zodResolver(ttlockSchema),
+  })
+
+  const onLogin = async (data: TTLockCredentials) => {
     try {
-      const { oauthUrl, state } = await locksApi.startOAuth()
+      const { state } = await locksApi.loginWithCredentials(data.username, data.password)
       setOauthState(state)
-      const popup = window.open(oauthUrl, 'ttlock-oauth', 'width=620,height=700,left=300,top=100')
-      popupRef.current = popup
-
-      const checkPopup = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkPopup)
-          setLoading(false)
-        }
-      }, 500)
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Could not start TTLock connection')
-      setLoading(false)
-    }
-  }
-
-  const handleMessage = useCallback(async (e: MessageEvent) => {
-    if (e.data?.type === 'ttlock-oauth-success' || e.data?.type === 'ttlock-oauth-error') {
-      const state = e.data.state || oauthState
-      if (e.data?.type === 'ttlock-oauth-error') {
-        toast.error('TTLock authorization failed')
-        setLoading(false)
-        return
-      }
-      if (state) {
-        setOauthState(state)
-        await loadLocks(state)
-      }
-    }
-  }, [oauthState])
-
-  useEffect(() => {
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [handleMessage])
-
-  // Also check URL params (TTLock may redirect to this page)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const stateParam = params.get('ttlock_state')
-    if (stateParam) {
-      setOauthState(stateParam)
-      loadLocks(stateParam)
-      window.history.replaceState({}, '', window.location.pathname)
-    }
-  }, [])
-
-  const loadLocks = async (state: string) => {
-    setLoading(true)
-    try {
       const locks = await locksApi.getOAuthLocks(state)
       setAvailableLocks(locks)
-      setLoading(false)
+      setShowModal(false)
+      reset()
+      setPhase('select')
     } catch (err: any) {
-      toast.error('Could not load your locks from TTLock')
-      setLoading(false)
+      toast.error(err.response?.data?.message || 'Invalid credentials. Check your TTLock app username and password.')
     }
   }
 
@@ -256,90 +218,184 @@ function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void 
     }
   }
 
-  if (availableLocks.length > 0) {
+  if (phase === 'select') {
     return (
       <div className="max-w-md mx-auto">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Select your lock</h2>
         <p className="text-gray-500 mb-6">Choose which lock to connect to your property.</p>
 
-        <div className="space-y-2 mb-5">
-          {availableLocks.map((lock) => (
+        {availableLocks.length === 0 ? (
+          <div className="text-center py-10 text-gray-400">
+            <Lock size={32} className="mx-auto mb-3 opacity-30" />
+            <p className="text-sm mb-3">No locks found on this TTLock account.</p>
             <button
-              key={lock.lockId}
-              onClick={() => { setSelected(lock); setCustomName(lock.lockAlias || '') }}
-              className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                selected?.lockId === lock.lockId
-                  ? 'border-primary-500 bg-primary-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
+              onClick={() => { setPhase('initial'); setShowModal(true) }}
+              className="text-primary-600 text-sm font-medium hover:underline"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
-                  <Lock size={16} className="text-gray-500" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">{lock.lockAlias || `Lock ${lock.lockId}`}</p>
-                  <p className="text-xs text-gray-500">ID: {lock.lockId}</p>
-                </div>
-                {selected?.lockId === lock.lockId && (
-                  <Check size={18} className="text-primary-600 ml-auto" />
-                )}
-              </div>
+              Try a different account
             </button>
-          ))}
-        </div>
-
-        {selected && (
-          <div className="mb-5">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Lock name <span className="text-gray-400 font-normal">(you can rename it)</span>
-            </label>
-            <input
-              type="text"
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              className="input-base"
-              placeholder={selected.lockAlias || 'e.g. Front Door'}
-            />
           </div>
-        )}
+        ) : (
+          <>
+            <div className="space-y-2 mb-5">
+              {availableLocks.map((lock) => (
+                <button
+                  key={lock.lockId}
+                  onClick={() => { setSelected(lock); setCustomName(lock.lockAlias || '') }}
+                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                    selected?.lockId === lock.lockId
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+                      <Lock size={16} className="text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{lock.lockAlias || `Lock ${lock.lockId}`}</p>
+                      <p className="text-xs text-gray-500">ID: {lock.lockId}</p>
+                    </div>
+                    {selected?.lockId === lock.lockId && (
+                      <Check size={18} className="text-primary-600 ml-auto" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
 
-        <button
-          onClick={handleConfirm}
-          disabled={!selected || saving}
-          className="btn-primary w-full justify-center py-3"
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <ChevronRight size={16} />}
-          {saving ? 'Saving…' : 'Continue'}
-        </button>
+            {selected && (
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Lock name <span className="text-gray-400 font-normal">(you can rename it)</span>
+                </label>
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  className="input-base"
+                  placeholder={selected.lockAlias || 'e.g. Front Door'}
+                />
+              </div>
+            )}
+
+            <button
+              onClick={handleConfirm}
+              disabled={!selected || saving}
+              className="btn-primary w-full justify-center py-3"
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <ChevronRight size={16} />}
+              {saving ? 'Saving…' : 'Continue'}
+            </button>
+          </>
+        )}
       </div>
     )
   }
 
   return (
-    <div className="max-w-md mx-auto">
-      <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mb-5">
-        <Lock size={28} className="text-primary-600" />
+    <>
+      <div className="max-w-md mx-auto">
+        <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mb-5">
+          <Lock size={28} className="text-primary-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your TTLock</h2>
+        <p className="text-gray-500 mb-8">
+          Sign in to your TTLock account to authorize access. This allows Propvian to
+          create and revoke guest codes automatically.
+        </p>
+
+        <button
+          onClick={() => setShowModal(true)}
+          className="btn-primary w-full justify-center py-3"
+        >
+          <Lock size={16} />
+          Connect with TTLock
+        </button>
+
+        <p className="text-xs text-gray-400 text-center mt-4">
+          Authorized via TTLock's official API using your mobile app credentials.
+        </p>
       </div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your TTLock</h2>
-      <p className="text-gray-500 mb-8">
-        Sign in to your TTLock account to authorize access. This allows Propvian to
-        create and revoke guest codes automatically.
-      </p>
 
-      <button
-        onClick={startOAuth}
-        disabled={loading}
-        className="btn-primary w-full justify-center py-3"
-      >
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <ExternalLink size={16} />}
-        {loading ? 'Opening TTLock…' : 'Connect with TTLock'}
-      </button>
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center">
+                  <Lock size={14} className="text-primary-600" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900">Sign in to TTLock</h3>
+              </div>
+              <button
+                onClick={() => { setShowModal(false); reset() }}
+                className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-      <p className="text-xs text-gray-400 text-center mt-4">
-        A popup will open to the TTLock website. Allow popups if prompted.
-      </p>
-    </div>
+            <div className="flex items-start gap-2.5 p-3 bg-blue-50 border border-blue-100 rounded-xl mb-5">
+              <Smartphone size={15} className="text-blue-500 mt-0.5 flex-shrink-0" />
+              <p className="text-xs text-blue-700">
+                Use your <strong>TTLock mobile app</strong> account credentials —
+                not your developer portal account.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit(onLogin)} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+                <input
+                  {...register('username')}
+                  type="text"
+                  autoComplete="username"
+                  className="input-base"
+                  placeholder="Email or phone number"
+                  autoFocus
+                />
+                {errors.username && <p className="mt-1 text-xs text-red-500">{errors.username.message}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                <div className="relative">
+                  <input
+                    {...register('password')}
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    className="input-base pr-10"
+                    placeholder="Your TTLock app password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="btn-primary w-full justify-center py-3"
+              >
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                {isSubmitting ? 'Connecting…' : 'Connect account'}
+              </button>
+            </form>
+
+            <p className="text-xs text-gray-400 text-center mt-4">
+              Credentials are sent securely over HTTPS and are not stored by Propvian.
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
