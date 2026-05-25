@@ -98,11 +98,10 @@ export function RegisterPage() {
 
         <div className="pt-2 border-t border-gray-200">
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Organization / Company name
+            Account name
           </label>
-          <input {...register('orgName')} className="input-base" placeholder="My Properties LLC" />
+          <input {...register('orgName')} className="input-base" placeholder="My Properties" />
           {errors.orgName && <p className="mt-1 text-xs text-red-500">{errors.orgName.message}</p>}
-          <p className="text-xs text-gray-400 mt-1">You can rename this later in settings.</p>
         </div>
 
         <button

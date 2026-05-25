@@ -42,17 +42,6 @@ export interface Organization {
   createdAt: string
 }
 
-export interface OrganizationMember {
-  id: string
-  userId: string
-  email: string
-  firstName?: string
-  lastName?: string
-  avatarUrl?: string
-  role: string
-  acceptedAt?: string
-  joinedAt?: string
-}
 
 export interface Property {
   id: string

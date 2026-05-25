@@ -9,9 +9,6 @@ import { ReservationsPage } from '@/pages/ReservationsPage'
 import { LocksPage } from '@/pages/LocksPage'
 import { IntegrationsPage } from '@/pages/IntegrationsPage'
 import { NotificationsPage } from '@/pages/NotificationsPage'
-import { AnalyticsPage } from '@/pages/AnalyticsPage'
-import { OrganizationPage } from '@/pages/OrganizationPage'
-import { AuditLogsPage } from '@/pages/AuditLogsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { BillingPage } from '@/pages/BillingPage'
 
@@ -31,9 +28,6 @@ export default function App() {
           <Route path="/locks" element={<LocksPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/organization" element={<OrganizationPage />} />
-          <Route path="/audit-logs" element={<AuditLogsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/billing" element={<BillingPage />} />
         </Route>

@@ -1,8 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Calendar, Lock, Bell,
-  Users, Settings, LogOut, BarChart3,
-  CreditCard, BookOpen, Plug, ChevronDown, Lock as LockIcon
+  Settings, LogOut, CreditCard, Plug, Lock as LockIcon
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from '@/api/auth'
@@ -15,12 +14,9 @@ const navItems = [
   { icon: Lock, label: 'Locks', to: '/locks' },
   { icon: Plug, label: 'Integrations', to: '/integrations' },
   { icon: Bell, label: 'Notifications', to: '/notifications' },
-  { icon: BarChart3, label: 'Analytics', to: '/analytics' },
-  { icon: BookOpen, label: 'Audit Logs', to: '/audit-logs' },
 ]
 
 const bottomItems = [
-  { icon: Users, label: 'Team', to: '/organization' },
   { icon: CreditCard, label: 'Billing', to: '/billing' },
   { icon: Settings, label: 'Settings', to: '/settings' },
 ]
@@ -45,18 +41,17 @@ export function Sidebar() {
         <span className="font-semibold text-gray-900 text-lg">Propvian</span>
       </div>
 
-      {/* Org switcher */}
+      {/* Account name */}
       {activeOrg && (
         <div className="px-4 py-3 border-b border-gray-200">
-          <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-left">
+          <div className="flex items-center gap-2 px-3 py-2">
             <div className="w-6 h-6 bg-primary-50 rounded-md flex items-center justify-center flex-shrink-0">
               <span className="text-primary-600 text-xs font-bold">
                 {activeOrg.name.charAt(0).toUpperCase()}
               </span>
             </div>
             <span className="text-sm text-gray-700 font-medium truncate">{activeOrg.name}</span>
-            <ChevronDown size={14} className="text-gray-400 ml-auto flex-shrink-0" />
-          </button>
+          </div>
         </div>
       )}
 
