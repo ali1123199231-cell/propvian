@@ -32,13 +32,15 @@ public class LockService {
     private final TtlockOAuthStateRepository oauthStateRepository;
     private final DuplicateLockAttemptRepository duplicateLockAttemptRepository;
     private final OnboardingService onboardingService;
+    private final BillingService billingService;
 
     @Transactional
     public LockResponse connectLock(UUID propertyId, ConnectLockRequest request, UUID userId) {
-        propertyRepository.findById(propertyId)
+        Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
 
-        // Duplicate lock check — a lock can only belong to one account
+        billingService.enforceCanAddLock(property.getOrganizationId());
+
         lockRepository.findFirstByTtlockLockId(request.getTtlockLockId()).ifPresent(existing -> {
             UUID existingOwnerId = resolveOwner(existing.getPropertyId());
             duplicateLockAttemptRepository.save(DuplicateLockAttempt.builder()

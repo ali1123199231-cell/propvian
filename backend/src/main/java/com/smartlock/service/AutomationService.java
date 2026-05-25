@@ -5,8 +5,10 @@ import com.smartlock.domain.Reservation;
 import com.smartlock.domain.enums.AccessCodeStatus;
 import com.smartlock.dto.response.automation.AutomationStatusResponse;
 import com.smartlock.event.ReservationCreatedEvent;
+import com.smartlock.exception.AppException;
 import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.repository.AccessCodeRepository;
+import org.springframework.http.HttpStatus;
 import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
@@ -30,6 +32,7 @@ public class AutomationService {
     private final ReservationRepository reservationRepository;
     private final AccessCodeRepository accessCodeRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final BillingService billingService;
 
     @Transactional(readOnly = true)
     public AutomationStatusResponse getStatus(UUID orgId) {
@@ -45,6 +48,12 @@ public class AutomationService {
     public AutomationStatusResponse enableAutomation(UUID orgId) {
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
+
+        if (!billingService.isAccessActive(orgId)) {
+            throw new AppException(
+                    "Active subscription required to enable automation.",
+                    HttpStatus.PAYMENT_REQUIRED, "SUBSCRIPTION_INACTIVE");
+        }
 
         org.setAutomationEnabled(true);
         organizationRepository.save(org);

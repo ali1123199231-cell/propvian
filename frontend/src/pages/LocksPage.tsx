@@ -9,12 +9,15 @@ import { formatDistanceToNow, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
 import { locksApi, type OAuthLockItem } from '@/api/locks'
 import { propertiesApi } from '@/api/properties'
+import { billingApi } from '@/api/billing'
 import { useAuthStore } from '@/store/authStore'
 import { TopBar } from '@/components/layout/TopBar'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { LockStatusBadge } from '@/components/ui/Badge'
 import { AutomationStatus } from '@/components/automation/AutomationStatus'
+import { BillingBanner } from '@/components/billing/BillingBanner'
+import { QuotaExceededModal } from '@/components/billing/QuotaExceededModal'
 import type { Lock as LockType } from '@/types'
 
 function LockStatusIcon({ status }: { status: string }) {
@@ -99,6 +102,7 @@ export function LocksPage() {
   const [syncingId, setSyncingId] = useState<string | null>(null)
   const [disconnectTarget, setDisconnectTarget] = useState<LockType | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<LockType | null>(null)
+  const [showQuotaModal, setShowQuotaModal] = useState(false)
 
   // OAuth post-redirect state
   const ttlockState = searchParams.get('ttlock_state')
@@ -110,6 +114,12 @@ export function LocksPage() {
   const [popupOpened, setPopupOpened] = useState(false)
   const [popupBlocked, setPopupBlocked] = useState(false)
   const popupRef = useRef<Window | null>(null)
+
+  const { data: billing } = useQuery({
+    queryKey: ['billing-status', orgId],
+    queryFn: () => billingApi.getStatus(orgId!),
+    enabled: !!orgId,
+  })
 
   const { data: propsData } = useQuery({
     queryKey: ['properties', orgId, 0],
@@ -262,16 +272,26 @@ export function LocksPage() {
   const locks = locksQuery.data ?? []
   const oauthLocks = oauthLocksQuery.data ?? []
 
+  const handleConnectClick = () => {
+    if (billing && (!billing.accessActive || billing.usedLocks >= billing.lockQuota)) {
+      setShowQuotaModal(true)
+      return
+    }
+    startOAuthMutation.mutate()
+  }
+
   return (
     <div>
       <TopBar
         title="Locks"
         action={{
           label: startOAuthMutation.isPending ? 'Opening…' : 'Connect with TTLock',
-          onClick: () => startOAuthMutation.mutate(),
+          onClick: handleConnectClick,
         }}
       />
       <div className="p-6 space-y-4">
+        {/* Billing banner */}
+        <BillingBanner />
         {/* Automation status */}
         <AutomationStatus />
 
@@ -312,7 +332,7 @@ export function LocksPage() {
             description="Connect your TTLock smart locks to automate guest access. You'll be redirected to TTLock to authorize — no password needed here."
             action={{
               label: startOAuthMutation.isPending ? 'Redirecting to TTLock...' : 'Connect with TTLock',
-              onClick: () => startOAuthMutation.mutate(),
+              onClick: handleConnectClick,
             }}
           />
         ) : (
@@ -474,6 +494,14 @@ export function LocksPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Quota exceeded modal */}
+      {showQuotaModal && (
+        <QuotaExceededModal
+          billing={billing ?? null}
+          onClose={() => setShowQuotaModal(false)}
+        />
+      )}
     </div>
   )
 }

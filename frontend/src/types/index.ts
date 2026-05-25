@@ -220,6 +220,20 @@ export interface AutomationStatus {
   pendingReservationCount: number
 }
 
+export interface BillingStatus {
+  status: 'TRIALING' | 'ACTIVE' | 'PAST_DUE' | 'CANCELLED' | 'EXPIRED'
+  trialActive: boolean
+  paidActive: boolean
+  accessActive: boolean
+  trialEnd?: string
+  currentPeriodEnd?: string
+  lockQuota: number
+  usedLocks: number
+  cancelAtPeriodEnd: boolean
+  paymentProvider?: 'STRIPE' | 'PAYPAL'
+  failedPaymentAt?: string
+}
+
 export interface CheckinPageData {
   propertyName: string
   guestName?: string

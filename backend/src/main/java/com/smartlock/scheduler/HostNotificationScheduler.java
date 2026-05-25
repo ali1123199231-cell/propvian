@@ -39,6 +39,7 @@ public class HostNotificationScheduler {
     private final AccessCodeRepository accessCodeRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final com.smartlock.service.BillingService billingService;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -55,6 +56,10 @@ public class HostNotificationScheduler {
 
         for (Organization org : activeOrgs) {
             try {
+                if (!billingService.isAccessActive(org.getId())) {
+                    log.debug("Skipping host notifications for org {} — subscription inactive", org.getId());
+                    continue;
+                }
                 processOrg(org, windowStart, windowEnd);
             } catch (Exception e) {
                 log.error("Host notification failed for org {}: {}", org.getId(), e.getMessage());

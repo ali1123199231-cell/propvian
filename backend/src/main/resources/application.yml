@@ -140,6 +140,17 @@ ttlock:
 resend:
   api-key: ${RESEND_API_KEY:}
 
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  price-id: ${STRIPE_PRICE_ID:}
+
+paypal:
+  client-id: ${PAYPAL_CLIENT_ID:}
+  client-secret: ${PAYPAL_CLIENT_SECRET:}
+  plan-id: ${PAYPAL_PLAN_ID:}
+  base-url: ${PAYPAL_BASE_URL:https://api-m.paypal.com}
+
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}

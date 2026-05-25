@@ -59,6 +59,21 @@ public class Subscription {
     @Builder.Default
     private Boolean cancelAtPeriodEnd = false;
 
+    @Column(name = "lock_quota")
+    private Integer lockQuota;
+
+    @Column(name = "paypal_subscription_id", length = 200)
+    private String paypalSubscriptionId;
+
+    @Column(name = "payment_provider", length = 50)
+    private String paymentProvider;
+
+    @Column(name = "stripe_price_id", length = 200)
+    private String stripePriceId;
+
+    @Column(name = "failed_payment_at")
+    private Instant failedPaymentAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
