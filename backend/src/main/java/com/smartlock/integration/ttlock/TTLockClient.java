@@ -271,10 +271,11 @@ public class TTLockClient {
 
     public String buildOAuthUrl(String state) {
         String redirectUri = properties.getRedirectUri();
+        String encodedRedirectUri = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
         String url = properties.getOauthBaseUrl() + "/oauth2/authorize"
                 + "?client_id=" + properties.getClientId()
                 + "&response_type=code"
-                + "&redirect_uri=" + redirectUri
+                + "&redirect_uri=" + encodedRedirectUri
                 + "&state=" + state;
         log.info("TTLock OAuth URL built | fullUrl=[{}]", url);
         log.info("TTLock redirect_uri as char codes: {}", redirectUri.chars()
