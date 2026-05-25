@@ -15,6 +15,7 @@ import { propertiesApi } from '@/api/properties'
 import { calendarIntegrationsApi } from '@/api/calendarIntegrations'
 import { useAuthStore } from '@/store/authStore'
 import type { OnboardingState } from '@/types'
+import { COUNTRIES } from '@/constants/countries'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -26,6 +27,7 @@ const STEPS = [
 ]
 
 const PLATFORMS = ['Airbnb', 'Booking.com', 'VRBO', 'Expedia', 'Agoda', 'Trip.com', 'HomeAway', 'Other']
+
 
 function stepIndex(step: string) {
   return STEPS.findIndex((s) => s.id === step)
@@ -525,13 +527,16 @@ function PropertySetupStep({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
           <div className="relative">
-            <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
+            <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
+            <select
               {...register('country')}
-              type="text"
-              placeholder="e.g. United States"
-              className="input-base pl-9"
-            />
+              className="input-base pl-9 appearance-none"
+            >
+              <option value="">Select a country…</option>
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
           {errors.country && <p className="mt-1 text-xs text-red-500">{errors.country.message}</p>}
         </div>

@@ -146,6 +146,7 @@ public class OrganizationService {
                 .timezone(org.getTimezone())
                 .country(org.getCountry())
                 .website(org.getWebsite())
+                .automationEnabled(org.isAutomationEnabled())
                 .createdAt(org.getCreatedAt())
                 .build();
     }

@@ -1,6 +1,7 @@
 package com.smartlock.service;
 
 import com.smartlock.domain.CalendarIntegration;
+import com.smartlock.domain.Organization;
 import com.smartlock.domain.Reservation;
 import com.smartlock.domain.enums.ReservationSource;
 import com.smartlock.domain.enums.ReservationStatus;
@@ -10,6 +11,7 @@ import com.smartlock.integration.ical.ICalFetcher;
 import com.smartlock.integration.ical.ICalParser;
 import com.smartlock.integration.ical.dto.ParsedReservation;
 import com.smartlock.repository.CalendarIntegrationRepository;
+import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -28,9 +31,13 @@ import java.util.UUID;
 @Slf4j
 public class CalendarSyncService {
 
+    private static final SecureRandom CHECKIN_CODE_RANDOM = new SecureRandom();
+    private static final String CHECKIN_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
     private final CalendarIntegrationRepository calendarIntegrationRepository;
     private final ReservationRepository reservationRepository;
     private final PropertyRepository propertyRepository;
+    private final OrganizationRepository organizationRepository;
     private final ICalFetcher icalFetcher;
     private final ICalParser icalParser;
     private final ApplicationEventPublisher eventPublisher;
@@ -80,9 +87,13 @@ public class CalendarSyncService {
                 .map(p -> p.getOrganizationId())
                 .orElse(null);
 
+        boolean automationEnabled = orgId != null && organizationRepository.findById(orgId)
+                .map(Organization::isAutomationEnabled)
+                .orElse(false);
+
         for (ParsedReservation pr : parsed) {
             try {
-                SyncResult syncResult = upsertReservation(integration.getPropertyId(), orgId, pr);
+                SyncResult syncResult = upsertReservation(integration.getPropertyId(), orgId, automationEnabled, pr);
                 switch (syncResult) {
                     case CREATED -> created++;
                     case UPDATED -> updated++;
@@ -103,7 +114,7 @@ public class CalendarSyncService {
         log.info("Calendar sync complete for {}: +{} new, {} updated", integration.getId(), created, updated);
     }
 
-    private SyncResult upsertReservation(UUID propertyId, UUID orgId, ParsedReservation pr) {
+    private SyncResult upsertReservation(UUID propertyId, UUID orgId, boolean automationEnabled, ParsedReservation pr) {
         Optional<Reservation> existing = reservationRepository.findByPropertyIdAndIcalUid(propertyId, pr.getUid());
 
         if (existing.isPresent()) {
@@ -137,16 +148,31 @@ public class CalendarSyncService {
                 .timezone(pr.getTimezone() != null ? pr.getTimezone() : "UTC")
                 .guestName(pr.getGuestName())
                 .guestEmail(pr.getGuestEmail())
+                .checkinCode(generateCheckinCode())
                 .syncedAt(Instant.now())
                 .build();
 
         reservation = reservationRepository.save(reservation);
 
-        if (orgId != null) {
+        if (orgId != null && automationEnabled) {
             eventPublisher.publishEvent(new ReservationCreatedEvent(this, reservation.getId(), orgId));
         }
 
         return SyncResult.CREATED;
+    }
+
+    private String generateCheckinCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            StringBuilder sb = new StringBuilder(7);
+            for (int i = 0; i < 7; i++) {
+                sb.append(CHECKIN_CODE_CHARS.charAt(CHECKIN_CODE_RANDOM.nextInt(CHECKIN_CODE_CHARS.length())));
+            }
+            String code = sb.toString();
+            if (reservationRepository.findByCheckinCode(code).isEmpty()) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("Failed to generate unique checkin code");
     }
 
     private ReservationSource detectSource(String summary) {

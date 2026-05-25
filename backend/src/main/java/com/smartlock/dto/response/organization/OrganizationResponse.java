@@ -21,5 +21,6 @@ public class OrganizationResponse {
     private String timezone;
     private String country;
     private String website;
+    private boolean automationEnabled;
     private Instant createdAt;
 }

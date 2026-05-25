@@ -38,4 +38,8 @@ public class Organization extends SoftDeletableEntity {
 
     @Column(length = 500)
     private String website;
+
+    @Column(name = "automation_enabled", nullable = false)
+    @Builder.Default
+    private boolean automationEnabled = false;
 }

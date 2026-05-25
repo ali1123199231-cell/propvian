@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -39,4 +40,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
 
     @Query("SELECT COUNT(r) FROM Reservation r JOIN Property p ON r.propertyId = p.id WHERE p.organizationId = :orgId AND r.createdAt >= :from AND r.deletedAt IS NULL")
     long countByOrganizationIdSince(UUID orgId, Instant from);
+
+    Optional<Reservation> findByCheckinCode(String checkinCode);
+
+    @Query("SELECT r FROM Reservation r WHERE r.propertyId IN :propertyIds AND r.status = com.smartlock.domain.enums.ReservationStatus.CONFIRMED AND r.checkOutDate > :now AND r.deletedAt IS NULL")
+    List<Reservation> findUpcomingConfirmedByPropertyIds(@Param("propertyIds") List<UUID> propertyIds, @Param("now") Instant now);
+
+    @Query("SELECT r FROM Reservation r WHERE r.propertyId IN :propertyIds AND r.hostNotifiedAt IS NULL AND r.status = com.smartlock.domain.enums.ReservationStatus.CONFIRMED AND r.checkInDate >= :from AND r.checkInDate < :to AND r.deletedAt IS NULL")
+    List<Reservation> findPendingHostNotifications(@Param("propertyIds") List<UUID> propertyIds, @Param("from") Instant from, @Param("to") Instant to);
 }

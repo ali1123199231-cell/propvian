@@ -14,6 +14,7 @@ import { TopBar } from '@/components/layout/TopBar'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { LockStatusBadge } from '@/components/ui/Badge'
+import { AutomationStatus } from '@/components/automation/AutomationStatus'
 import type { Lock as LockType } from '@/types'
 
 function LockStatusIcon({ status }: { status: string }) {
@@ -270,7 +271,10 @@ export function LocksPage() {
           onClick: () => startOAuthMutation.mutate(),
         }}
       />
-      <div className="p-6">
+      <div className="p-6 space-y-4">
+        {/* Automation status */}
+        <AutomationStatus />
+
         {/* Popup status banner */}
         {popupOpened && (
           <div className="mb-4 flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">

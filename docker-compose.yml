@@ -8,8 +8,6 @@ services:
       POSTGRES_DB: smartlock3
       POSTGRES_USER: ali
       POSTGRES_PASSWORD: "123"
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -64,7 +62,7 @@ services:
       TTLOCK_BASE_URL: https://api.sciener.com
       TTLOCK_CLIENT_ID: 3c90aef0945340a88ef76a876b8b0600
       TTLOCK_CLIENT_SECRET: d0a5dac24e6da24a3bce4d0d5ef77a90
-      JWT_SECRET: ${JWT_SECRET:-smartlock-super-secret-jwt-key-min-256-bits-long-for-hs512}
+      JWT_SECRET: ${JWT_SECRET:-smartlock-super-secret-jwt-key-needs-512-bits-minimum-for-hs512-padding-here}
       JWT_ACCESS_EXPIRATION_MS: 900000
       JWT_REFRESH_EXPIRATION_MS: 2592000000
     ports:

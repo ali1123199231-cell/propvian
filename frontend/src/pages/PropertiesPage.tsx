@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { StatsSkeleton } from '@/components/ui/Skeleton'
 import type { Property } from '@/types'
+import { COUNTRIES } from '@/constants/countries'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(200),
@@ -122,7 +123,12 @@ function PropertyForm({ defaultValues, onSubmit, loading }: {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-          <input {...register('country')} className="input-base w-full" placeholder="US" />
+          <select {...register('country')} className="input-base w-full appearance-none">
+            <option value="">Select a country…</option>
+            {COUNTRIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>

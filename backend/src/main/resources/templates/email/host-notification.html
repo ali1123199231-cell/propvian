@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guest Arriving Soon</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; color: #1e293b; }
+  .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .header { background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 36px 40px; }
+  .header h1 { color: white; margin: 0 0 4px; font-size: 22px; }
+  .header p { color: rgba(255,255,255,0.85); margin: 0; font-size: 14px; }
+  .body { padding: 36px 40px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+  .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
+  .info-card .label { color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .info-card .value { color: #1e293b; font-weight: 600; font-size: 14px; }
+  .section { margin: 28px 0; }
+  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+  .option-block { border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 14px; }
+  .option-label { display: inline-block; background: #6366f1; color: white; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 8px; margin-bottom: 12px; letter-spacing: 0.04em; }
+  .option-label.secondary { background: #64748b; }
+  .link-btn { display: inline-block; background: #6366f1; color: white !important; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; margin-top: 6px; }
+  .copyblock { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.7; white-space: pre-wrap; color: #1e293b; margin-top: 8px; }
+  .platforms { color: #64748b; font-size: 13px; margin-top: 10px; }
+  .footer { background: #f8fafc; padding: 18px 40px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Guest arriving soon 🔑</h1>
+    <p th:text="${guestName != null ? guestName + ' is checking in at ' + propertyName : 'A guest is checking in at ' + propertyName}">Guest is arriving soon</p>
+  </div>
+
+  <div class="body">
+    <p style="color:#475569; font-size:14px; margin-top:0;">
+      The access code has been generated automatically. Share it with your guest through your preferred channel.
+    </p>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">Check-in</div>
+        <div class="value" th:text="${checkIn}">1 Jan 2025 15:00</div>
+      </div>
+      <div class="info-card">
+        <div class="label">Check-out</div>
+        <div class="value" th:text="${checkOut}">7 Jan 2025 11:00</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Share the access code</div>
+
+      <!-- Option 1: Link -->
+      <div class="option-block" th:if="${checkinPageUrl != null}">
+        <span class="option-label">Option 1 — Share a link</span>
+        <p style="font-size:13px; color:#475569; margin:0 0 10px;">Send this link directly to your guest. It shows the door code, dates, and property info.</p>
+        <a th:href="${checkinPageUrl}" class="link-btn">Open Guest Check-in Page</a>
+        <p style="font-size:12px; color:#94a3b8; margin-top:10px; word-break:break-all;" th:text="${checkinPageUrl}"></p>
+      </div>
+
+      <!-- Option 2: Copy-paste text -->
+      <div class="option-block">
+        <span class="option-label secondary">Option 2 — Copy &amp; paste message</span>
+        <p style="font-size:13px; color:#475569; margin:0 0 10px;">Copy this and send it via Airbnb chat, WhatsApp, SMS, or email.</p>
+        <div class="copyblock">Door Code: <strong th:text="${pin}">123456</strong>
+Valid From: <span th:text="${checkIn}">1 Jan 2025 15:00</span>
+Valid Until: <span th:text="${checkOut}">7 Jan 2025 11:00</span></div>
+        <div class="platforms">Send via: Airbnb chat · WhatsApp · SMS · Email</div>
+      </div>
+    </div>
+
+    <p style="font-size:12px; color:#94a3b8; margin-bottom:0;">
+      Guests are never contacted automatically by Propvian. Sharing the code manually keeps you in full control of the conversation.
+    </p>
+  </div>
+
+  <div class="footer">
+    <p>Powered by Propvian · Automated Code Management</p>
+  </div>
+</div>
+</body>
+</html>

@@ -2,10 +2,12 @@ package com.smartlock.controller;
 
 import com.smartlock.dto.request.organization.CreateOrganizationRequest;
 import com.smartlock.dto.request.organization.InviteMemberRequest;
+import com.smartlock.dto.response.automation.AutomationStatusResponse;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.dto.response.organization.OrganizationMemberResponse;
 import com.smartlock.dto.response.organization.OrganizationResponse;
 import com.smartlock.security.CustomUserDetails;
+import com.smartlock.service.AutomationService;
 import com.smartlock.service.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -28,6 +30,7 @@ import java.util.UUID;
 public class OrganizationController {
 
     private final OrganizationService organizationService;
+    private final AutomationService automationService;
 
     @PostMapping
     @Operation(summary = "Create organization")
@@ -69,5 +72,23 @@ public class OrganizationController {
             @PathVariable UUID userId) {
         organizationService.removeMember(orgId, userId);
         return ResponseEntity.ok(ApiResponse.success("Member removed"));
+    }
+
+    @GetMapping("/{orgId}/automation")
+    @Operation(summary = "Get automation status")
+    public ResponseEntity<ApiResponse<AutomationStatusResponse>> getAutomationStatus(@PathVariable UUID orgId) {
+        return ResponseEntity.ok(ApiResponse.success(automationService.getStatus(orgId)));
+    }
+
+    @PutMapping("/{orgId}/automation/enable")
+    @Operation(summary = "Enable automation")
+    public ResponseEntity<ApiResponse<AutomationStatusResponse>> enableAutomation(@PathVariable UUID orgId) {
+        return ResponseEntity.ok(ApiResponse.success(automationService.enableAutomation(orgId)));
+    }
+
+    @PutMapping("/{orgId}/automation/disable")
+    @Operation(summary = "Disable automation")
+    public ResponseEntity<ApiResponse<AutomationStatusResponse>> disableAutomation(@PathVariable UUID orgId) {
+        return ResponseEntity.ok(ApiResponse.success(automationService.disableAutomation(orgId)));
     }
 }

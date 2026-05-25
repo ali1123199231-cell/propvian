@@ -8,6 +8,7 @@ import { TopBar } from '@/components/layout/TopBar'
 import { StatCard } from '@/components/analytics/StatCard'
 import { StatsSkeleton, TableSkeleton } from '@/components/ui/Skeleton'
 import { ReservationStatusBadge, SourceBadge } from '@/components/ui/Badge'
+import { AutomationStatus } from '@/components/automation/AutomationStatus'
 import { useNavigate } from 'react-router-dom'
 
 export function DashboardPage() {
@@ -38,6 +39,9 @@ export function DashboardPage() {
       />
 
       <div className="p-6 space-y-6">
+        {/* Automation status */}
+        <AutomationStatus />
+
         {/* Stats grid */}
         {statsLoading ? (
           <StatsSkeleton />

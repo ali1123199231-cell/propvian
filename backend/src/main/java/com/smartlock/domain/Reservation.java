@@ -79,4 +79,10 @@ public class Reservation extends SoftDeletableEntity {
 
     @Column(name = "access_code_sent_at")
     private Instant accessCodeSentAt;
+
+    @Column(name = "checkin_code", length = 20, unique = true)
+    private String checkinCode;
+
+    @Column(name = "host_notified_at")
+    private Instant hostNotifiedAt;
 }

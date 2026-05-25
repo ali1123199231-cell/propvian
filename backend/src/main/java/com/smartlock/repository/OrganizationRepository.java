@@ -13,4 +13,5 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
     Optional<Organization> findBySlug(String slug);
     boolean existsBySlug(String slug);
     List<Organization> findByOwnerId(UUID ownerId);
+    List<Organization> findByAutomationEnabledTrue();
 }

@@ -38,6 +38,7 @@ export interface Organization {
   timezone: string
   country?: string
   website?: string
+  automationEnabled: boolean
   createdAt: string
 }
 
@@ -65,6 +66,8 @@ export interface Property {
   timezone: string
   description?: string
   imageUrl?: string
+  wifiDetails?: string
+  accessInstructions?: string
   status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
   cleanerUserId?: string
   maxGuests?: number
@@ -110,6 +113,7 @@ export interface Reservation {
   currency?: string
   syncedAt?: string
   accessCodeSentAt?: string
+  checkinCode?: string
   hasAccessCode: boolean
   createdAt: string
 }
@@ -209,4 +213,21 @@ export interface ApiResponse<T> {
   success: boolean
   message?: string
   data: T
+}
+
+export interface AutomationStatus {
+  enabled: boolean
+  pendingReservationCount: number
+}
+
+export interface CheckinPageData {
+  propertyName: string
+  guestName?: string
+  pin: string
+  validFrom: string
+  validTo: string
+  timezone: string
+  wifiDetails?: string
+  accessInstructions?: string
+  lockNotes?: string
 }

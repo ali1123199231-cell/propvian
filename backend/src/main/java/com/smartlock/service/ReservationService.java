@@ -1,5 +1,6 @@
 package com.smartlock.service;
 
+import com.smartlock.domain.Organization;
 import com.smartlock.domain.Reservation;
 import com.smartlock.domain.enums.ReservationSource;
 import com.smartlock.domain.enums.ReservationStatus;
@@ -10,6 +11,7 @@ import com.smartlock.event.ReservationCheckedOutEvent;
 import com.smartlock.event.ReservationCreatedEvent;
 import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.repository.AccessCodeRepository;
+import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -28,9 +31,13 @@ import java.util.UUID;
 @Slf4j
 public class ReservationService {
 
+    private static final SecureRandom CHECKIN_CODE_RANDOM = new SecureRandom();
+    private static final String CHECKIN_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
     private final ReservationRepository reservationRepository;
     private final PropertyRepository propertyRepository;
     private final AccessCodeRepository accessCodeRepository;
+    private final OrganizationRepository organizationRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -52,11 +59,18 @@ public class ReservationService {
                 .source(request.getSource() != null ? request.getSource() : ReservationSource.MANUAL)
                 .externalId(request.getExternalId())
                 .status(ReservationStatus.CONFIRMED)
+                .checkinCode(generateCheckinCode())
                 .build();
 
         reservation = reservationRepository.save(reservation);
 
-        eventPublisher.publishEvent(new ReservationCreatedEvent(this, reservation.getId(), orgId));
+        boolean automationEnabled = organizationRepository.findById(orgId)
+                .map(Organization::isAutomationEnabled)
+                .orElse(false);
+
+        if (automationEnabled) {
+            eventPublisher.publishEvent(new ReservationCreatedEvent(this, reservation.getId(), orgId));
+        }
 
         return toResponse(reservation, null);
     }
@@ -105,6 +119,20 @@ public class ReservationService {
         eventPublisher.publishEvent(new ReservationCheckedOutEvent(this, reservation.getId(), orgId));
 
         return toResponse(reservation, null);
+    }
+
+    private String generateCheckinCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            StringBuilder sb = new StringBuilder(7);
+            for (int i = 0; i < 7; i++) {
+                sb.append(CHECKIN_CODE_CHARS.charAt(CHECKIN_CODE_RANDOM.nextInt(CHECKIN_CODE_CHARS.length())));
+            }
+            String code = sb.toString();
+            if (reservationRepository.findByCheckinCode(code).isEmpty()) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("Failed to generate unique checkin code");
     }
 
     private ReservationResponse toResponse(Reservation r, Boolean hasAccessCode) {
