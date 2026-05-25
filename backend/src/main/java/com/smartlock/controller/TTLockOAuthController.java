@@ -8,6 +8,7 @@ import com.smartlock.integration.ttlock.dto.TTLockLockListResponse;
 import com.smartlock.integration.ttlock.dto.TTLockTokenResponse;
 import com.smartlock.repository.TtlockOAuthStateRepository;
 import com.smartlock.security.CustomUserDetails;
+import com.smartlock.service.SystemConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,42 +38,51 @@ public class TTLockOAuthController {
     private final TTLockClient ttlockClient;
     private final TTLockProperties ttlockProperties;
     private final TtlockOAuthStateRepository stateRepository;
+    private final SystemConfigService systemConfigService;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
     /**
-     * Step 1: Generate the TTLock OAuth authorization URL and a state token.
-     * The frontend stores the state and redirects the user to the returned URL.
+     * Step 1: Returns auth method (oauth or password) and, for oauth, the authorization URL.
+     * Auth method is controlled exclusively via the system_config table in the database.
      */
     @GetMapping("/start")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Start TTLock OAuth flow — returns authorization URL")
+    @Operation(summary = "Start TTLock connect flow — returns authMethod and (for oauth) authorization URL")
     public ResponseEntity<ApiResponse<Map<String, String>>> startOAuth(
             @AuthenticationPrincipal CustomUserDetails currentUser) {
 
-        // Clean up expired states for this user
         stateRepository.deleteExpired(Instant.now());
 
-        // Create a new pending state record
+        String authMethod = systemConfigService.getTtlockAuthMethod();
+        log.info("TTLock connect start | user={} | authMethod={}", currentUser.getUserId(), authMethod);
+
+        if ("password".equals(authMethod)) {
+            // Password flow: frontend shows its own credential dialog — no OAuth URL needed
+            return ResponseEntity.ok(ApiResponse.success(Map.of("authMethod", "password")));
+        }
+
+        // OAuth flow: create state record and build authorization URL
         TtlockOAuthState state = TtlockOAuthState.builder()
                 .userId(currentUser.getUserId())
-                .expiresAt(Instant.now().plusSeconds(900)) // 15 minutes
+                .expiresAt(Instant.now().plusSeconds(900))
                 .build();
         state = stateRepository.save(state);
 
         String oauthUrl = ttlockClient.buildOAuthUrl(state.getId().toString());
         log.info("TTLock OAuth started for user {} with state {}", currentUser.getUserId(), state.getId());
 
-        return ResponseEntity.ok(ApiResponse.success(Map.of(
-                "oauthUrl", oauthUrl,
-                "state", state.getId().toString()
-        )));
+        Map<String, String> result = new HashMap<>();
+        result.put("authMethod", "oauth");
+        result.put("oauthUrl", oauthUrl);
+        result.put("state", state.getId().toString());
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     /**
-     * Alternative Step 1: Authenticate with TTLock username/password directly (password grant).
-     * Used instead of the authorization code flow when TTLock's web authorize page is unavailable.
+     * Password grant login — used when authMethod=password is set in system_config.
+     * Frontend calls this with the user's TTLock credentials.
      */
     @PostMapping("/login")
     @SecurityRequirement(name = "bearerAuth")
@@ -99,9 +110,8 @@ public class TTLockOAuthController {
     }
 
     /**
-     * Step 2: TTLock redirects here after the user authorizes your app.
-     * This endpoint is PUBLIC — no JWT required (browser redirect from TTLock).
-     * It exchanges the code for tokens, stores them, then redirects to the frontend.
+     * Step 2 (oauth only): TTLock redirects here after the user authorizes.
+     * Public endpoint — no JWT required (browser redirect from TTLock).
      */
     @RequestMapping(value = "/callback", method = {RequestMethod.GET, RequestMethod.POST})
     @Operation(summary = "TTLock OAuth callback — public endpoint")
@@ -121,7 +131,6 @@ public class TTLockOAuthController {
             return ResponseEntity.ok().build();
         }
 
-        // TTLock redirected back with an error (e.g. user denied, invalid params)
         if (error != null) {
             log.warn("TTLock OAuth error callback: error={} description={}", error, error_description);
             String errorUrl = frontendUrl + "/onboarding?ttlock_error=" + error;
@@ -137,7 +146,6 @@ public class TTLockOAuthController {
         try {
             stateId = UUID.fromString(state);
         } catch (IllegalArgumentException e) {
-            // Non-UUID state means this is a test/invalid request — redirect rather than 4xx
             String errorUrl = frontendUrl + "/locks?ttlock_error=invalid_state";
             return ResponseEntity.status(302).location(URI.create(errorUrl)).build();
         }
@@ -150,15 +158,15 @@ public class TTLockOAuthController {
                 return ResponseEntity.status(302).location(URI.create(errorUrl)).build();
             }
 
-            TTLockTokenResponse tokenResponse = ttlockClient.exchangeAuthCode(
-                    code, ttlockProperties.getRedirectUri()
-            );
+            // redirect_uri sent here must exactly match what was sent to /authorize
+            String redirectUri = systemConfigService.getTtlockRedirectUri();
+            TTLockTokenResponse tokenResponse = ttlockClient.exchangeAuthCode(code, redirectUri);
 
             oauthState.setAccessToken(tokenResponse.getAccessToken());
             oauthState.setRefreshToken(tokenResponse.getRefreshToken());
             oauthState.setTtlockUid(tokenResponse.getUid());
             oauthState.setExpiresIn(tokenResponse.getExpiresIn());
-            oauthState.setExpiresAt(Instant.now().plusSeconds(900)); // 15 more minutes to pick a lock
+            oauthState.setExpiresAt(Instant.now().plusSeconds(900));
             stateRepository.save(oauthState);
 
             log.info("TTLock OAuth authorized successfully for state {}", stateId);
@@ -173,7 +181,7 @@ public class TTLockOAuthController {
     }
 
     /**
-     * Step 3: After redirect, frontend fetches the user's available locks.
+     * Step 3: Frontend fetches the user's available locks using the state token.
      */
     @GetMapping("/locks")
     @SecurityRequirement(name = "bearerAuth")

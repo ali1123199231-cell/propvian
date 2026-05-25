@@ -5,6 +5,7 @@ import com.smartlock.integration.ttlock.dto.TTLockLockInfoResponse;
 import com.smartlock.integration.ttlock.dto.TTLockLockListResponse;
 import com.smartlock.integration.ttlock.dto.TTLockPasscodeResponse;
 import com.smartlock.integration.ttlock.dto.TTLockTokenResponse;
+import com.smartlock.service.SystemConfigService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class TTLockClient {
 
     private final TTLockProperties properties;
     private final RestTemplate restTemplate;
+    private final SystemConfigService systemConfigService;
 
     @PostConstruct
     public void logConfig() {
@@ -270,14 +272,14 @@ public class TTLockClient {
     }
 
     public String buildOAuthUrl(String state) {
-        String redirectUri = properties.getRedirectUri();
+        String redirectUri = systemConfigService.getTtlockRedirectUri();
         String encodedRedirectUri = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
         String url = properties.getOauthBaseUrl() + "/oauth2/authorize"
                 + "?client_id=" + properties.getClientId()
                 + "&response_type=code"
                 + "&redirect_uri=" + encodedRedirectUri
                 + "&state=" + state;
-        log.info("TTLock OAuth URL built | fullUrl=[{}]", url);
+        log.info("TTLock OAuth URL built | redirectUri=[{}] | fullUrl=[{}]", redirectUri, url);
         return url;
     }
 

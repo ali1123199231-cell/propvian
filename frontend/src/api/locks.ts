@@ -2,8 +2,9 @@ import apiClient from './client'
 import type { Lock } from '@/types'
 
 export interface OAuthStartResponse {
-  oauthUrl: string
-  state: string
+  authMethod: 'oauth' | 'password'
+  oauthUrl?: string
+  state?: string
 }
 
 export interface OAuthLockItem {
@@ -17,6 +18,11 @@ export interface OAuthLockItem {
 export const locksApi = {
   startOAuth: async (): Promise<OAuthStartResponse> => {
     const { data } = await apiClient.get('/ttlock/oauth/start')
+    return data.data
+  },
+
+  loginWithCredentials: async (username: string, password: string): Promise<{ state: string }> => {
+    const { data } = await apiClient.post('/ttlock/oauth/login', { username, password })
     return data.data
   },
 

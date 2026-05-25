@@ -170,21 +170,114 @@ interface PendingLock {
   lockName: string
 }
 
-function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void }) {
-  const [oauthState, setOauthState] = useState<string | null>(null)
-  const [availableLocks, setAvailableLocks] = useState<any[]>([])
-  const [selected, setSelected]     = useState<any | null>(null)
-  const [customName, setCustomName] = useState('')
-  const [loading, setLoading]       = useState(false)
-  const [saving, setSaving]         = useState(false)
-  const popupRef = useRef<Window | null>(null)
+// Password-grant credential dialog shown when authMethod=password
+function TTLockCredentialDialog({
+  onSuccess,
+  onCancel,
+}: {
+  onSuccess: (state: string) => void
+  onCancel: () => void
+}) {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading]   = useState(false)
 
-  const startOAuth = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!username.trim() || !password.trim()) return
     setLoading(true)
     try {
-      const { oauthUrl, state } = await locksApi.startOAuth()
-      setOauthState(state)
-      const popup = window.open(oauthUrl, 'ttlock-oauth', 'width=620,height=700,left=300,top=100')
+      const { state } = await locksApi.loginWithCredentials(username.trim(), password)
+      onSuccess(state)
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Invalid TTLock credentials'
+      toast.error(msg)
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-7">
+        <div className="w-12 h-12 bg-primary-50 rounded-xl flex items-center justify-center mb-5">
+          <Lock size={24} className="text-primary-600" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-1">Sign in to TTLock</h3>
+        <p className="text-sm text-gray-500 mb-6">
+          Enter your TTLock app credentials to connect your lock.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">TTLock username</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="input-base"
+              placeholder="Your TTLock username"
+              autoComplete="username"
+              disabled={loading}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">TTLock password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input-base"
+              placeholder="Your TTLock password"
+              autoComplete="current-password"
+              disabled={loading}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading || !username.trim() || !password.trim()}
+            className="btn-primary w-full justify-center py-3 mt-2"
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
+            {loading ? 'Connecting…' : 'Connect lock'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="w-full text-sm text-gray-500 hover:text-gray-700 text-center py-1"
+          >
+            Cancel
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void }) {
+  const [oauthState, setOauthState]         = useState<string | null>(null)
+  const [availableLocks, setAvailableLocks] = useState<any[]>([])
+  const [selected, setSelected]             = useState<any | null>(null)
+  const [customName, setCustomName]         = useState('')
+  const [loading, setLoading]               = useState(false)
+  const [saving, setSaving]                 = useState(false)
+  const [showCredDialog, setShowCredDialog] = useState(false)
+  const popupRef = useRef<Window | null>(null)
+
+  const handleConnect = async () => {
+    setLoading(true)
+    try {
+      const result = await locksApi.startOAuth()
+
+      if (result.authMethod === 'password') {
+        setLoading(false)
+        setShowCredDialog(true)
+        return
+      }
+
+      // OAuth flow
+      const { oauthUrl, state } = result
+      setOauthState(state!)
+      const popup = window.open(oauthUrl!, 'ttlock-oauth', 'width=620,height=700,left=300,top=100')
       popupRef.current = popup
 
       const checkPopup = setInterval(() => {
@@ -197,6 +290,12 @@ function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void 
       toast.error(err.response?.data?.message || 'Could not start TTLock connection')
       setLoading(false)
     }
+  }
+
+  const handleCredSuccess = async (state: string) => {
+    setShowCredDialog(false)
+    setOauthState(state)
+    await loadLocks(state)
   }
 
   const handleMessage = useCallback(async (e: MessageEvent) => {
@@ -322,29 +421,33 @@ function TTLockConnectStep({ onDone }: { onDone: (pending: PendingLock) => void 
   }
 
   return (
-    <div className="max-w-md mx-auto">
-      <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mb-5">
-        <Lock size={28} className="text-primary-600" />
+    <>
+      {showCredDialog && (
+        <TTLockCredentialDialog
+          onSuccess={handleCredSuccess}
+          onCancel={() => { setShowCredDialog(false); setLoading(false) }}
+        />
+      )}
+      <div className="max-w-md mx-auto">
+        <div className="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mb-5">
+          <Lock size={28} className="text-primary-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your TTLock</h2>
+        <p className="text-gray-500 mb-8">
+          Sign in to your TTLock account to authorize access. This allows Propvian to
+          create and revoke guest codes automatically.
+        </p>
+
+        <button
+          onClick={handleConnect}
+          disabled={loading}
+          className="btn-primary w-full justify-center py-3"
+        >
+          {loading ? <Loader2 size={16} className="animate-spin" /> : <ExternalLink size={16} />}
+          {loading ? 'Connecting…' : 'Connect with TTLock'}
+        </button>
       </div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your TTLock</h2>
-      <p className="text-gray-500 mb-8">
-        Sign in to your TTLock account to authorize access. This allows Propvian to
-        create and revoke guest codes automatically.
-      </p>
-
-      <button
-        onClick={startOAuth}
-        disabled={loading}
-        className="btn-primary w-full justify-center py-3"
-      >
-        {loading ? <Loader2 size={16} className="animate-spin" /> : <ExternalLink size={16} />}
-        {loading ? 'Opening TTLock…' : 'Connect with TTLock'}
-      </button>
-
-      <p className="text-xs text-gray-400 text-center mt-4">
-        A popup will open to the TTLock website. Allow popups if prompted.
-      </p>
-    </div>
+    </>
   )
 }
 
