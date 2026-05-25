@@ -270,13 +270,16 @@ public class TTLockClient {
     }
 
     public String buildOAuthUrl(String state) {
+        String redirectUri = properties.getRedirectUri();
         String url = properties.getOauthBaseUrl() + "/oauth2/authorize"
                 + "?client_id=" + properties.getClientId()
                 + "&response_type=code"
-                + "&redirect_uri=" + properties.getRedirectUri()
+                + "&redirect_uri=" + redirectUri
                 + "&state=" + state;
-        log.info("TTLock OAuth URL built | oauthBaseUrl={} | clientId={} | redirectUri={} | state={} | fullUrl={}",
-                properties.getOauthBaseUrl(), properties.getClientId(), properties.getRedirectUri(), state, url);
+        log.info("TTLock OAuth URL built | fullUrl=[{}]", url);
+        log.info("TTLock redirect_uri as char codes: {}", redirectUri.chars()
+                .mapToObj(c -> String.valueOf((char) c)).reduce("", String::concat));
+        log.info("TTLock redirect_uri length={} | value=[{}]", redirectUri.length(), redirectUri);
         return url;
     }
 

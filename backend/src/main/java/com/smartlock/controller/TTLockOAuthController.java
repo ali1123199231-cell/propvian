@@ -111,8 +111,13 @@ public class TTLockOAuthController {
             @RequestParam(required = false) String error,
             @RequestParam(required = false) String error_description) {
 
+        log.info("TTLock callback received | code={} | state={} | error={} | error_description={}",
+                code != null ? code.substring(0, Math.min(8, code.length())) + "..." : "null",
+                state, error, error_description);
+
         // TTLock developer console tests this URL with no params — return 200 so validation passes
         if (code == null && error == null) {
+            log.info("TTLock callback: no params — returning 200 for console validation");
             return ResponseEntity.ok().build();
         }
 
@@ -124,6 +129,7 @@ public class TTLockOAuthController {
         }
 
         if (state == null) {
+            log.warn("TTLock callback: code present but state is null");
             return ResponseEntity.ok().build();
         }
 
