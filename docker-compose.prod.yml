@@ -51,13 +51,6 @@ services:
     networks:
       - smartlock-net
 
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: smartlock-mailhog
-    restart: unless-stopped
-    networks:
-      - smartlock-net
-
   backend:
     build:
       context: ./backend
@@ -71,10 +64,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      SPRING_MAIL_HOST: mailhog
-      SPRING_MAIL_PORT: 1025
-      SPRING_MAIL_USERNAME: ""
-      SPRING_MAIL_PASSWORD: ""
       TTLOCK_BASE_URL: https://euapi.sciener.com
       TTLOCK_OAUTH_BASE_URL: https://euapi.sciener.com
       TTLOCK_CLIENT_ID: "${TTLOCK_CLIENT_ID}"
