@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class AutomationStatusResponse {
     private boolean enabled;
     private long pendingReservationCount;
+    private boolean hasLocks;
+    private boolean hasIntegration;
 }

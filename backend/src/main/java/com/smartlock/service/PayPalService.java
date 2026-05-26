@@ -2,10 +2,12 @@ package com.smartlock.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartlock.exception.AppException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -55,6 +57,9 @@ public class PayPalService {
     }
 
     public String createSubscriptionLink(UUID orgId, int quantity, String returnUrl, String cancelUrl) {
+        if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.isBlank()) {
+            throw new AppException("PayPal payments are not configured on this server.", HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
+        }
         try {
             String token = getAccessToken();
             RestTemplate rest = new RestTemplate();

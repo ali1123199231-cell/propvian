@@ -115,6 +115,11 @@ export function LocksPage() {
   const [popupBlocked, setPopupBlocked] = useState(false)
   const popupRef = useRef<Window | null>(null)
 
+  // Password auth modal
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [pwUsername, setPwUsername] = useState('')
+  const [pwPassword, setPwPassword] = useState('')
+
   const { data: billing } = useQuery({
     queryKey: ['billing-status', orgId],
     queryFn: () => billingApi.getStatus(orgId!),
@@ -198,7 +203,11 @@ export function LocksPage() {
 
   const startOAuthMutation = useMutation({
     mutationFn: locksApi.startOAuth,
-    onSuccess: ({ oauthUrl }) => {
+    onSuccess: ({ authMethod, oauthUrl }) => {
+      if (authMethod === 'password') {
+        setShowPasswordModal(true)
+        return
+      }
       const w = 620, h = 700
       const left = Math.round((window.screen.width - w) / 2)
       const top = Math.round((window.screen.height - h) / 2)
@@ -210,7 +219,7 @@ export function LocksPage() {
       if (!popup || popup.closed) {
         setPopupBlocked(true)
         setPopupOpened(false)
-        toast.error('Popup was blocked by your browser. Please allow popups for this site and try again, or click the button to open in this tab.')
+        toast.error('Popup was blocked by your browser. Please allow popups for this site and try again.')
       } else {
         popupRef.current = popup
         setPopupOpened(true)
@@ -219,6 +228,17 @@ export function LocksPage() {
       }
     },
     onError: () => toast.error('Failed to start TTLock authorization'),
+  })
+
+  const loginWithCredentialsMutation = useMutation({
+    mutationFn: () => locksApi.loginWithCredentials(pwUsername, pwPassword),
+    onSuccess: ({ state }) => {
+      setShowPasswordModal(false)
+      setPwUsername('')
+      setPwPassword('')
+      setSearchParams({ ttlock_state: state }, { replace: true })
+    },
+    onError: () => toast.error('TTLock login failed. Check your username and password.'),
   })
 
   const connectMutation = useMutation({
@@ -490,6 +510,56 @@ export function LocksPage() {
               className="btn-danger"
             >
               {deleteMutation.isPending ? 'Removing...' : 'Remove Lock'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* TTLock password login modal */}
+      <Modal
+        isOpen={showPasswordModal}
+        onClose={() => { setShowPasswordModal(false); setPwUsername(''); setPwPassword('') }}
+        title="Connect TTLock Account"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500">Enter your TTLock account credentials to connect your locks.</p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">TTLock Username</label>
+            <input
+              type="text"
+              value={pwUsername}
+              onChange={e => setPwUsername(e.target.value)}
+              className="input-base w-full"
+              placeholder="username"
+              autoComplete="username"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">TTLock Password</label>
+            <input
+              type="password"
+              value={pwPassword}
+              onChange={e => setPwPassword(e.target.value)}
+              className="input-base w-full"
+              placeholder="password"
+              autoComplete="current-password"
+              onKeyDown={e => { if (e.key === 'Enter' && pwUsername && pwPassword) loginWithCredentialsMutation.mutate() }}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-1">
+            <button
+              onClick={() => { setShowPasswordModal(false); setPwUsername(''); setPwPassword('') }}
+              className="btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => loginWithCredentialsMutation.mutate()}
+              disabled={!pwUsername || !pwPassword || loginWithCredentialsMutation.isPending}
+              className="btn-primary"
+            >
+              {loginWithCredentialsMutation.isPending ? 'Connecting…' : 'Connect'}
             </button>
           </div>
         </div>

@@ -207,6 +207,8 @@ export interface ApiResponse<T> {
 export interface AutomationStatus {
   enabled: boolean
   pendingReservationCount: number
+  hasLocks: boolean
+  hasIntegration: boolean
 }
 
 export interface BillingStatus {

@@ -24,4 +24,7 @@ public interface LockRepository extends JpaRepository<Lock, UUID> {
 
     @Query("SELECT l FROM Lock l JOIN Property p ON l.propertyId = p.id WHERE p.organizationId = :orgId AND l.deletedAt IS NULL")
     List<Lock> findByOrganizationId(UUID orgId);
+
+    @Query("SELECT COUNT(l) > 0 FROM Lock l JOIN Property p ON l.propertyId = p.id WHERE p.organizationId = :orgId AND l.status = 'CONNECTED' AND l.deletedAt IS NULL")
+    boolean existsConnectedByOrganizationId(UUID orgId);
 }

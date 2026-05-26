@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { Toaster } from 'react-hot-toast'
 import { authApi } from '@/api/auth'
 import { organizationsApi } from '@/api/organizations'
 import { useAuthStore } from '@/store/authStore'
+import { SEOHead } from '@/components/seo/SEOHead'
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -225,7 +226,10 @@ function SignUpForm() {
       </button>
 
       <p className="text-xs text-gray-400 text-center">
-        By creating an account you agree to our Terms of Service.
+        By creating an account you agree to our{' '}
+        <Link to="/legal/terms" className="underline hover:text-gray-600">Terms of Service</Link>
+        {' '}and{' '}
+        <Link to="/legal/privacy" className="underline hover:text-gray-600">Privacy Policy</Link>.
       </p>
     </form>
   )
@@ -237,6 +241,12 @@ export function LandingPage() {
   const [tab, setTab] = useState<'signin' | 'signup'>('signin')
 
   return (
+    <>
+    <SEOHead
+      title="Smart Lock Automation for Short-Term Rentals"
+      description="Automatically create and revoke TTLock guest codes from Airbnb and Booking.com reservations. Free 30-day trial. No credit card required."
+      canonical="/"
+    />
     <div className="min-h-screen bg-white flex flex-col lg:flex-row">
 
       {/* ── Left: Marketing ─────────────────────────────────── */}
@@ -335,5 +345,6 @@ export function LandingPage() {
         }}
       />
     </div>
+    </>
   )
 }

@@ -1,4 +1,4 @@
-import { Bell, Search, Plus } from 'lucide-react'
+import { Bell, Plus } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { notificationsApi } from '@/api/notifications'
 import { useNavigate } from 'react-router-dom'
@@ -25,16 +25,6 @@ export function TopBar({ title, action }: TopBarProps) {
       <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
 
       <div className="flex items-center gap-3">
-        {/* Search */}
-        <div className="relative hidden md:block">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 w-56"
-          />
-        </div>
-
         {/* Notifications */}
         <button
           onClick={() => navigate('/notifications')}

@@ -42,7 +42,18 @@ public class LockService {
         billingService.enforceCanAddLock(property.getOrganizationId());
 
         lockRepository.findFirstByTtlockLockId(request.getTtlockLockId()).ifPresent(existing -> {
-            UUID existingOwnerId = resolveOwner(existing.getPropertyId());
+            Property existingProperty = propertyRepository.findById(existing.getPropertyId()).orElse(null);
+            UUID existingOrgId = existingProperty != null ? existingProperty.getOrganizationId() : null;
+
+            if (property.getOrganizationId().equals(existingOrgId)) {
+                throw new AppException(
+                        "This lock is already connected to your account. You can manage it from the Locks page.",
+                        HttpStatus.CONFLICT, "LOCK_ALREADY_REGISTERED");
+            }
+
+            UUID existingOwnerId = existingOrgId != null
+                    ? organizationRepository.findById(existingOrgId).map(Organization::getOwnerId).orElse(null)
+                    : null;
             duplicateLockAttemptRepository.save(DuplicateLockAttempt.builder()
                     .attemptedUserId(userId)
                     .existingOwnerUserId(existingOwnerId != null ? existingOwnerId : userId)
@@ -142,14 +153,6 @@ public class LockService {
         }
 
         return toResponse(lockRepository.save(lock));
-    }
-
-    private UUID resolveOwner(UUID propertyId) {
-        if (propertyId == null) return null;
-        return propertyRepository.findById(propertyId)
-                .flatMap(p -> organizationRepository.findById(p.getOrganizationId()))
-                .map(Organization::getOwnerId)
-                .orElse(null);
     }
 
     private LockResponse toResponse(Lock lock) {

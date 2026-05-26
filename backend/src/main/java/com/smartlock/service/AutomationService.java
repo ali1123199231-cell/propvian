@@ -8,6 +8,8 @@ import com.smartlock.event.ReservationCreatedEvent;
 import com.smartlock.exception.AppException;
 import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.repository.AccessCodeRepository;
+import com.smartlock.repository.CalendarIntegrationRepository;
+import com.smartlock.repository.LockRepository;
 import org.springframework.http.HttpStatus;
 import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.PropertyRepository;
@@ -31,6 +33,8 @@ public class AutomationService {
     private final PropertyRepository propertyRepository;
     private final ReservationRepository reservationRepository;
     private final AccessCodeRepository accessCodeRepository;
+    private final LockRepository lockRepository;
+    private final CalendarIntegrationRepository calendarIntegrationRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final BillingService billingService;
 
@@ -38,9 +42,13 @@ public class AutomationService {
     public AutomationStatusResponse getStatus(UUID orgId) {
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
+        boolean hasLocks = lockRepository.existsConnectedByOrganizationId(orgId);
+        boolean hasIntegration = calendarIntegrationRepository.existsByOrganizationId(orgId);
         return AutomationStatusResponse.builder()
                 .enabled(org.isAutomationEnabled())
                 .pendingReservationCount(countPendingReservations(orgId))
+                .hasLocks(hasLocks)
+                .hasIntegration(hasIntegration)
                 .build();
     }
 
@@ -53,6 +61,18 @@ public class AutomationService {
             throw new AppException(
                     "Active subscription required to enable automation.",
                     HttpStatus.PAYMENT_REQUIRED, "SUBSCRIPTION_INACTIVE");
+        }
+
+        if (!lockRepository.existsConnectedByOrganizationId(orgId)) {
+            throw new AppException(
+                    "At least one connected lock is required before enabling automation.",
+                    HttpStatus.BAD_REQUEST, "NO_LOCKS");
+        }
+
+        if (!calendarIntegrationRepository.existsByOrganizationId(orgId)) {
+            throw new AppException(
+                    "At least one calendar integration is required before enabling automation.",
+                    HttpStatus.BAD_REQUEST, "NO_INTEGRATION");
         }
 
         org.setAutomationEnabled(true);
@@ -69,9 +89,13 @@ public class AutomationService {
             }
         }
 
+        boolean hasLocks = true;
+        boolean hasIntegration = true;
         return AutomationStatusResponse.builder()
                 .enabled(true)
                 .pendingReservationCount(pending.size())
+                .hasLocks(hasLocks)
+                .hasIntegration(hasIntegration)
                 .build();
     }
 
@@ -87,6 +111,8 @@ public class AutomationService {
         return AutomationStatusResponse.builder()
                 .enabled(false)
                 .pendingReservationCount(0)
+                .hasLocks(lockRepository.existsConnectedByOrganizationId(orgId))
+                .hasIntegration(calendarIntegrationRepository.existsByOrganizationId(orgId))
                 .build();
     }
 

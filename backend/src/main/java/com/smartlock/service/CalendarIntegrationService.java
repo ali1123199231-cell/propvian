@@ -42,7 +42,9 @@ public class CalendarIntegrationService {
                 .enabled(true)
                 .build();
 
-        return toResponse(calendarIntegrationRepository.save(integration));
+        CalendarIntegration saved = calendarIntegrationRepository.save(integration);
+        triggerSync(saved.getId(), orgId);
+        return toResponse(saved);
     }
 
     @Transactional(readOnly = true)

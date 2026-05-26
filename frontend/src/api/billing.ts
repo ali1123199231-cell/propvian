@@ -26,4 +26,8 @@ export const billingApi = {
     const res = await apiClient.put(`/organizations/${orgId}/billing/quota`, { quantity })
     return res.data.data
   },
+
+  trackEvent: async (orgId: string, eventType: string, metadata?: Record<string, unknown>): Promise<void> => {
+    await apiClient.post(`/organizations/${orgId}/events/track`, { eventType, metadata }).catch(() => {})
+  },
 }

@@ -1,11 +1,72 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/lock-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Propvian - Automated Guest Access Management for Short-Term Rentals" />
-    <title>Propvian</title>
+
+    <!-- Base SEO — overridden per-page by react-helmet-async -->
+    <title>Propvian — Smart Lock Automation for Short-Term Rentals</title>
+    <meta name="description" content="Automatically create and revoke TTLock guest codes from Airbnb and Booking.com reservations. Smart lock automation for short-term rental hosts. Free 1-month trial." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://propvian.com/" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Propvian — Smart Lock Automation for Short-Term Rentals" />
+    <meta property="og:description" content="Automatically create and revoke TTLock guest codes from Airbnb and Booking.com reservations. Save hours of manual work. Free 1-month trial." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://propvian.com/" />
+    <meta property="og:image" content="https://propvian.com/og-image.png" />
+    <meta property="og:site_name" content="Propvian" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Propvian — Smart Lock Automation for Short-Term Rentals" />
+    <meta name="twitter:description" content="Automatically generate TTLock guest codes from Airbnb and Booking.com reservations. Free 1-month trial." />
+    <meta name="twitter:image" content="https://propvian.com/og-image.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/lock-icon.svg" />
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+    <!-- Organization JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Propvian",
+      "url": "https://propvian.com",
+      "description": "Smart lock automation software for short-term rental hosts. Automatically generates and revokes TTLock door codes from Airbnb and Booking.com reservations.",
+      "foundingDate": "2025",
+      "serviceType": "Software as a Service",
+      "areaServed": "Worldwide",
+      "offers": {
+        "@type": "Offer",
+        "price": "2.00",
+        "priceCurrency": "USD",
+        "description": "$2 per lock per month after 30-day free trial"
+      }
+    }
+    </script>
+
+    <!-- SoftwareApplication JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Propvian",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "description": "Smart lock automation for short-term rental hosts. Automatically generates and revokes TTLock access codes based on Airbnb and Booking.com reservations.",
+      "url": "https://propvian.com",
+      "offers": {
+        "@type": "Offer",
+        "price": "2.00",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -20,6 +20,10 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
 
+ttlock:
+  base-url: https://api.sciener.com
+  oauth-base-url: https://api.sciener.com
+
 app:
   cors:
     allowed-origins: http://localhost:3000,http://localhost:5173,http://localhost:4173

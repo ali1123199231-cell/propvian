@@ -17,4 +17,7 @@ public interface CalendarIntegrationRepository extends JpaRepository<CalendarInt
 
     @Query("SELECT ci FROM CalendarIntegration ci WHERE ci.enabled = true AND ci.deletedAt IS NULL")
     List<CalendarIntegration> findAllEnabled();
+
+    @Query("SELECT COUNT(ci) > 0 FROM CalendarIntegration ci JOIN Property p ON ci.propertyId = p.id WHERE p.organizationId = :orgId AND ci.deletedAt IS NULL")
+    boolean existsByOrganizationId(UUID orgId);
 }

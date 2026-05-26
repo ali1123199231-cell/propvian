@@ -1,9 +1,12 @@
 package com.smartlock.service;
 
 import com.smartlock.domain.Subscription;
+import com.smartlock.domain.SubscriptionPlan;
 import com.smartlock.domain.enums.SubscriptionStatus;
+import com.smartlock.domain.enums.SubscriptionTier;
 import com.smartlock.exception.AppException;
 import com.smartlock.repository.LockRepository;
+import com.smartlock.repository.SubscriptionPlanRepository;
 import com.smartlock.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +23,31 @@ import java.util.UUID;
 public class BillingService {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final LockRepository lockRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Subscription getSubscription(UUID orgId) {
         return subscriptionRepository.findByOrganizationId(orgId)
-                .orElseThrow(() -> new AppException("No subscription found for org", HttpStatus.NOT_FOUND, "SUBSCRIPTION_NOT_FOUND"));
+                .orElseGet(() -> createDefaultTrialSubscription(orgId));
+    }
+
+    private Subscription createDefaultTrialSubscription(UUID orgId) {
+        SubscriptionPlan freePlan = subscriptionPlanRepository.findByTier(SubscriptionTier.FREE)
+                .orElseThrow(() -> new AppException("No FREE plan found", HttpStatus.INTERNAL_SERVER_ERROR, "PLAN_NOT_FOUND"));
+        Instant now = Instant.now();
+        Subscription sub = Subscription.builder()
+                .organizationId(orgId)
+                .planId(freePlan.getId())
+                .status(SubscriptionStatus.TRIALING)
+                .currentPeriodStart(now)
+                .currentPeriodEnd(now.plus(30, java.time.temporal.ChronoUnit.DAYS))
+                .trialEnd(now.plus(30, java.time.temporal.ChronoUnit.DAYS))
+                .lockQuota(1)
+                .cancelAtPeriodEnd(false)
+                .build();
+        log.info("Auto-creating trial subscription for org {}", orgId);
+        return subscriptionRepository.save(sub);
     }
 
     public boolean isTrialActive(Subscription sub) {

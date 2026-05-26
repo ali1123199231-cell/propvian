@@ -2,7 +2,9 @@ package com.smartlock.service;
 
 import com.smartlock.domain.Subscription;
 import com.smartlock.domain.enums.SubscriptionStatus;
+import com.smartlock.exception.AppException;
 import com.smartlock.repository.SubscriptionRepository;
+import org.springframework.http.HttpStatus;
 import com.stripe.Stripe;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
@@ -51,6 +53,9 @@ public class StripeService {
 
     public String createCheckoutSession(UUID orgId, String orgName, String ownerEmail,
                                         int quantity, String successUrl, String cancelUrl) throws StripeException {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new AppException("Stripe payments are not configured on this server.", HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
+        }
         Subscription sub = billingService.getSubscription(orgId);
 
         String customerId = sub.getStripeCustomerId();
@@ -84,6 +89,9 @@ public class StripeService {
     }
 
     public String createCustomerPortalSession(UUID orgId, String returnUrl) throws StripeException {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new AppException("Stripe payments are not configured on this server.", HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
+        }
         Subscription sub = billingService.getSubscription(orgId);
         if (sub.getStripeCustomerId() == null) {
             throw new IllegalStateException("No Stripe customer found for this organization.");

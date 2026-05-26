@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Zap, ZapOff, Loader2, AlertCircle } from 'lucide-react'
+import { Zap, ZapOff, Loader2, AlertCircle, Link2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { automationApi } from '@/api/automation'
 import { useAuthStore } from '@/store/authStore'
@@ -8,6 +9,7 @@ import { useAuthStore } from '@/store/authStore'
 export function AutomationStatus() {
   const { activeOrg } = useAuthStore()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const orgId = activeOrg?.id
   const [showEnableModal, setShowEnableModal] = useState(false)
   const [showDisableModal, setShowDisableModal] = useState(false)
@@ -45,9 +47,32 @@ export function AutomationStatus() {
   if (isLoading || !status) return null
 
   const isEnabled = status.enabled
+  const prereqsMet = status.hasLocks && status.hasIntegration
 
   return (
     <>
+      {/* Prerequisite warning — only shown when disabled and prereqs not met */}
+      {!isEnabled && !prereqsMet && (
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50 text-sm text-amber-800">
+          <Link2 size={15} className="flex-shrink-0 mt-0.5 text-amber-500" />
+          <div className="space-y-0.5">
+            <p className="font-medium">Required before enabling automation:</p>
+            {!status.hasLocks && (
+              <p>
+                • No connected lock found.{' '}
+                <button onClick={() => navigate('/locks')} className="underline hover:text-amber-900">Add a lock</button>
+              </p>
+            )}
+            {!status.hasIntegration && (
+              <p>
+                • No calendar integration configured.{' '}
+                <button onClick={() => navigate('/integrations')} className="underline hover:text-amber-900">Add an integration</button>
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Status bar */}
       <div className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
         isEnabled
@@ -70,11 +95,14 @@ export function AutomationStatus() {
         </div>
 
         <button
-          onClick={() => isEnabled ? setShowDisableModal(true) : setShowEnableModal(true)}
+          onClick={() => isEnabled ? setShowDisableModal(true) : (prereqsMet ? setShowEnableModal(true) : null)}
+          disabled={!isEnabled && !prereqsMet}
           className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
             isEnabled
               ? 'text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-              : 'bg-red-600 text-white hover:bg-red-700 shadow-sm'
+              : prereqsMet
+              ? 'bg-red-600 text-white hover:bg-red-700 shadow-sm'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
           {isEnabled ? 'Disable Automation' : 'Enable Automation'}

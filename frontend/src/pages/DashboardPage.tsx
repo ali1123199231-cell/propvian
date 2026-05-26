@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Building2, Lock, Calendar, CheckSquare, BarChart3, TrendingUp, Zap, Clock } from 'lucide-react'
+import { Building2, Lock, Calendar, BarChart3, TrendingUp, Zap, Clock } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { analyticsApi } from '@/api/analytics'
 import { reservationsApi } from '@/api/reservations'
@@ -49,7 +49,7 @@ export function DashboardPage() {
         {statsLoading ? (
           <StatsSkeleton />
         ) : stats ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <StatCard
               title="Total Properties"
               value={stats.totalProperties}
@@ -70,13 +70,6 @@ export function DashboardPage() {
               subtitle={`${stats.reservationsThisMonth} this month`}
               icon={Calendar}
               iconColor="text-primary-600"
-            />
-            <StatCard
-              title="Pending Tasks"
-              value={stats.pendingCleanerTasks}
-              subtitle="Cleaner assignments"
-              icon={CheckSquare}
-              iconColor="text-amber-600"
             />
           </div>
         ) : null}
@@ -106,7 +99,7 @@ export function DashboardPage() {
             <h3 className="font-semibold text-gray-800 mb-4">Quick Overview</h3>
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: 'Access Codes Active', value: stats?.activeReservations ?? 0, icon: Zap, color: 'text-emerald-600' },
+                { label: 'Active Reservations', value: stats?.activeReservations ?? 0, icon: Zap, color: 'text-emerald-600' },
                 { label: 'Unread Notifications', value: stats?.unreadNotifications ?? 0, icon: Clock, color: 'text-amber-600' },
                 { label: 'This Month', value: stats?.reservationsThisMonth ?? 0, icon: TrendingUp, color: 'text-blue-600' },
               ].map(({ label, value, icon: Icon, color }) => (

@@ -150,6 +150,7 @@ function SubscribeCard({ orgId, billing }: { orgId: string; billing: BillingStat
 
   const handleStripe = async () => {
     setLoading('stripe')
+    billingApi.trackEvent(orgId, 'BILLING_STRIPE_CLICK', { quantity: qty, amount: qty * 2 })
     try {
       const url = await billingApi.createStripeCheckout(orgId, qty)
       window.location.href = url
@@ -160,6 +161,7 @@ function SubscribeCard({ orgId, billing }: { orgId: string; billing: BillingStat
 
   const handlePaypal = async () => {
     setLoading('paypal')
+    billingApi.trackEvent(orgId, 'BILLING_PAYPAL_CLICK', { quantity: qty, amount: qty * 2 })
     try {
       const url = await billingApi.createPaypalCheckout(orgId, qty)
       window.location.href = url

@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Marketing pages
+Allow: /blog
+Allow: /blog/
+Allow: /pricing
+Allow: /integrations/
+Allow: /features/
+Allow: /legal/
+
+# Disallow authenticated app routes
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /properties
+Disallow: /reservations
+Disallow: /locks
+Disallow: /notifications
+Disallow: /settings
+Disallow: /billing
+Disallow: /onboarding
+
+Sitemap: https://propvian.com/sitemap.xml

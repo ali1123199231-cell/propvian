@@ -470,6 +470,8 @@ function PropertySetupStep({
   pending: PendingLock | null
   onDone: (propertyId: string) => void
 }) {
+  const [createdPropertyId, setCreatedPropertyId] = useState<string | null>(null)
+
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<PropertyData>({
     resolver: zodResolver(propertySchema),
     defaultValues: { name: pending?.lockName || '' },
@@ -477,23 +479,28 @@ function PropertySetupStep({
 
   const onSubmit = async (data: PropertyData) => {
     try {
-      const property = await propertiesApi.create(orgId, { name: data.name, country: data.country })
+      // Avoid duplicate property creation if user clicks twice
+      let propId = createdPropertyId
+      if (!propId) {
+        const property = await propertiesApi.create(orgId, { name: data.name, country: data.country })
+        propId = property.id
+        setCreatedPropertyId(propId)
+      }
 
-      // Connect the lock to the new property
+      // Connect the lock to the new property — failure is non-blocking
       if (pending) {
         try {
-          await locksApi.connect(property.id, {
+          await locksApi.connect(propId, {
             oauthState: pending.oauthState,
             ttlockLockId: pending.lockId,
             name: pending.lockName,
           })
         } catch (err: any) {
-          toast.error(err.response?.data?.message || 'Lock registration failed')
-          return
+          toast.error(err.response?.data?.message || 'Lock will need to be reconnected from the Locks page.')
         }
       }
 
-      onDone(property.id)
+      onDone(propId)
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Could not create property')
     }
