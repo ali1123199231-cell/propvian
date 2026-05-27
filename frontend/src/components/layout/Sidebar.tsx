@@ -21,7 +21,12 @@ const bottomItems = [
   { icon: Settings, label: 'Settings', to: '/settings' },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, activeOrg, logout } = useAuthStore()
   const navigate = useNavigate()
 
@@ -32,7 +37,12 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex flex-col w-64 h-screen bg-white border-r border-gray-200 fixed left-0 top-0 z-30">
+    <aside
+      className={clsx(
+        'flex flex-col w-64 h-screen bg-white border-r border-gray-200 fixed left-0 top-0 z-30 transition-transform duration-300 ease-in-out',
+        isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      )}
+    >
       {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
         <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
@@ -61,6 +71,7 @@ export function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onClose}
             className={({ isActive }) =>
               clsx('sidebar-item', isActive && 'active')
             }
@@ -77,6 +88,7 @@ export function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={onClose}
             className={({ isActive }) =>
               clsx('sidebar-item', isActive && 'active')
             }

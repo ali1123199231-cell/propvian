@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { Outlet, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
+import { Menu } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { Sidebar } from './Sidebar'
 
 export function AppLayout() {
   const { isAuthenticated, user } = useAuthStore()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />
@@ -16,10 +19,29 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar />
-      <main className="flex-1 ml-64 overflow-y-auto">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <main className="flex-1 md:ml-64 overflow-y-auto">
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-10">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+            aria-label="Open menu"
+          >
+            <Menu size={22} />
+          </button>
+          <span className="font-semibold text-gray-900">Propvian</span>
+        </div>
         <Outlet />
       </main>
+
       <Toaster
         position="top-right"
         toastOptions={{
