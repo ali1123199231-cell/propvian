@@ -36,6 +36,7 @@ export function RegisterPage() {
       const org = await organizationsApi.create(data.orgName)
       setActiveOrg(org)
 
+      window.gtag?.('event', 'conversion', { send_to: 'AW-18015500784/SVoYCIqh57McEPDzuo5D' })
       navigate('/dashboard')
       toast.success('Account created! Welcome to Propvian.')
     } catch (error: any) {
