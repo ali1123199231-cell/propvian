@@ -23,9 +23,9 @@ const faqs = [
       "You can update the check-in or check-out time for any reservation in the Propvian dashboard. When you save the change, the associated door code is automatically updated to match the new validity window.",
   },
   {
-    question: 'Can codes be shared with cleaners or co-hosts?',
+    question: 'Can codes be shared with co-hosts?',
     answer:
-      "Yes. The code is visible in your Propvian dashboard for any reservation. You can share it with your cleaning crew or co-host so they can verify access if needed. You can also add team members to your Propvian account.",
+      "Yes. The code is visible in your Propvian dashboard for any reservation. You can share it with your co-host so they can verify access if needed. You can also add team members to your Propvian account.",
   },
   {
     question: 'What happens to the code after checkout?',

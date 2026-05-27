@@ -26,8 +26,8 @@ export function AuthLayout() {
             Automate guest access<br />for your properties
           </h1>
           <p className="text-primary-100 text-lg leading-relaxed">
-            Sync your Airbnb calendar, automatically generate PINs, send them to guests,
-            and manage cleaners — all in one place.
+            Sync your Airbnb calendar, automatically generate PINs, and send them to guests
+            — all in one place.
           </p>
 
           <div className="mt-10 grid grid-cols-2 gap-4">

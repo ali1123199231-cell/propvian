@@ -187,7 +187,6 @@ function SubscribeCard({ orgId, billing }: { orgId: string; billing: BillingStat
           'Unlimited calendar syncs',
           'Automated TTLock access codes',
           'Host arrival notifications',
-          'Cleaner task management',
         ].map((f) => (
           <div key={f} className="flex items-center gap-2 text-sm text-gray-600">
             <Check size={14} className="text-emerald-500 flex-shrink-0" />
