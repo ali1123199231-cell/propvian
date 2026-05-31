@@ -47,6 +47,7 @@ export interface Property {
   id: string
   organizationId: string
   name: string
+  propertyType?: string
   address?: string
   city?: string
   state?: string
@@ -64,6 +65,16 @@ export interface Property {
   bathrooms?: number
   lockCount: number
   activeReservationCount: number
+  // Direct booking pricing
+  baseNightlyRate?: number
+  cleaningFee?: number
+  securityDeposit?: number
+  minStayNights?: number
+  maxStayNights?: number
+  checkInTime?: string
+  checkOutTime?: string
+  instantBooking?: boolean
+  slug?: string
   createdAt: string
 }
 
@@ -223,6 +234,142 @@ export interface BillingStatus {
   cancelAtPeriodEnd: boolean
   paymentProvider?: 'STRIPE' | 'PAYPAL'
   failedPaymentAt?: string
+}
+
+// ── Business model & system config ───────────────────────────────────────────
+
+export type BusinessModel = 'ttlock' | 'direct_booking'
+
+export interface SystemConfig {
+  businessModel: BusinessModel
+  verificationSteps: {
+    identityEnabled: boolean
+    propertyEnabled: boolean
+    otaEnabled: boolean
+    calendarEnabled: boolean
+    paymentEnabled: boolean
+    domainEnabled: boolean
+    adminApprovalEnabled: boolean
+  }
+}
+
+// ── Verification ──────────────────────────────────────────────────────────────
+
+export type VerificationStatus = 'NOT_STARTED' | 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface VerificationStepStatus {
+  key: string
+  label: string
+  status: VerificationStatus
+  enabled: boolean
+  submittedAt?: string
+  reviewedAt?: string
+  rejectionReason?: string
+  data?: string[]
+}
+
+export interface VerificationProgress {
+  organizationId: string
+  bookingsEnabled: boolean
+  completedSteps: number
+  totalRequiredSteps: number
+  progressPercent: number
+  identityStep: VerificationStepStatus
+  propertyStep: VerificationStepStatus
+  otaStep: VerificationStepStatus
+  calendarStep: VerificationStepStatus
+  paymentStep: VerificationStepStatus
+  domainStep: VerificationStepStatus
+  adminStep: VerificationStepStatus
+  identityStepEnabled: boolean
+  propertyStepEnabled: boolean
+  otaStepEnabled: boolean
+  calendarStepEnabled: boolean
+  paymentStepEnabled: boolean
+  domainStepEnabled: boolean
+  adminStepEnabled: boolean
+  blockingReason?: string
+}
+
+// ── Direct Booking ────────────────────────────────────────────────────────────
+
+export type DirectBookingStatus =
+  | 'PENDING_PAYMENT'
+  | 'CONFIRMED'
+  | 'CANCELLED'
+  | 'CHECKED_IN'
+  | 'CHECKED_OUT'
+
+export interface DirectBooking {
+  id: string
+  propertyId: string
+  organizationId: string
+  guestName: string
+  guestEmail: string
+  guestPhone?: string
+  numberOfGuests: number
+  checkInDate: string
+  checkOutDate: string
+  totalAmount?: number
+  currency: string
+  paymentProvider?: string
+  paymentStatus: string
+  status: DirectBookingStatus
+  cancelledAt?: string
+  cancellationReason?: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+// ── Property extras for direct booking ────────────────────────────────────────
+
+export interface PropertyPhoto {
+  id: string
+  propertyId: string
+  url: string
+  caption?: string
+  sortOrder: number
+  primary: boolean
+  createdAt: string
+}
+
+export interface PropertyAmenity {
+  id: string
+  propertyId: string
+  category: string
+  name: string
+  icon?: string
+}
+
+export interface PropertyDomain {
+  id: string
+  organizationId: string
+  domain: string
+  sslStatus: 'PENDING' | 'ACTIVE' | 'FAILED'
+  dnsValidated: boolean
+  dnsValidatedAt?: string
+  primary: boolean
+  createdAt: string
+}
+
+// ── Guest Review ──────────────────────────────────────────────────────────────
+
+export interface GuestReview {
+  id: string
+  propertyId: string
+  bookingId?: string
+  guestName?: string
+  rating: number
+  comment?: string
+  cleanlinessRating?: number
+  communicationRating?: number
+  locationRating?: number
+  accuracyRating?: number
+  hostReply?: string
+  hostRepliedAt?: string
+  publicReview: boolean
+  createdAt: string
 }
 
 export interface CheckinPageData {

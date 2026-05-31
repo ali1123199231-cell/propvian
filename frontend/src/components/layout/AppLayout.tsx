@@ -1,20 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Menu } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { useSystemStore } from '@/store/systemStore'
 import { Sidebar } from './Sidebar'
 
 export function AppLayout() {
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated, user }   = useAuthStore()
+  const { fetchConfig, isDirectBooking } = useSystemStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Bootstrap system config once on mount (keeps sidebar in sync)
+  useEffect(() => {
+    fetchConfig()
+  }, [fetchConfig])
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />
   }
 
   if (user && user.onboardingCompleted === false) {
-    return <Navigate to="/onboarding" replace />
+    // Route to the correct onboarding for the active business model
+    const target = isDirectBooking() ? '/onboarding-direct' : '/onboarding'
+    return <Navigate to={target} replace />
   }
 
   return (
@@ -39,7 +48,9 @@ export function AppLayout() {
           </button>
           <span className="font-semibold text-gray-900">Propvian</span>
         </div>
-        <Outlet />
+        <div className="p-6">
+          <Outlet />
+        </div>
       </main>
 
       <Toaster
@@ -55,7 +66,7 @@ export function AppLayout() {
             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
           },
           success: { iconTheme: { primary: '#10b981', secondary: '#ffffff' } },
-          error: { iconTheme: { primary: '#ef4444', secondary: '#ffffff' } },
+          error:   { iconTheme: { primary: '#ef4444', secondary: '#ffffff' } },
         }}
       />
     </div>

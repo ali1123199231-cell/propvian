@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>You're Approved!</title></head>
+<body style="font-family:sans-serif;background:#f9fafb;margin:0;padding:24px;">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;border:1px solid #e5e7eb;">
+  <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+    <div style="font-size:40px;margin-bottom:8px;">🎉</div>
+    <h2 style="margin:0;font-size:22px;">Your Propvian account is live!</h2>
+  </div>
+  <p style="color:#374151;font-size:15px;" th:text="${message}">Guests can now book your property directly.</p>
+  <a href="https://propvian.com/dashboard" style="display:inline-block;margin-top:16px;padding:12px 28px;background:#4f46e5;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;">Go to dashboard</a>
+  <p style="color:#9ca3af;font-size:12px;margin-top:24px;">Propvian · noreply@propvian.com</p>
+</div>
+</body></html>

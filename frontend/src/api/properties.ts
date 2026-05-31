@@ -27,4 +27,14 @@ export const propertiesApi = {
   delete: async (orgId: string, propertyId: string): Promise<void> => {
     await apiClient.delete(`/organizations/${orgId}/properties/${propertyId}`)
   },
+
+  addPhoto: async (orgId: string, propertyId: string, data: { url: string; caption?: string; sortOrder?: number; primary?: boolean }): Promise<any> => {
+    const response = await apiClient.post(`/organizations/${orgId}/properties/${propertyId}/photos`, data)
+    return response.data.data
+  },
+
+  getPhotos: async (orgId: string, propertyId: string): Promise<any[]> => {
+    const { data } = await apiClient.get(`/organizations/${orgId}/properties/${propertyId}/photos`)
+    return data.data ?? []
+  },
 }

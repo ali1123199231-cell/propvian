@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>New Verification Submission</title></head>
+<body style="font-family:sans-serif;background:#f9fafb;margin:0;padding:24px;">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;border:1px solid #e5e7eb;">
+  <h2 style="color:#111827;margin-top:0;">New verification submission</h2>
+  <p style="color:#6b7280;">A host has submitted <strong th:text="${docType}">documents</strong> for review.</p>
+  <p style="color:#6b7280;">Organization ID: <code th:text="${orgId}">org-id</code></p>
+  <a href="https://propvian.com/admin/verification" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#4f46e5;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Review in admin</a>
+</div>
+</body></html>

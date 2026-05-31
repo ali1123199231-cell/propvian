@@ -144,6 +144,7 @@ stripe:
   secret-key: ${STRIPE_SECRET_KEY:}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   price-id: ${STRIPE_PRICE_ID:}
+  connect-client-id: ${STRIPE_CONNECT_CLIENT_ID:}
 
 paypal:
   client-id: ${PAYPAL_CLIENT_ID:}

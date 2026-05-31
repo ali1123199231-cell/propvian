@@ -40,6 +40,9 @@ public class SecurityConfig {
                     "/api/v1/auth/refresh",
                     "/api/v1/auth/logout",
                     "/api/v1/ttlock/oauth/callback",
+                    "/api/v1/stripe/connect-callback",
+                    "/api/v1/paypal/connect-callback",
+                    "/api/v1/files/view",
                     "/api/public/**",
                     "/actuator/health",
                     "/actuator/info",
@@ -48,6 +51,8 @@ public class SecurityConfig {
                     "/api-docs/**",
                     "/v3/api-docs/**"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/system/**").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/system/config").authenticated()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
             )

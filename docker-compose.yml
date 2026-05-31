@@ -4,6 +4,8 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: smartlock-postgres
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_DB: smartlock3
       POSTGRES_USER: ali

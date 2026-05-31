@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -71,4 +72,41 @@ public class Property extends SoftDeletableEntity {
 
     @Column(name = "access_instructions", columnDefinition = "TEXT")
     private String accessInstructions;
+
+    @Column(name = "property_type", length = 100)
+    private String propertyType;
+
+    @Column(name = "base_nightly_rate", precision = 10, scale = 2)
+    private BigDecimal baseNightlyRate;
+
+    @Column(name = "cleaning_fee", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal cleaningFee = BigDecimal.ZERO;
+
+    @Column(name = "security_deposit", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal securityDeposit = BigDecimal.ZERO;
+
+    @Column(name = "min_stay_nights")
+    @Builder.Default
+    private int minStayNights = 1;
+
+    @Column(name = "max_stay_nights")
+    @Builder.Default
+    private int maxStayNights = 365;
+
+    @Column(name = "check_in_time", length = 10)
+    @Builder.Default
+    private String checkInTime = "15:00";
+
+    @Column(name = "check_out_time", length = 10)
+    @Builder.Default
+    private String checkOutTime = "11:00";
+
+    @Column(name = "instant_booking", nullable = false)
+    @Builder.Default
+    private boolean instantBooking = true;
+
+    @Column(name = "slug", length = 255)
+    private String slug;
 }

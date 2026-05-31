@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CreditCard, Lock, Check, AlertTriangle, Clock, Minus, Plus, Zap } from 'lucide-react'
+import { CreditCard, Lock, Check, AlertTriangle, Clock, Minus, Plus, Zap, Building2, DollarSign, ArrowRight } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
+import { Link } from 'react-router-dom'
 import { billingApi } from '@/api/billing'
 import { useAuthStore } from '@/store/authStore'
+import { useSystemStore } from '@/store/systemStore'
+import { propertiesApi } from '@/api/properties'
 import { TopBar } from '@/components/layout/TopBar'
 import { BillingStatus } from '@/types'
 
@@ -304,10 +307,122 @@ function ManageBillingCard({ orgId, billing }: { orgId: string; billing: Billing
   )
 }
 
-export function BillingPage() {
-  const { activeOrg } = useAuthStore()
-  const orgId = activeOrg?.id
+// ── Direct Booking Billing ────────────────────────────────────────────────────
 
+function DirectBookingBilling({ orgId }: { orgId: string }) {
+  const { data: propsData } = useQuery({
+    queryKey: ['properties', orgId],
+    queryFn: () => propertiesApi.list(orgId, 0, 100),
+    enabled: !!orgId,
+  })
+  const activeCount = propsData?.content.filter(p => p.status === 'ACTIVE').length ?? 0
+  const monthlyTotal = activeCount * 10
+
+  return (
+    <div className="space-y-4">
+      {/* Plan summary */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center gap-4 mb-5">
+          <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center">
+            <CreditCard size={22} className="text-primary-600" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500">Current plan</p>
+            <p className="text-lg font-bold text-gray-900">Propvian Direct · $10 / property / month</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-gray-900">{activeCount}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Active properties</p>
+          </div>
+          <div className="text-center border-x border-gray-100">
+            <p className="text-2xl font-bold text-primary-600">${monthlyTotal}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Per month</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-gray-900">${monthlyTotal * 12}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Per year (est.)</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Billing model explanation */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
+        <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+          <DollarSign size={15} className="text-primary-500" /> How billing works
+        </h3>
+        <ul className="space-y-2">
+          {[
+            'Billed monthly based on the number of active properties',
+            'Add or remove properties anytime — billing adjusts automatically',
+            'No setup fees, no contracts, cancel anytime',
+            'Stripe & PayPal guest payments go directly to your account — Propvian never touches guest funds',
+          ].map((item, i) => (
+            <li key={i} className="flex items-start gap-2.5 text-sm text-gray-600">
+              <Check size={14} className="text-green-500 flex-shrink-0 mt-0.5" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Properties list */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+            <Building2 size={15} className="text-primary-500" /> Properties on this plan
+          </h3>
+          <Link to="/properties" className="text-xs text-primary-600 hover:underline flex items-center gap-1">
+            Manage <ArrowRight size={11} />
+          </Link>
+        </div>
+        {!propsData?.content.length ? (
+          <p className="text-sm text-gray-400 text-center py-4">No properties yet</p>
+        ) : (
+          <div className="space-y-2">
+            {propsData.content.map(p => (
+              <div key={p.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{p.name}</p>
+                  <p className="text-xs text-gray-400">{p.city}{p.country ? `, ${p.country}` : ''}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    p.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                  }`}>{p.status}</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    {p.status === 'ACTIVE' ? '$10/mo' : '—'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Manage subscription */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="font-semibold text-gray-900 mb-3">Manage subscription</h3>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button className="btn-primary py-2.5 px-5 text-sm flex items-center gap-2 justify-center">
+            <CreditCard size={14} /> Update payment method
+          </button>
+          <button className="btn-secondary py-2.5 px-5 text-sm text-gray-600 justify-center">
+            Download invoice
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Payment handled securely via Stripe. Contact support to cancel your subscription.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── TTLock Billing (extracted to avoid hooks violation) ───────────────────────
+
+function TTLockBillingPage({ orgId }: { orgId: string | undefined }) {
   const { data: billing, isLoading } = useQuery({
     queryKey: ['billing-status', orgId],
     queryFn: () => billingApi.getStatus(orgId!),
@@ -370,4 +485,26 @@ export function BillingPage() {
       </div>
     </div>
   )
+}
+
+// ── Router ────────────────────────────────────────────────────────────────────
+
+export function BillingPage() {
+  const { activeOrg } = useAuthStore()
+  const { isDirectBooking } = useSystemStore()
+  const orgId = activeOrg?.id
+
+  if (isDirectBooking()) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
+          <p className="text-gray-500 mt-1">Subscription and payment management</p>
+        </div>
+        <DirectBookingBilling orgId={orgId ?? ''} />
+      </div>
+    )
+  }
+
+  return <TTLockBillingPage orgId={orgId} />
 }

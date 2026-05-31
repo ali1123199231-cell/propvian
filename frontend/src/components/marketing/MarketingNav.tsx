@@ -1,23 +1,43 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Lock, Menu, X, ChevronDown } from 'lucide-react'
+import { Building2, Menu, X, ChevronDown } from 'lucide-react'
+import { systemConfigApi } from '@/api/systemConfig'
 
-const integrations = [
+const integrationsDB = [
+  { label: 'Airbnb Integration', href: '/integrations/airbnb' },
+  { label: 'Booking.com Integration', href: '/integrations/booking-com' },
+]
+
+const integrationsTTLock = [
   { label: 'Airbnb Integration', href: '/integrations/airbnb' },
   { label: 'Booking.com Integration', href: '/integrations/booking-com' },
   { label: 'TTLock Integration', href: '/integrations/ttlock' },
 ]
 
-const features = [
+const featuresDB = [
+  { label: 'Direct Booking Website', href: '/features/self-checkin' },
+  { label: 'Calendar Sync',          href: '/integrations/airbnb' },
+]
+
+const featuresTTLock = [
   { label: 'Guest Code Automation', href: '/features/guest-code-automation' },
-  { label: 'Self Check-In', href: '/features/self-checkin' },
+  { label: 'Self Check-In',         href: '/features/self-checkin' },
 ]
 
 export function MarketingNav() {
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileOpen, setMobileOpen]         = useState(false)
   const [integrationsOpen, setIntegrationsOpen] = useState(false)
-  const [featuresOpen, setFeaturesOpen] = useState(false)
+  const [featuresOpen, setFeaturesOpen]     = useState(false)
+  const [isDirect, setIsDirect]             = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    systemConfigApi.getBusinessModel().then(m => setIsDirect(m === 'direct_booking')).catch(() => {})
+  }, [])
+
+  const integrations = isDirect ? integrationsDB  : integrationsTTLock
+  const features     = isDirect ? featuresDB      : featuresTTLock
+  const ctaLabel     = isDirect ? 'Get Started'   : 'Start Free Trial'
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
@@ -26,7 +46,7 @@ export function MarketingNav() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <Lock size={16} className="text-white" />
+              <Building2 size={16} className="text-white" />
             </div>
             <span className="text-lg font-bold text-gray-900 tracking-tight">Propvian</span>
           </Link>
@@ -87,7 +107,7 @@ export function MarketingNav() {
             </button>
             <button onClick={() => navigate('/', { state: { tab: 'signup' } })}
               className="btn-primary py-2 px-5 text-sm">
-              Start Free Trial
+              {ctaLabel}
             </button>
           </div>
 

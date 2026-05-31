@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Verification Needs Attention</title></head>
+<body style="font-family:sans-serif;background:#f9fafb;margin:0;padding:24px;">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;border:1px solid #e5e7eb;">
+  <div style="background:#dc2626;color:#fff;border-radius:8px;padding:12px 16px;margin-bottom:24px;">
+    <strong th:text="${step}">Step</strong> — Action Required
+  </div>
+  <p style="color:#374151;font-size:15px;">We need you to re-submit your <strong th:text="${step}">step</strong>.</p>
+  <p style="color:#6b7280;font-size:14px;"><strong>Reason:</strong> <span th:text="${reason}">Please review and resubmit.</span></p>
+  <a href="https://propvian.com/verification" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#4f46e5;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">Fix my verification</a>
+  <p style="color:#9ca3af;font-size:12px;margin-top:24px;">Propvian · noreply@propvian.com</p>
+</div>
+</body></html>

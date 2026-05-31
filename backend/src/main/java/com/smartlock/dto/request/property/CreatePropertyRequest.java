@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -11,6 +12,9 @@ public class CreatePropertyRequest {
     @NotBlank
     @Size(min = 2, max = 200)
     private String name;
+
+    @Size(max = 100)
+    private String propertyType;
 
     @Size(max = 500)
     private String address;
@@ -31,7 +35,6 @@ public class CreatePropertyRequest {
     private String timezone;
 
     private String description;
-
     private String imageUrl;
 
     private Integer maxGuests;
@@ -39,4 +42,19 @@ public class CreatePropertyRequest {
     private Integer bathrooms;
 
     private UUID cleanerUserId;
+
+    // Direct booking pricing
+    private BigDecimal baseNightlyRate;
+    private BigDecimal cleaningFee;
+    private BigDecimal securityDeposit;
+    private Integer    minStayNights;
+    private Integer    maxStayNights;
+
+    @Size(max = 10)
+    private String checkInTime;
+
+    @Size(max = 10)
+    private String checkOutTime;
+
+    private Boolean instantBooking;
 }

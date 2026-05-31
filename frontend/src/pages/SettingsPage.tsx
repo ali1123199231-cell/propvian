@@ -48,11 +48,15 @@ function loadAccessSettings(): AccessSettingsData {
 export function SettingsPage() {
   const { user } = useAuthStore()
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'access'>('profile')
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? '')
 
-  const { register: rProfile, handleSubmit: hsProfile, formState: { errors: eProfile } } = useForm<ProfileFormData>({
+  const { register: rProfile, handleSubmit: hsProfile, watch: watchProfile, formState: { errors: eProfile } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: { firstName: user?.firstName ?? '', lastName: user?.lastName ?? '', avatarUrl: user?.avatarUrl ?? '' },
   })
+
+  const firstName = watchProfile('firstName') ?? user?.firstName ?? ''
+  const lastName  = watchProfile('lastName')  ?? user?.lastName  ?? ''
 
   const { register: rPwd, handleSubmit: hsPwd, reset: resetPwd, formState: { errors: ePwd } } = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -64,8 +68,9 @@ export function SettingsPage() {
   })
 
   const updateProfileMutation = useMutation({
-    mutationFn: (d: ProfileFormData) => apiClient.put('/users/me', d),
+    mutationFn: (d: ProfileFormData) => apiClient.put('/users/me', { ...d, avatarUrl }),
     onSuccess: () => toast.success('Profile updated'),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to update profile'),
   })
 
   const changePasswordMutation = useMutation({
@@ -77,6 +82,7 @@ export function SettingsPage() {
       toast.success('Password changed')
       resetPwd()
     },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? 'Failed to change password'),
   })
 
   const saveAccessSettings = (d: AccessSettingsData) => {
@@ -117,15 +123,6 @@ export function SettingsPage() {
           <div className="card p-6">
             <h3 className="font-semibold text-gray-900 mb-5">Profile Information</h3>
             <form onSubmit={hsProfile(d => updateProfileMutation.mutate(d))} className="space-y-4">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-primary-50 flex items-center justify-center text-2xl font-bold text-primary-600">
-                  {user?.firstName?.charAt(0) ?? user?.email?.charAt(0) ?? '?'}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-sm text-gray-500">{user?.email}</p>
-                </div>
-              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
@@ -143,8 +140,20 @@ export function SettingsPage() {
                 <input value={user?.email ?? ''} disabled className="input-base w-full opacity-60 cursor-not-allowed bg-gray-50" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Avatar URL</label>
-                <input {...rProfile('avatarUrl')} className="input-base w-full" placeholder="https://..." />
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Profile photo</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {avatarUrl
+                      ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      : <span className="text-primary-700 text-xl font-bold">{firstName?.[0]}{lastName?.[0]}</span>
+                    }
+                  </div>
+                  <div className="flex-1">
+                    <input type="url" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)}
+                      className="input-base text-sm w-full" placeholder="https://example.com/photo.jpg" />
+                    <p className="text-xs text-gray-400 mt-1">Paste a photo URL or upload to Imgur/Cloudinary first.</p>
+                  </div>
+                </div>
               </div>
               <div className="flex justify-end pt-2">
                 <button type="submit" disabled={updateProfileMutation.isPending} className="btn-primary">

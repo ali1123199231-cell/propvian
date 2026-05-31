@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ public class PropertyResponse {
     private UUID id;
     private UUID organizationId;
     private String name;
+    private String propertyType;
     private String address;
     private String city;
     private String state;
@@ -31,5 +33,17 @@ public class PropertyResponse {
     private Integer bathrooms;
     private long lockCount;
     private long activeReservationCount;
+
+    // Direct booking pricing
+    private BigDecimal baseNightlyRate;
+    private BigDecimal cleaningFee;
+    private BigDecimal securityDeposit;
+    private int minStayNights;
+    private int maxStayNights;
+    private String checkInTime;
+    private String checkOutTime;
+    private boolean instantBooking;
+    private String slug;
+
     private Instant createdAt;
 }

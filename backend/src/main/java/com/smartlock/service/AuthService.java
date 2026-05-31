@@ -78,11 +78,20 @@ public class AuthService {
             return buildAuthResponse(existingUser, orgId);
         }
 
+        String resolvedFirstName = request.getFirstName() != null ? request.getFirstName()
+                : (request.getName() != null ? request.getName().split(" ")[0] : null);
+        String resolvedLastName  = request.getLastName() != null ? request.getLastName()
+                : (request.getName() != null && request.getName().contains(" ")
+                   ? request.getName().substring(request.getName().indexOf(' ') + 1) : null);
+        String displayName = resolvedFirstName != null ? resolvedFirstName
+                + (resolvedLastName != null ? " " + resolvedLastName : "") : request.getName();
+
         User user = User.builder()
                 .email(email)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .firstName(request.getName())
+                .name(displayName)
+                .firstName(resolvedFirstName)
+                .lastName(resolvedLastName)
                 .role(Role.USER)
                 .emailVerified(false)
                 .onboardingStep("EMAIL_VERIFICATION")

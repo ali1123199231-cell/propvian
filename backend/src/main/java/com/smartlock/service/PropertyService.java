@@ -30,6 +30,7 @@ public class PropertyService {
         Property property = Property.builder()
                 .organizationId(orgId)
                 .name(request.getName())
+                .propertyType(request.getPropertyType())
                 .address(request.getAddress())
                 .city(request.getCity())
                 .state(request.getState())
@@ -42,6 +43,14 @@ public class PropertyService {
                 .bedrooms(request.getBedrooms())
                 .bathrooms(request.getBathrooms())
                 .cleanerUserId(request.getCleanerUserId())
+                .baseNightlyRate(request.getBaseNightlyRate())
+                .cleaningFee(request.getCleaningFee())
+                .securityDeposit(request.getSecurityDeposit())
+                .minStayNights(request.getMinStayNights() != null ? request.getMinStayNights() : 1)
+                .maxStayNights(request.getMaxStayNights() != null ? request.getMaxStayNights() : 365)
+                .checkInTime(request.getCheckInTime() != null ? request.getCheckInTime() : "15:00")
+                .checkOutTime(request.getCheckOutTime() != null ? request.getCheckOutTime() : "11:00")
+                .instantBooking(request.getInstantBooking() != null ? request.getInstantBooking() : true)
                 .status(PropertyStatus.ACTIVE)
                 .build();
 
@@ -85,6 +94,15 @@ public class PropertyService {
         property.setBedrooms(request.getBedrooms());
         property.setBathrooms(request.getBathrooms());
         property.setCleanerUserId(request.getCleanerUserId());
+        property.setPropertyType(request.getPropertyType());
+        if (request.getBaseNightlyRate() != null)  property.setBaseNightlyRate(request.getBaseNightlyRate());
+        if (request.getCleaningFee() != null)       property.setCleaningFee(request.getCleaningFee());
+        if (request.getSecurityDeposit() != null)   property.setSecurityDeposit(request.getSecurityDeposit());
+        if (request.getMinStayNights() != null)     property.setMinStayNights(request.getMinStayNights());
+        if (request.getMaxStayNights() != null)     property.setMaxStayNights(request.getMaxStayNights());
+        if (request.getCheckInTime() != null)       property.setCheckInTime(request.getCheckInTime());
+        if (request.getCheckOutTime() != null)      property.setCheckOutTime(request.getCheckOutTime());
+        if (request.getInstantBooking() != null)    property.setInstantBooking(request.getInstantBooking());
 
         return toResponse(propertyRepository.save(property));
     }
@@ -104,6 +122,7 @@ public class PropertyService {
                 .id(p.getId())
                 .organizationId(p.getOrganizationId())
                 .name(p.getName())
+                .propertyType(p.getPropertyType())
                 .address(p.getAddress())
                 .city(p.getCity())
                 .state(p.getState())
@@ -118,6 +137,15 @@ public class PropertyService {
                 .bedrooms(p.getBedrooms())
                 .bathrooms(p.getBathrooms())
                 .lockCount(lockCount)
+                .baseNightlyRate(p.getBaseNightlyRate())
+                .cleaningFee(p.getCleaningFee())
+                .securityDeposit(p.getSecurityDeposit())
+                .minStayNights(p.getMinStayNights())
+                .maxStayNights(p.getMaxStayNights())
+                .checkInTime(p.getCheckInTime())
+                .checkOutTime(p.getCheckOutTime())
+                .instantBooking(p.isInstantBooking())
+                .slug(p.getSlug())
                 .createdAt(p.getCreatedAt())
                 .build();
     }

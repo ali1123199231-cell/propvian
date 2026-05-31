@@ -1,25 +1,87 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Calendar, Lock, Bell,
-  Settings, LogOut, CreditCard, Plug, Lock as LockIcon
+  Settings, LogOut, CreditCard, Plug, Lock as LockIcon,
+  ShieldCheck, Globe, Star, MessageCircle, BarChart2,
+  Home, Wallet, CheckSquare, SlidersHorizontal,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { useSystemStore } from '@/store/systemStore'
 import { authApi } from '@/api/auth'
 import clsx from 'clsx'
 
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard' },
-  { icon: Building2, label: 'Properties', to: '/properties' },
-  { icon: Calendar, label: 'Reservations', to: '/reservations' },
-  { icon: Lock, label: 'Locks', to: '/locks' },
-  { icon: Plug, label: 'Integrations', to: '/integrations' },
-  { icon: Bell, label: 'Notifications', to: '/notifications' },
+// ── TTLock navigation ─────────────────────────────────────────────────────────
+
+const ttlockNavItems = [
+  { icon: LayoutDashboard, label: 'Dashboard',    to: '/dashboard' },
+  { icon: Building2,       label: 'Properties',   to: '/properties' },
+  { icon: Calendar,        label: 'Reservations', to: '/reservations' },
+  { icon: Lock,            label: 'Locks',        to: '/locks' },
+  { icon: Plug,            label: 'Integrations', to: '/integrations' },
+  { icon: Bell,            label: 'Notifications',to: '/notifications' },
 ]
 
-const bottomItems = [
-  { icon: CreditCard, label: 'Billing', to: '/billing' },
-  { icon: Settings, label: 'Settings', to: '/settings' },
+const ttlockBottomItems = [
+  { icon: CreditCard,          label: 'Billing',       to: '/billing' },
+  { icon: Settings,            label: 'Settings',      to: '/settings' },
 ]
+
+const ttlockAdminItems = [
+  { icon: SlidersHorizontal,   label: 'System Config', to: '/system-config' },
+]
+
+// ── Direct Booking navigation ─────────────────────────────────────────────────
+
+const dbNavSections = [
+  {
+    heading: null,
+    items: [
+      { icon: LayoutDashboard, label: 'Dashboard',    to: '/dashboard' },
+    ],
+  },
+  {
+    heading: 'Manage',
+    items: [
+      { icon: Building2, label: 'Properties',   to: '/properties' },
+      { icon: Calendar,  label: 'Calendar',     to: '/calendar' },
+      { icon: CheckSquare, label: 'Reservations', to: '/reservations' },
+    ],
+  },
+  {
+    heading: 'Revenue',
+    items: [
+      { icon: Wallet,   label: 'Payments',  to: '/payments' },
+      { icon: Star,     label: 'Reviews',   to: '/reviews' },
+      { icon: BarChart2,label: 'Analytics', to: '/analytics' },
+    ],
+  },
+  {
+    heading: 'Website',
+    items: [
+      { icon: Home,         label: 'Website Builder', to: '/website' },
+      { icon: Globe,        label: 'Domains',         to: '/domains' },
+      { icon: MessageCircle,label: 'Messaging',        to: '/messaging' },
+    ],
+  },
+  {
+    heading: 'Account',
+    items: [
+      { icon: ShieldCheck, label: 'Verification', to: '/verification' },
+      { icon: Bell,        label: 'Notifications',to: '/notifications' },
+    ],
+  },
+]
+
+const dbBottomItems = [
+  { icon: CreditCard,          label: 'Billing',       to: '/billing' },
+  { icon: Settings,            label: 'Settings',      to: '/settings' },
+]
+
+const dbAdminItems = [
+  { icon: SlidersHorizontal,   label: 'System Config', to: '/system-config' },
+]
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 interface SidebarProps {
   isOpen: boolean
@@ -28,13 +90,26 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, activeOrg, logout } = useAuthStore()
-  const navigate = useNavigate()
+  const { isDirectBooking }         = useSystemStore()
+  const navigate                    = useNavigate()
+  const isDirect                    = isDirectBooking()
 
   const handleLogout = async () => {
     await authApi.logout()
     logout()
     navigate('/login')
   }
+
+  const NavItem = ({ to, icon: Icon, label }: { to: string; icon: typeof Lock; label: string }) => (
+    <NavLink
+      to={to}
+      onClick={onClose}
+      className={({ isActive }) => clsx('sidebar-item', isActive && 'active')}
+    >
+      <Icon size={16} className="flex-shrink-0" />
+      <span>{label}</span>
+    </NavLink>
+  )
 
   return (
     <aside
@@ -66,36 +141,42 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       {/* Main nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onClose}
-            className={({ isActive }) =>
-              clsx('sidebar-item', isActive && 'active')
-            }
-          >
-            <item.icon size={18} className="flex-shrink-0" />
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {isDirect ? (
+          // ── Direct booking navigation ──────────────────────────────────────
+          <div className="space-y-4">
+            {dbNavSections.map((section) => (
+              <div key={section.heading ?? 'main'}>
+                {section.heading && (
+                  <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">
+                    {section.heading}
+                  </p>
+                )}
+                <div className="space-y-0.5">
+                  {section.items.map((item) => (
+                    <NavItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          // ── TTLock navigation ──────────────────────────────────────────────
+          <div className="space-y-0.5">
+            {ttlockNavItems.map((item) => (
+              <NavItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
+            ))}
+          </div>
+        )}
       </nav>
 
       {/* Bottom nav */}
-      <div className="px-3 py-4 border-t border-gray-200 space-y-1">
-        {bottomItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onClose}
-            className={({ isActive }) =>
-              clsx('sidebar-item', isActive && 'active')
-            }
-          >
-            <item.icon size={18} className="flex-shrink-0" />
-            <span>{item.label}</span>
-          </NavLink>
+      <div className="px-3 py-4 border-t border-gray-200 space-y-0.5">
+        {(isDirect ? dbBottomItems : ttlockBottomItems).map((item) => (
+          <NavItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
+        ))}
+        {user?.role === 'SUPER_ADMIN' && (isDirect ? dbAdminItems : ttlockAdminItems).map((item) => (
+          <NavItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
         ))}
 
         {/* User info */}
