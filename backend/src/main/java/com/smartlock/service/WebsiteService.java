@@ -11,6 +11,7 @@ import com.smartlock.dto.request.website.WebsiteSectionRequest;
 import com.smartlock.dto.response.website.PromoCodeResponse;
 import com.smartlock.dto.response.website.WebsiteConfigResponse;
 import com.smartlock.dto.response.website.WebsiteSectionResponse;
+import com.smartlock.domain.enums.PropertyStatus;
 import com.smartlock.exception.AppException;
 import com.smartlock.repository.PromoCodeRepository;
 import com.smartlock.repository.PropertyRepository;
@@ -54,8 +55,8 @@ public class WebsiteService {
     @Transactional
     public WebsiteConfigResponse updateConfig(UUID orgId, WebsiteConfigRequest req) {
         orgSecurity.requireOrgAccess(orgId);
-        if (Boolean.TRUE.equals(req.getSetupCompleted()) && propertyRepo.countByOrganizationId(orgId) == 0) {
-            throw new AppException("You must add at least one property before completing website setup.", HttpStatus.BAD_REQUEST);
+        if (Boolean.TRUE.equals(req.getSetupCompleted()) && propertyRepo.countByOrganizationIdAndStatus(orgId, PropertyStatus.ACTIVE) == 0) {
+            throw new AppException("You must have at least one active property before completing website setup.", HttpStatus.BAD_REQUEST);
         }
         WebsiteConfig config = websiteRepo.findByOrganizationId(orgId)
                 .orElseGet(() -> createDefaultConfig(orgId));
@@ -95,8 +96,8 @@ public class WebsiteService {
 
     @Transactional
     public WebsiteConfigResponse publishWebsite(UUID orgId) {
-        if (propertyRepo.countByOrganizationId(orgId) == 0) {
-            throw new AppException("You must add at least one property before publishing your website.", HttpStatus.BAD_REQUEST);
+        if (propertyRepo.countByOrganizationIdAndStatus(orgId, PropertyStatus.ACTIVE) == 0) {
+            throw new AppException("You must have at least one active property before publishing your website.", HttpStatus.BAD_REQUEST);
         }
         WebsiteConfig config = websiteRepo.findByOrganizationId(orgId)
                 .orElseThrow(() -> new AppException("Website not configured", HttpStatus.NOT_FOUND));

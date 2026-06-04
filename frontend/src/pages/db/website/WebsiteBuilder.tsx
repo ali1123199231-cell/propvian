@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   Save, Globe, Monitor, Smartphone, ChevronDown, ChevronUp,
   Check, Loader2, Plus, Trash2, ArrowLeft, ExternalLink,
-  Palette, Layout, Eye, Settings, Zap,
+  Palette, Layout, Eye, Settings, Zap, XCircle, CheckCircle,
 } from 'lucide-react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -12,6 +12,7 @@ import {
   type WebsiteSection,
   type PromoCode,
 } from '@/api/websiteBuilder'
+import { organizationsApi } from '@/api/organizations'
 import { SectionPreview, SECTION_LABELS } from './SectionPreview'
 import type { Property } from '@/types'
 
@@ -57,6 +58,73 @@ interface Props {
   orgSlug?: string
   property: Property | null
   initialConfig: WebsiteConfig
+}
+
+function SubdomainCard({ orgId, currentSlug }: { orgId: string; currentSlug: string }) {
+  const [input, setInput] = useState(currentSlug)
+  const [status, setStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
+  const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!input || input === currentSlug) { setStatus('idle'); return }
+    if (!/^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/.test(input) || input.includes('--')) {
+      setStatus('invalid'); return
+    }
+    setStatus('checking')
+    if (debounce.current) clearTimeout(debounce.current)
+    debounce.current = setTimeout(async () => {
+      try {
+        const res = await organizationsApi.checkSlug(input)
+        setStatus(res.available ? 'available' : 'taken')
+      } catch { setStatus('idle') }
+    }, 500)
+  }, [input, currentSlug])
+
+  const saveMut = useMutation({
+    mutationFn: () => organizationsApi.updateSlug(orgId, input),
+    onSuccess: () => {
+      toast.success(`Subdomain updated to ${input}.propvian.com`)
+      setStatus('idle')
+      window.location.reload()
+    },
+    onError: (e: any) => toast.error(e?.response?.data?.message ?? 'Failed to update subdomain'),
+  })
+
+  const canSave = status === 'available' && input !== currentSlug
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 className="text-sm font-semibold text-gray-900 mb-0.5">Website Address</h3>
+      <p className="text-xs text-gray-400 mb-4">Your booking website URL — changing this will update your public link immediately</p>
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+            className="input-base text-sm pr-8"
+            placeholder="your-property"
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2">
+            {status === 'checking' && <Loader2 size={14} className="animate-spin text-gray-400" />}
+            {status === 'available' && <CheckCircle size={14} className="text-emerald-500" />}
+            {(status === 'taken' || status === 'invalid') && <XCircle size={14} className="text-red-400" />}
+          </span>
+        </div>
+        <span className="text-sm text-gray-400 whitespace-nowrap">.propvian.com</span>
+        <button
+          onClick={() => saveMut.mutate()}
+          disabled={!canSave || saveMut.isPending}
+          className="btn-primary py-2 px-4 text-sm disabled:opacity-40"
+        >
+          {saveMut.isPending ? <Loader2 size={14} className="animate-spin" /> : 'Save'}
+        </button>
+      </div>
+      {status === 'available' && <p className="text-xs text-emerald-600 mt-1.5">✓ {input}.propvian.com is available</p>}
+      {status === 'taken' && <p className="text-xs text-red-500 mt-1.5">That address is already taken — try another</p>}
+      {status === 'invalid' && <p className="text-xs text-red-500 mt-1.5">Use lowercase letters, numbers and hyphens only (min 3 chars)</p>}
+      {status === 'idle' && currentSlug && <p className="text-xs text-gray-400 mt-1.5">Current: {currentSlug}.propvian.com</p>}
+    </div>
+  )
 }
 
 export function WebsiteBuilder({ orgId, orgSlug, property, initialConfig }: Props) {
@@ -721,6 +789,9 @@ export function WebsiteBuilder({ orgId, orgSlug, property, initialConfig }: Prop
         {/* ── Settings ──────────────────────────────────────────────────────── */}
         {activeTab === 'settings' && (
           <div className="max-w-2xl mx-auto p-6 space-y-6">
+            {/* Subdomain */}
+            <SubdomainCard orgId={orgId} currentSlug={orgSlug ?? ''} />
+
             {/* SEO */}
             <Card title="SEO & Visibility">
               <div className="space-y-4">

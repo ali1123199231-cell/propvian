@@ -11,6 +11,7 @@ import com.smartlock.repository.LockRepository;
 import com.smartlock.repository.PropertyPhotoRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
+import com.smartlock.repository.WebsiteConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,7 @@ public class PropertyService {
     private final OrganizationSecurityService orgSecurity;
     private final BillingService billingService;
     private final FileUploadService fileUploadService;
+    private final WebsiteConfigRepository websiteConfigRepository;
 
     @Transactional
     public PropertyResponse createProperty(UUID orgId, CreatePropertyRequest request, UUID userId) {
@@ -181,6 +183,15 @@ public class PropertyService {
         property.softDelete();
         propertyRepository.save(property);
         log.info("[DELETE-PROPERTY] Property '{}' (id={}) soft-deleted successfully", property.getName(), propertyId);
+
+        long remaining = propertyRepository.countByOrganizationIdAndStatus(orgId, PropertyStatus.ACTIVE);
+        if (remaining == 0) {
+            websiteConfigRepository.findByOrganizationId(orgId).ifPresent(ws -> {
+                ws.setSetupCompleted(false);
+                websiteConfigRepository.save(ws);
+                log.info("[DELETE-PROPERTY] Reset setupCompleted=false for org {} — no active properties remain", orgId);
+            });
+        }
     }
 
     private PropertyResponse toResponse(Property p) {
