@@ -5,7 +5,7 @@ import {
   DollarSign, Clock, Users, Star, Globe, Loader2, X, Check,
   Upload, Camera, ChevronRight, ChevronLeft, Home, Hotel,
   Waves, Trees, BedDouble, Bath, ArrowRight, Zap, ClipboardList,
-  PawPrint, Cigarette, PartyPopper, Moon, AlarmClock, Ban,
+  PawPrint, Cigarette, PartyPopper, Moon, AlarmClock, Ban, GripVertical,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -271,14 +271,19 @@ function PropertyWizard({ isDirect, onClose, onSaved }: {
     setData(d => ({ ...d, [key]: val })), [])
 
   const [photos, setPhotos] = useState<string[]>([])
-  const addPhotoFile = async (file: File) => {
-    try {
-      const { url } = await fileUploadApi.upload(file)
-      setPhotos(p => p.length < 12 ? [...p, url] : p)
-    } catch {
-      toast.error('Failed to upload photo')
+  const wizardDragIdx = useRef<number | null>(null)
+
+  const addPhotoFiles = async (files: File[]) => {
+    for (const file of files) {
+      try {
+        const { url } = await fileUploadApi.upload(file)
+        setPhotos(p => p.length < 12 ? [...p, url] : p)
+      } catch {
+        toast.error('Failed to upload photo')
+      }
     }
   }
+
   const canNext = (): boolean => {
     if (step === 1) return !!data.propertyType && data.name.trim().length >= 2
     if (step === 2) return !!data.city && !!data.country
@@ -479,7 +484,8 @@ function PropertyWizard({ isDirect, onClose, onSaved }: {
                 onDragOver={e => e.preventDefault()}
                 onDrop={e => {
                   e.preventDefault()
-                  Array.from(e.dataTransfer.files).forEach(addPhotoFile)
+                  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+                  if (files.length) addPhotoFiles(files)
                 }}
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-primary-400 hover:bg-primary-50 transition-all cursor-pointer"
@@ -488,17 +494,38 @@ function PropertyWizard({ isDirect, onClose, onSaved }: {
                 <p className="text-sm font-medium text-gray-700">
                   Drag & drop photos or <span className="text-primary-600">browse</span>
                 </p>
-                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP · up to 12 photos · first is cover</p>
+                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP · up to 12 photos · first is cover · drag to reorder</p>
                 <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden"
-                  onChange={e => Array.from(e.target.files ?? []).forEach(addPhotoFile)} />
+                  onChange={e => { addPhotoFiles(Array.from(e.target.files ?? [])); e.target.value = '' }} />
               </div>
 
               {photos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2">
                   {photos.map((url, i) => (
-                    <div key={i} className="relative group aspect-video rounded-lg overflow-hidden bg-gray-100">
-                      <img src={url} alt="" className="w-full h-full object-cover"
+                    <div
+                      key={url}
+                      draggable
+                      onDragStart={() => { wizardDragIdx.current = i }}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => {
+                        e.stopPropagation()
+                        const from = wizardDragIdx.current
+                        if (from === null || from === i) return
+                        setPhotos(p => {
+                          const arr = [...p]
+                          arr.splice(i, 0, arr.splice(from, 1)[0])
+                          return arr
+                        })
+                        wizardDragIdx.current = null
+                      }}
+                      className="relative group aspect-video rounded-lg overflow-hidden bg-gray-100 cursor-grab active:cursor-grabbing"
+                    >
+                      <img src={url} alt="" className="w-full h-full object-cover pointer-events-none"
                         onError={e => { e.currentTarget.style.display = 'none' }} />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
+                      <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <GripVertical size={14} className="text-white drop-shadow" />
+                      </div>
                       <button type="button" onClick={() => setPhotos(p => p.filter((_, j) => j !== i))}
                         className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <X size={11} />
@@ -746,23 +773,27 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [tab, setTab] = useState<'details' | 'pricing' | 'policies' | 'photos'>('details')
 
-  const existingPhotos: PropertyPhoto[] = property.photos ?? []
-  const [photos, setPhotos] = useState<string[]>(existingPhotos.map(p => p.url))
+  interface PhotoItem { url: string; id?: string }
+  const [photos, setPhotos] = useState<PhotoItem[]>(
+    (property.photos ?? []).map(p => ({ url: p.url, id: p.id }))
+  )
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([])
+  const editDragIdx = useRef<number | null>(null)
 
   const removePhoto = (idx: number) => {
-    const url = photos[idx]
-    const existing = existingPhotos.find(p => p.url === url)
-    if (existing) setDeletedPhotoIds(ids => [...ids, existing.id])
+    const item = photos[idx]
+    if (item.id) setDeletedPhotoIds(ids => [...ids, item.id!])
     setPhotos(p => p.filter((_, j) => j !== idx))
   }
 
-  const addPhotoFile = async (file: File) => {
-    try {
-      const { url } = await fileUploadApi.upload(file)
-      setPhotos(p => p.length < 12 ? [...p, url] : p)
-    } catch {
-      toast.error('Failed to upload photo')
+  const addPhotoFiles = async (files: File[]) => {
+    for (const file of files) {
+      try {
+        const { url } = await fileUploadApi.upload(file)
+        setPhotos(p => p.length < 12 ? [...p, { url }] : p)
+      } catch {
+        toast.error('Failed to upload photo')
+      }
     }
   }
 
@@ -834,16 +865,22 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
       for (const photoId of deletedPhotoIds) {
         try { await propertiesApi.deletePhoto(orgId, property.id, photoId) } catch { /* non-fatal */ }
       }
-      // Save new photos
-      const existingUrls = existingPhotos.map(p => p.url)
-      for (let i = 0; i < photos.length; i++) {
-        if (!existingUrls.includes(photos[i])) {
+      // Add new photos and collect IDs for all photos in display order
+      const finalPhotos: PhotoItem[] = []
+      for (const photo of photos) {
+        if (photo.id) {
+          finalPhotos.push(photo)
+        } else {
           try {
-            await propertiesApi.addPhoto(orgId, property.id, {
-              url: photos[i], sortOrder: i, primary: i === 0,
-            })
-          } catch { /* non-fatal */ }
+            const saved = await propertiesApi.addPhoto(orgId, property.id, { url: photo.url, sortOrder: 99 })
+            finalPhotos.push({ url: photo.url, id: saved.id })
+          } catch { finalPhotos.push(photo) }
         }
+      }
+      // Persist final order
+      const orderedIds = finalPhotos.filter(p => p.id).map(p => p.id!)
+      if (orderedIds.length > 0) {
+        try { await propertiesApi.reorderPhotos(orgId, property.id, orderedIds) } catch { /* non-fatal */ }
       }
 
       qc.invalidateQueries({ queryKey: ['properties', orgId] })
@@ -1049,21 +1086,44 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
                   onDragOver={e => e.preventDefault()}
                   onDrop={e => {
                     e.preventDefault()
-                    Array.from(e.dataTransfer.files).forEach(addPhotoFile)
+                    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))
+                    if (files.length) addPhotoFiles(files)
                   }}
                   onClick={() => fileInputRef.current?.click()}
                   className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary-400 hover:bg-primary-50 transition-all cursor-pointer"
                 >
                   <Upload size={22} className="mx-auto mb-2 text-gray-400" />
                   <p className="text-sm text-gray-500">Drag & drop or <span className="text-primary-600">browse</span></p>
+                  <p className="text-xs text-gray-400 mt-0.5">First photo is the cover · drag cards to reorder</p>
                   <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden"
-                    onChange={e => Array.from(e.target.files ?? []).forEach(addPhotoFile)} />
+                    onChange={e => { addPhotoFiles(Array.from(e.target.files ?? [])); e.target.value = '' }} />
                 </div>
                 {photos.length > 0 && (
                   <div className="grid grid-cols-3 gap-2">
-                    {photos.map((url, i) => (
-                      <div key={i} className="relative group aspect-video rounded-lg overflow-hidden bg-gray-100">
-                        <img src={url} alt="" className="w-full h-full object-cover" />
+                    {photos.map((item, i) => (
+                      <div
+                        key={item.url}
+                        draggable
+                        onDragStart={() => { editDragIdx.current = i }}
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={e => {
+                          e.stopPropagation()
+                          const from = editDragIdx.current
+                          if (from === null || from === i) return
+                          setPhotos(p => {
+                            const arr = [...p]
+                            arr.splice(i, 0, arr.splice(from, 1)[0])
+                            return arr
+                          })
+                          editDragIdx.current = null
+                        }}
+                        className="relative group aspect-video rounded-lg overflow-hidden bg-gray-100 cursor-grab active:cursor-grabbing"
+                      >
+                        <img src={item.url} alt="" className="w-full h-full object-cover pointer-events-none" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
+                        <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          <GripVertical size={14} className="text-white drop-shadow" />
+                        </div>
                         <button type="button" onClick={() => removePhoto(i)}
                           className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <X size={11} />

@@ -130,6 +130,25 @@ public class PropertyController {
         return ResponseEntity.ok(ApiResponse.success("Photo deleted"));
     }
 
+    @PutMapping("/api/v1/organizations/{orgId}/properties/{propertyId}/photos/reorder")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponse<Void>> reorderPhotos(
+            @PathVariable UUID orgId,
+            @PathVariable UUID propertyId,
+            @RequestBody ReorderPhotosRequest request) {
+        List<UUID> ids = request.getPhotoIds();
+        for (int i = 0; i < ids.size(); i++) {
+            final int order = i;
+            final boolean isPrimary = (i == 0);
+            photoRepository.findById(ids.get(i)).ifPresent(photo -> {
+                photo.setSortOrder(order);
+                photo.setPrimary(isPrimary);
+                photoRepository.save(photo);
+            });
+        }
+        return ResponseEntity.ok(ApiResponse.success("Photos reordered"));
+    }
+
     // ── DTOs ──────────────────────────────────────────────────────────────────
 
     public record PhotoResponse(UUID id, UUID propertyId, String url, String caption,
@@ -149,5 +168,10 @@ public class PropertyController {
         private String caption;
         private Integer sortOrder;
         private Boolean primary;
+    }
+
+    @Data
+    public static class ReorderPhotosRequest {
+        private List<UUID> photoIds;
     }
 }

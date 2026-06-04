@@ -41,4 +41,8 @@ export const propertiesApi = {
   deletePhoto: async (orgId: string, propertyId: string, photoId: string): Promise<void> => {
     await apiClient.delete(`/organizations/${orgId}/properties/${propertyId}/photos/${photoId}`)
   },
+
+  reorderPhotos: async (orgId: string, propertyId: string, photoIds: string[]): Promise<void> => {
+    await apiClient.put(`/organizations/${orgId}/properties/${propertyId}/photos/reorder`, { photoIds })
+  },
 }
