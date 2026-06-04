@@ -302,12 +302,18 @@ function PaymentStep({ orgId, onDone, stepData }: {
         label="Payment Setup"
         note={
           stripeAccountId
-            ? `Stripe ${stripeAccountId} · charges ${chargesEnabled ? '✓' : '✗'} · payouts ${payoutsEnabled ? '✓' : '✗'}`
+            ? `Stripe ${stripeAccountId} · ${chargesEnabled && payoutsEnabled ? '🟢 Payments Active' : '🟡 Setup In Progress'}`
             : paypalAccountId ? `PayPal: ${paypalAccountId}` : 'Payment account connected'
         }
       />
     )
   }
+
+  const stripeStatusLabel = chargesEnabled && payoutsEnabled
+    ? '🟢 Payments Active'
+    : stripeAccountId
+      ? '🟡 Setup In Progress'
+      : '⚪ Not Connected'
 
   if (status === 'PENDING') {
     return (
@@ -316,8 +322,8 @@ function PaymentStep({ orgId, onDone, stepData }: {
         {stripeAccountId && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700">
             <p><strong>Stripe {stripeAccountId}</strong> is connected but Stripe hasn't finished verifying your account yet.</p>
-            <p className="mt-1 text-xs">Charges enabled: {chargesEnabled ? '✓' : 'pending'} · Payouts enabled: {payoutsEnabled ? '✓' : 'pending'}</p>
-            <p className="mt-2 text-xs">Complete your Stripe onboarding to enable payouts, then reconnect below.</p>
+            <p className="mt-1.5 font-medium">{stripeStatusLabel}</p>
+            <p className="mt-1.5 text-xs">Complete your Stripe onboarding to enable payouts, then reconnect below.</p>
             <button onClick={connectStripe} disabled={loadingStripe}
               className="mt-3 btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5">
               {loadingStripe ? <Loader2 size={12} className="animate-spin" /> : null}
@@ -325,6 +331,40 @@ function PaymentStep({ orgId, onDone, stepData }: {
             </button>
           </div>
         )}
+
+        {/* PayPal is always available even while Stripe is pending */}
+        <div className="border border-gray-200 hover:border-primary-300 rounded-xl p-5 transition-colors">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-[#003087] rounded-xl flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+                <path d="M20.067 8.478c.492.315.844.825.983 1.39.372 1.514-.565 3.233-2.122 3.942-.52.233-1.113.368-1.754.368H15.67a.497.497 0 0 0-.491.42l-.526 3.352-.147.927H12.93a.294.294 0 0 1-.29-.337l.949-6.024c.04-.252.257-.435.512-.435h2.34c.58 0 1.122-.097 1.61-.287.488-.189.905-.467 1.239-.822.335-.356.584-.79.727-1.294zm-7.47-.534h2.26c1.83 0 3.28.584 3.792 1.693.224.482.3 1.023.223 1.618-.33 2.518-1.864 3.74-4.537 3.74h-.94a.497.497 0 0 0-.49.42l-.527 3.35-.149.944H10.64a.295.295 0 0 1-.29-.338l1.756-11.09c.04-.252.258-.437.512-.437zm-4.24 0h2.26c.902 0 1.698.149 2.38.443-.298 2.197-1.8 3.347-4.28 3.347h-1.24a.497.497 0 0 0-.49.42l-.527 3.35h-1.59a.295.295 0 0 1-.29-.338L6.43 8.356c.04-.252.258-.412.512-.412h1.415z"/>
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">PayPal Business</p>
+              <p className="text-xs text-gray-500">Connect PayPal as an alternative payment method</p>
+            </div>
+            {paypalAccountId && (
+              <span className="ml-auto flex items-center gap-1 text-xs text-green-600 font-medium">
+                <Check size={12} /> Connected
+              </span>
+            )}
+          </div>
+          {paypalAccountId ? (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3 text-xs text-green-700">
+              Account: <strong>{paypalAccountId}</strong>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-600 mb-4">
+              A popup will open with PayPal's login page. Sign in and authorize Propvian to receive your account details.
+            </p>
+          )}
+          <button onClick={connectPaypal} disabled={loadingPaypal}
+            className="w-full justify-center py-2.5 bg-[#0070ba] hover:bg-[#005ea6] text-white font-medium rounded-xl flex items-center gap-2 text-sm transition-colors">
+            {loadingPaypal ? <Loader2 size={16} className="animate-spin" /> : <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white"><path d="M20.067 8.478c.492.315.844.825.983 1.39.372 1.514-.565 3.233-2.122 3.942-.52.233-1.113.368-1.754.368H15.67a.497.497 0 0 0-.491.42l-.526 3.352-.147.927H12.93a.294.294 0 0 1-.29-.337l.949-6.024c.04-.252.257-.435.512-.435h2.34c.58 0 1.122-.097 1.61-.287.488-.189.905-.467 1.239-.822.335-.356.584-.79.727-1.294z"/></svg>}
+            {loadingPaypal ? 'Opening PayPal…' : paypalAccountId ? 'Re-connect PayPal' : 'Connect with PayPal'}
+          </button>
+        </div>
       </div>
     )
   }
@@ -363,7 +403,7 @@ function PaymentStep({ orgId, onDone, stepData }: {
           {stripeAccountId ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3 text-xs text-green-700">
               Account: <strong>{stripeAccountId}</strong><br />
-              Charges enabled: {chargesEnabled ? '✓' : '✗'} · Payouts enabled: {payoutsEnabled ? '✓' : '✗'}
+              <span className="font-medium">{stripeStatusLabel}</span>
             </div>
           ) : (
             <p className="text-sm text-gray-600 mb-4">

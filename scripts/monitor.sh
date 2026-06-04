@@ -48,7 +48,7 @@ for CONTAINER in "${CONTAINERS[@]}"; do
 
   # 3. Scan last 2 minutes of logs for real errors (not DEBUG noise)
   ERRORS=$(docker logs "$CONTAINER" --since 2m 2>&1 \
-    | grep -vE "\] (DEBUG|TRACE) " \
+    | grep -vE "\] (DEBUG|TRACE|INFO) " \
     | grep -E "(\] ERROR |\] WARN |NullPointerException|StackOverflowError|OutOfMemoryError|Connection refused|HikariPool.*dead|FlywayException|nginx.*\[error\])" \
     | grep -vE "(WARN.*booking_hold|WARN.*RepositoryConfig|WARN.*Flyway upgrade|WARN.*newer than this version)" \
     || true)

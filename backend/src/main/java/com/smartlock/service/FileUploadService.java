@@ -118,6 +118,52 @@ public class FileUploadService {
         }
     }
 
+    public void deleteFile(String urlOrPath) {
+        try {
+            String filePath = extractFilePath(urlOrPath);
+            if (filePath == null) {
+                log.warn("[DELETE-FILE] Could not extract file path from: {}", urlOrPath);
+                return;
+            }
+            Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path target = uploadRoot.resolve(filePath).normalize();
+            if (!target.startsWith(uploadRoot)) {
+                log.warn("[DELETE-FILE] Path traversal attempt blocked: {}", filePath);
+                return;
+            }
+            boolean existed = Files.deleteIfExists(target);
+            if (existed) {
+                log.info("[DELETE-FILE] Successfully deleted file from disk: {}", filePath);
+            } else {
+                log.warn("[DELETE-FILE] File not found on disk (already deleted?): {}", filePath);
+            }
+        } catch (Exception e) {
+            log.warn("[DELETE-FILE] Could not delete file {}: {}", urlOrPath, e.getMessage());
+        }
+    }
+
+    // Extract relative path from either a raw path or a signed-URL token (ignoring JWT expiry)
+    private String extractFilePath(String urlOrPath) {
+        if (urlOrPath == null || urlOrPath.isBlank()) return null;
+        if (!urlOrPath.contains("?token=")) return urlOrPath;
+        try {
+            String token = urlOrPath.substring(urlOrPath.indexOf("?token=") + 7);
+            String[] parts = token.split("\\.");
+            if (parts.length < 2) return null;
+            // Base64-decode the payload without verifying signature or expiry
+            byte[] payloadBytes = java.util.Base64.getUrlDecoder().decode(parts[1]);
+            String payload = new String(payloadBytes, java.nio.charset.StandardCharsets.UTF_8);
+            int subIdx = payload.indexOf("\"sub\":\"");
+            if (subIdx < 0) return null;
+            int start = subIdx + 7;
+            int end = payload.indexOf("\"", start);
+            return end > start ? payload.substring(start, end) : null;
+        } catch (Exception e) {
+            log.warn("Could not extract file path from URL: {}", e.getMessage());
+            return null;
+        }
+    }
+
     public Resource loadDirect(String orgId, String filename) {
         try {
             Path path = Paths.get(uploadDir, orgId, filename).normalize();

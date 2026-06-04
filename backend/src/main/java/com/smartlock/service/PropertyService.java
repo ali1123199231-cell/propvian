@@ -12,6 +12,7 @@ import com.smartlock.repository.PropertyPhotoRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PropertyService {
 
     private final PropertyRepository propertyRepository;
@@ -31,6 +33,7 @@ public class PropertyService {
     private final OnboardingService onboardingService;
     private final OrganizationSecurityService orgSecurity;
     private final BillingService billingService;
+    private final FileUploadService fileUploadService;
 
     @Transactional
     public PropertyResponse createProperty(UUID orgId, CreatePropertyRequest request, UUID userId) {
@@ -160,8 +163,24 @@ public class PropertyService {
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
+
+        log.info("[DELETE-PROPERTY] Starting deletion of property '{}' (id={}, org={})",
+                property.getName(), propertyId, orgId);
+
+        var photos = photoRepository.findByPropertyIdOrderBySortOrderAsc(propertyId);
+        log.info("[DELETE-PROPERTY] Found {} photo(s) to delete for property {}", photos.size(), propertyId);
+
+        for (var photo : photos) {
+            log.info("[DELETE-PROPERTY] Deleting photo id={} url={}", photo.getId(), photo.getUrl());
+            fileUploadService.deleteFile(photo.getUrl());
+        }
+
+        photoRepository.deleteByPropertyId(propertyId);
+        log.info("[DELETE-PROPERTY] Deleted {} photo record(s) from DB for property {}", photos.size(), propertyId);
+
         property.softDelete();
         propertyRepository.save(property);
+        log.info("[DELETE-PROPERTY] Property '{}' (id={}) soft-deleted successfully", property.getName(), propertyId);
     }
 
     private PropertyResponse toResponse(Property p) {

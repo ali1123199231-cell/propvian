@@ -704,6 +704,7 @@ function PropertyWizard({ isDirect, onClose, onSaved }: {
 
 const editSchema = z.object({
   name:               z.string().min(2).max(200),
+  status:             z.enum(['DRAFT', 'ACTIVE', 'INACTIVE']),
   propertyType:       z.string().optional(),
   address:            z.string().optional(),
   city:               z.string().optional(),
@@ -769,6 +770,7 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
     resolver: zodResolver(editSchema),
     defaultValues: {
       name: property.name,
+      status: (property.status as 'DRAFT' | 'ACTIVE' | 'INACTIVE') ?? 'DRAFT',
       propertyType: property.propertyType ?? '',
       address: property.address ?? '',
       city: property.city ?? '',
@@ -800,6 +802,7 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
     try {
       const payload: any = {
         name: data.name,
+        status: data.status,
         propertyType: data.propertyType || undefined,
         address: data.address || undefined,
         city: data.city || undefined,
@@ -884,6 +887,20 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
 
             {tab === 'details' && (
               <div className="space-y-4">
+                {/* Status — most important field: controls guest visibility */}
+                <div className="flex items-center justify-between p-3.5 rounded-xl border border-gray-200 bg-gray-50">
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">Listing status</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Only <span className="font-semibold text-emerald-600">Active</span> properties appear on your booking website
+                    </p>
+                  </div>
+                  <select {...register('status')} className="input-base w-36 text-sm">
+                    <option value="DRAFT">Draft</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                  </select>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Property name *</label>

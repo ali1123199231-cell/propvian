@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Calendar, Search, Loader2, XCircle, CheckCircle, Plus, X, DollarSign, Users } from 'lucide-react'
+import { Calendar, Search, Loader2, XCircle, CheckCircle, Plus, X, DollarSign, Users, RefreshCw } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { format, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
 import { directBookingApi } from '@/api/directBooking'
 import { propertiesApi } from '@/api/properties'
+import { reservationsApi } from '@/api/reservations'
 import { useAuthStore } from '@/store/authStore'
-import type { DirectBooking, DirectBookingStatus } from '@/types'
+import type { DirectBooking, DirectBookingStatus, Reservation } from '@/types'
 
 // ── New Booking Modal ────────────────────────────────────────────────────────
 
@@ -225,9 +227,122 @@ function BookingRow({ booking, orgId }: { booking: DirectBooking; orgId: string 
   )
 }
 
+// ── Source badge ─────────────────────────────────────────────────────────────
+
+const SOURCE_LABELS: Record<string, { label: string; cls: string }> = {
+  AIRBNB:  { label: 'Airbnb',       cls: 'bg-rose-100 text-rose-700' },
+  BOOKING: { label: 'Booking.com',  cls: 'bg-blue-100 text-blue-700' },
+  VRBO:    { label: 'VRBO',         cls: 'bg-sky-100 text-sky-700' },
+  MANUAL:  { label: 'Manual',       cls: 'bg-gray-100 text-gray-600' },
+  OTHER:   { label: 'iCal',         cls: 'bg-violet-100 text-violet-700' },
+}
+
+function SyncedReservationRow({ r }: { r: Reservation }) {
+  const src = SOURCE_LABELS[r.source] ?? SOURCE_LABELS.OTHER
+  const fmtDate = (d: string) => {
+    try { return format(parseISO(d), 'MMM d, yyyy') } catch { return d }
+  }
+  return (
+    <tr className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+      <td className="px-4 py-3">
+        <p className="text-sm font-medium text-gray-900">{r.guestName ?? '—'}</p>
+        {r.guestEmail && <p className="text-xs text-gray-400">{r.guestEmail}</p>}
+      </td>
+      <td className="px-4 py-3">
+        <p className="text-sm text-gray-700">{fmtDate(r.checkInDate)}</p>
+        <p className="text-xs text-gray-400">→ {fmtDate(r.checkOutDate)}</p>
+      </td>
+      <td className="px-4 py-3">
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${src.cls}`}>
+          {src.label}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+          r.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
+          r.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+          'bg-gray-100 text-gray-600'
+        }`}>
+          {r.status}
+        </span>
+      </td>
+      {r.propertyName && (
+        <td className="px-4 py-3 text-sm text-gray-500">{r.propertyName}</td>
+      )}
+    </tr>
+  )
+}
+
+function SyncedReservationsTab({ orgId }: { orgId: string }) {
+  const [search, setSearch] = useState('')
+  const [page, setPage]     = useState(0)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['synced-reservations', orgId, page],
+    queryFn:  () => reservationsApi.listByOrg(orgId, page, 20),
+    enabled:  !!orgId,
+  })
+
+  const filtered = (data?.content ?? []).filter(r =>
+    !search ||
+    (r.guestName ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    (r.guestEmail ?? '').toLowerCase().includes(search.toLowerCase())
+  )
+
+  return (
+    <div className="space-y-4">
+      <div className="relative max-w-xs">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input value={search} onChange={e => setSearch(e.target.value)}
+          placeholder="Search guests…" className="input-base pl-9 py-2 text-sm" />
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 size={22} className="animate-spin text-primary-500" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <RefreshCw size={32} className="mb-3 opacity-40" />
+            <p className="text-sm">No synced reservations yet</p>
+            <p className="text-xs mt-1 text-gray-400">Add an iCal integration to import reservations from Airbnb, Booking.com, and more</p>
+          </div>
+        ) : (
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Guest</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Dates</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Source</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Property</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(r => <SyncedReservationRow key={r.id} r={r} />)}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {data && data.totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={data.first}
+            className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Previous</button>
+          <span className="text-gray-500">Page {data.page + 1} of {data.totalPages}</span>
+          <button onClick={() => setPage(p => p + 1)} disabled={data.last}
+            className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Next</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function DirectReservationsPage() {
   const { activeOrg } = useAuthStore()
   const orgId         = activeOrg?.id ?? ''
+  const [view, setView]               = useState<'direct' | 'synced'>('direct')
   const [search, setSearch]           = useState('')
   const [page, setPage]               = useState(0)
   const [showNew, setShowNew]         = useState(false)
@@ -236,7 +351,7 @@ export function DirectReservationsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['direct-bookings', orgId, page],
     queryFn:  () => directBookingApi.list(orgId, page, 20),
-    enabled:  !!orgId,
+    enabled:  !!orgId && view === 'direct',
   })
 
   const filtered = data?.content.filter((b) =>
@@ -251,82 +366,105 @@ export function DirectReservationsPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Reservations</h1>
-          <p className="text-gray-500 mt-1">All direct bookings across your properties</p>
+          <p className="text-gray-500 mt-1">Direct bookings and synced iCal reservations</p>
         </div>
-        <button onClick={() => setShowNew(true)} className="btn-primary py-2 px-4 text-sm flex items-center gap-2">
-          <Plus size={15} /> New booking
-        </button>
-      </div>
-
-      {/* Status filter tabs */}
-      <div className="flex gap-1 flex-wrap">
-        {(['ALL', 'CONFIRMED', 'PENDING_PAYMENT', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED'] as const).map(s => (
-          <button key={s} onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-              statusFilter === s ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}>
-            {s === 'ALL' ? 'All' : STATUS_LABELS[s as DirectBookingStatus].label}
-            {s !== 'ALL' && data && (
-              <span className="ml-1 opacity-70">
-                ({data.content.filter(b => b.status === s).length})
-              </span>
-            )}
+        {view === 'direct' && (
+          <button onClick={() => setShowNew(true)} className="btn-primary py-2 px-4 text-sm flex items-center gap-2">
+            <Plus size={15} /> New booking
           </button>
-        ))}
-      </div>
-
-      {/* Search */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-xs">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search guests…"
-            className="input-base pl-9 py-2 text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 size={22} className="animate-spin text-primary-500" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-            <Calendar size={32} className="mb-3 opacity-40" />
-            <p className="text-sm">No reservations yet</p>
-          </div>
-        ) : (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Guest</th>
-                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Dates</th>
-                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
-                <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((b) => <BookingRow key={b.id} booking={b} orgId={orgId} />)}
-            </tbody>
-          </table>
         )}
       </div>
 
-      {/* Pagination */}
-      {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={data.first}
-            className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Previous</button>
-          <span className="text-gray-500">Page {data.page + 1} of {data.totalPages}</span>
-          <button onClick={() => setPage((p) => p + 1)} disabled={data.last}
-            className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Next</button>
-        </div>
+      {/* View toggle */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+        <button
+          onClick={() => setView('direct')}
+          className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            view === 'direct' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          Direct Bookings
+        </button>
+        <button
+          onClick={() => setView('synced')}
+          className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors flex items-center gap-1.5 ${
+            view === 'synced' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <RefreshCw size={13} /> Synced (iCal)
+        </button>
+      </div>
+
+      {view === 'synced' ? (
+        <SyncedReservationsTab orgId={orgId} />
+      ) : (
+        <>
+          {/* Status filter tabs */}
+          <div className="flex gap-1 flex-wrap">
+            {(['ALL', 'CONFIRMED', 'PENDING_PAYMENT', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELLED'] as const).map(s => (
+              <button key={s} onClick={() => setStatusFilter(s)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                  statusFilter === s ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}>
+                {s === 'ALL' ? 'All' : STATUS_LABELS[s as DirectBookingStatus].label}
+                {s !== 'ALL' && data && (
+                  <span className="ml-1 opacity-70">
+                    ({data.content.filter(b => b.status === s).length})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Search */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 max-w-xs">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input type="text" value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search guests…" className="input-base pl-9 py-2 text-sm" />
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 size={22} className="animate-spin text-primary-500" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <Calendar size={32} className="mb-3 opacity-40" />
+                <p className="text-sm">No reservations yet</p>
+              </div>
+            ) : (
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Guest</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Dates</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Amount</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((b) => <BookingRow key={b.id} booking={b} orgId={orgId} />)}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {data && data.totalPages > 1 && (
+            <div className="flex items-center justify-between text-sm">
+              <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={data.first}
+                className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Previous</button>
+              <span className="text-gray-500">Page {data.page + 1} of {data.totalPages}</span>
+              <button onClick={() => setPage(p => p + 1)} disabled={data.last}
+                className="btn-secondary disabled:opacity-40 py-1.5 px-3 text-xs">Next</button>
+            </div>
+          )}
+        </>
       )}
 
       {showNew && <NewBookingModal orgId={orgId} onClose={() => setShowNew(false)} />}
