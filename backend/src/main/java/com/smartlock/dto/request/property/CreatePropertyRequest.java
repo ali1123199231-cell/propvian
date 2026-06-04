@@ -44,6 +44,8 @@ public class CreatePropertyRequest {
     private UUID cleanerUserId;
 
     // Direct booking pricing
+    @Size(max = 3)
+    private String currency;
     private BigDecimal baseNightlyRate;
     private BigDecimal cleaningFee;
     private BigDecimal securityDeposit;
@@ -57,4 +59,27 @@ public class CreatePropertyRequest {
     private String checkOutTime;
 
     private Boolean instantBooking;
+
+    // ── Business Rules ─────────────────────────────────────────────────────────
+    // FLEXIBLE | MODERATE | STRICT | NON_REFUNDABLE
+    @Size(max = 30)
+    private String cancellationPolicy;
+
+    private Integer bufferDaysBefore;
+    private Integer bufferDaysAfter;
+    private Boolean depositRequired;
+    private BigDecimal depositPercent;
+
+    // ── Location coordinates ───────────────────────────────────────────────────
+    private BigDecimal latitude;
+    private BigDecimal longitude;
+
+    // ── Status ────────────────────────────────────────────────────────────────
+    // DRAFT | ACTIVE | PAUSED | ARCHIVED
+    @Size(max = 20)
+    private String status;
+
+    // ── Booking slug ──────────────────────────────────────────────────────────
+    @Size(max = 255)
+    private String slug;
 }

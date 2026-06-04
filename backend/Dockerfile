@@ -7,6 +7,7 @@ RUN mvn clean package -DskipTests -B
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN apk add --no-cache curl
 RUN addgroup -S smartlock && adduser -S smartlock -G smartlock
 COPY --from=build /app/target/*.jar app.jar
 RUN chown smartlock:smartlock app.jar

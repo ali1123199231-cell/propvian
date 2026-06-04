@@ -1,3 +1,50 @@
 propvian.com, www.propvian.com {
     reverse_proxy frontend:80
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com; frame-src https://js.stripe.com; object-src 'none'; base-uri 'self';"
+        -Server
+    }
+
+    encode gzip
+
+    @auth_endpoints {
+        path /api/v1/auth/login /api/v1/auth/register
+    }
+    handle @auth_endpoints {
+        reverse_proxy frontend:80 {
+            header_up X-Real-IP {remote_host}
+        }
+    }
+}
+
+# ── Guest booking subdomains: {slug}.propvian.com ──────────────────────────────
+# Prerequisites:
+#   1. DNS: add wildcard A record  *.propvian.com → your server IP
+#   2. TLS:  Caddy needs a DNS challenge provider for wildcard certs.
+#      Add your DNS provider plugin (e.g. caddy-dns/cloudflare) and set:
+#        tls { dns cloudflare {env.CF_API_TOKEN} }
+#      or use caddy-dns/route53, caddy-dns/digitalocean, etc.
+*.propvian.com {
+    # Only serve subdomains — not the apex or www (handled above)
+    @isSubdomain not host propvian.com www.propvian.com
+    handle @isSubdomain {
+        reverse_proxy frontend:80
+
+        header {
+            -Server
+            X-Content-Type-Options "nosniff"
+            Referrer-Policy "strict-origin-when-cross-origin"
+            # Guest booking page needs Stripe + PayPal JS SDKs
+            Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com https://www.paypal.com; frame-src https://js.stripe.com https://www.paypal.com; object-src 'none';"
+        }
+
+        encode gzip
+    }
 }

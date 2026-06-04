@@ -12,9 +12,12 @@ import com.smartlock.dto.request.organization.CreateOrganizationRequest;
 import com.smartlock.dto.request.organization.InviteMemberRequest;
 import com.smartlock.dto.response.organization.OrganizationMemberResponse;
 import com.smartlock.dto.response.organization.OrganizationResponse;
+import com.smartlock.exception.AppException;
 import com.smartlock.exception.DuplicateResourceException;
 import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.repository.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,7 @@ public class OrganizationService {
     private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionPlanRepository planRepository;
+    @Lazy private final OrganizationSecurityService orgSecurity;
 
     @Transactional
     public OrganizationResponse createOrganization(CreateOrganizationRequest request, UUID ownerId) {
@@ -81,6 +85,64 @@ public class OrganizationService {
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
         return toResponse(org);
+    }
+
+    @Transactional
+    public OrganizationResponse updateOrganization(UUID orgId, String name, String timezone,
+                                                    String country, String website, UUID requestingUserId) {
+        Organization org = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
+        if (name != null && !name.isBlank()) org.setName(name);
+        if (timezone != null && !timezone.isBlank()) org.setTimezone(timezone);
+        if (country != null) org.setCountry(country.isBlank() ? null : country);
+        if (website != null) org.setWebsite(website.isBlank() ? null : website);
+        org = organizationRepository.save(org);
+        log.info("Organization {} updated by {}", orgId, requestingUserId);
+        return toResponse(org);
+    }
+
+    @Transactional
+    public OrganizationResponse updateSlug(UUID orgId, String desiredSlug, UUID requestingUserId) {
+        orgSecurity.requireOrgAccess(orgId);
+
+        if (desiredSlug == null || desiredSlug.isBlank())
+            throw new AppException("Slug cannot be empty", HttpStatus.BAD_REQUEST);
+
+        String slug = desiredSlug.toLowerCase().trim();
+        if (!slug.matches("^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$") || slug.contains("--"))
+            throw new AppException(
+                "Site address must be 3–50 characters, lowercase letters, numbers and hyphens only — no consecutive hyphens, and cannot start or end with a hyphen",
+                HttpStatus.BAD_REQUEST);
+
+        // Block reserved words that could conflict with platform routes
+        if (slug.matches("^(www|api|admin|app|mail|static|cdn|assets|blog|pricing|legal|login|register|dashboard|sites|book|public|onboarding)$"))
+            throw new AppException("That address is reserved. Please choose another.", HttpStatus.BAD_REQUEST);
+
+        Organization org = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
+
+        // Allow keeping the same slug (idempotent)
+        if (!slug.equals(org.getSlug()) && organizationRepository.existsBySlug(slug))
+            throw new AppException("That address is already taken. Try another.", HttpStatus.CONFLICT);
+
+        org.setSlug(slug);
+        org = organizationRepository.save(org);
+        log.info("Organization {} slug updated to '{}' by {}", orgId, slug, requestingUserId);
+        return toResponse(org);
+    }
+
+    private static final java.util.Set<String> RESERVED = java.util.Set.of(
+        "www", "api", "admin", "app", "mail", "static", "cdn", "assets", "blog",
+        "pricing", "legal", "login", "register", "dashboard", "sites", "book",
+        "public", "onboarding", "help", "support", "status"
+    );
+
+    @Transactional(readOnly = true)
+    public boolean isSlugAvailable(String slug) {
+        if (slug == null || !slug.matches("^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$")) return false;
+        if (slug.contains("--")) return false;
+        if (RESERVED.contains(slug)) return false;
+        return !organizationRepository.existsBySlug(slug);
     }
 
     @Transactional(readOnly = true)

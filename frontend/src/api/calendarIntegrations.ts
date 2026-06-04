@@ -24,4 +24,14 @@ export const calendarIntegrationsApi = {
   sync: async (integrationId: string): Promise<void> => {
     await apiClient.post(`/calendar-integrations/${integrationId}/sync`)
   },
+
+  getExportToken: async (propertyId: string): Promise<string> => {
+    const { data } = await apiClient.get(`/properties/${propertyId}/calendar-integrations/export-token`)
+    return data.data
+  },
+
+  rotateToken: async (propertyId: string): Promise<string> => {
+    const { data } = await apiClient.post(`/properties/${propertyId}/calendar-integrations/rotate-token`)
+    return data.data
+  },
 }

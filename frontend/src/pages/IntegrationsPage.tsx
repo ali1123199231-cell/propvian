@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plug, RefreshCw, Trash2, CheckCircle, XCircle, Clock, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plug, RefreshCw, Trash2, CheckCircle, XCircle, Clock, ExternalLink, ChevronDown, ChevronUp, Copy, Check, RotateCcw } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -145,6 +145,35 @@ export function IntegrationsPage() {
   const integrations = integrationsQuery.data ?? []
   const platformHowTo = PLATFORM_CONFIG[selectedPlatform] ?? PLATFORM_CONFIG.OTHER
 
+  // iCal export feed state per property
+  const [exportTokens, setExportTokens] = useState<Record<string, string>>({})
+  const [copiedPropId, setCopiedPropId] = useState<string | null>(null)
+
+  const loadToken = async (propertyId: string) => {
+    if (exportTokens[propertyId]) return
+    try {
+      const token = await calendarIntegrationsApi.getExportToken(propertyId)
+      setExportTokens(t => ({ ...t, [propertyId]: token }))
+    } catch { toast.error('Could not load export token') }
+  }
+
+  const rotateTokenMut = useMutation({
+    mutationFn: (propertyId: string) => calendarIntegrationsApi.rotateToken(propertyId),
+    onSuccess: (token, propertyId) => {
+      setExportTokens(t => ({ ...t, [propertyId]: token }))
+      toast.success('Feed URL regenerated')
+    },
+  })
+
+  const copyFeedUrl = (propertyId: string) => {
+    const token = exportTokens[propertyId]
+    if (!token) return
+    const url = `${window.location.origin}/api/public/calendar/${token}/calendar.ics`
+    navigator.clipboard.writeText(url)
+    setCopiedPropId(propertyId)
+    setTimeout(() => setCopiedPropId(null), 2000)
+  }
+
   return (
     <div>
       <TopBar
@@ -236,6 +265,66 @@ export function IntegrationsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+        {/* iCal Export Feeds */}
+        {properties.length > 0 && (
+          <div className="card overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="font-semibold text-gray-800">Your Calendar Feeds</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Subscribe to these URLs in Google Calendar, Apple Calendar, Outlook, Airbnb, or Booking.com to export your Propvian bookings.
+              </p>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {properties.map(p => {
+                const token = exportTokens[p.id]
+                const feedUrl = token
+                  ? `${window.location.origin}/api/public/calendar/${token}/calendar.ics`
+                  : null
+                return (
+                  <div key={p.id} className="px-6 py-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium text-gray-900">{p.name}</p>
+                      {token && (
+                        <button
+                          onClick={() => rotateTokenMut.mutate(p.id)}
+                          disabled={rotateTokenMut.isPending}
+                          title="Regenerate URL (invalidates old link)"
+                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-amber-600 transition-colors"
+                        >
+                          <RotateCcw size={12} className={rotateTokenMut.isPending ? 'animate-spin' : ''} />
+                          Regenerate
+                        </button>
+                      )}
+                    </div>
+                    {token ? (
+                      <div className="flex items-center gap-2 p-2.5 bg-gray-50 border border-gray-200 rounded-lg">
+                        <code className="flex-1 text-xs text-gray-600 truncate">{feedUrl}</code>
+                        <button
+                          onClick={() => copyFeedUrl(p.id)}
+                          className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800 flex-shrink-0 transition-colors"
+                        >
+                          {copiedPropId === p.id ? <Check size={13} /> : <Copy size={13} />}
+                          {copiedPropId === p.id ? 'Copied' : 'Copy'}
+                        </button>
+                        <a href={feedUrl!} target="_blank" rel="noopener noreferrer"
+                          className="text-gray-400 hover:text-primary-600 flex-shrink-0 transition-colors">
+                          <ExternalLink size={13} />
+                        </a>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => loadToken(p.id)}
+                        className="text-xs text-primary-600 hover:text-primary-800 underline"
+                      >
+                        Generate feed URL
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

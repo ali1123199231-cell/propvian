@@ -4,6 +4,7 @@ import com.smartlock.event.ReservationCancelledEvent;
 import com.smartlock.event.ReservationCheckedOutEvent;
 import com.smartlock.event.ReservationCreatedEvent;
 import com.smartlock.service.AccessCodeService;
+import com.smartlock.service.CalendarEngine;
 import com.smartlock.service.CleanerTaskService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ public class ReservationEventListener {
 
     private final AccessCodeService accessCodeService;
     private final CleanerTaskService cleanerTaskService;
+    private final CalendarEngine calendarEngine;
 
     @Async
     @TransactionalEventListener
@@ -37,7 +39,13 @@ public class ReservationEventListener {
         try {
             accessCodeService.revokeAccessCodesForReservation(event.getReservationId());
         } catch (Exception e) {
-            log.error("Error processing ReservationCancelledEvent {}: {}", event.getReservationId(), e.getMessage());
+            log.error("Error revoking access codes for cancelled reservation {}: {}", event.getReservationId(), e.getMessage());
+        }
+        try {
+            calendarEngine.cancelBookingDates(event.getReservationId());
+        } catch (Exception e) {
+            log.warn("Could not clear calendar interval for cancelled reservation {} (may not have one): {}",
+                    event.getReservationId(), e.getMessage());
         }
     }
 

@@ -76,6 +76,10 @@ public class Property extends SoftDeletableEntity {
     @Column(name = "property_type", length = 100)
     private String propertyType;
 
+    @Column(name = "currency", length = 3, nullable = false)
+    @Builder.Default
+    private String currency = "USD";
+
     @Column(name = "base_nightly_rate", precision = 10, scale = 2)
     private BigDecimal baseNightlyRate;
 
@@ -109,4 +113,36 @@ public class Property extends SoftDeletableEntity {
 
     @Column(name = "slug", length = 255)
     private String slug;
+
+    // ── Business Rules ─────────────────────────────────────────────────────────
+
+    @Column(name = "cancellation_policy", length = 30)
+    @Builder.Default
+    private String cancellationPolicy = "MODERATE";  // FLEXIBLE | MODERATE | STRICT | NON_REFUNDABLE
+
+    @Column(name = "buffer_days_before", nullable = false)
+    @Builder.Default
+    private int bufferDaysBefore = 0;
+
+    @Column(name = "buffer_days_after", nullable = false)
+    @Builder.Default
+    private int bufferDaysAfter = 0;
+
+    @Column(name = "deposit_required", nullable = false)
+    @Builder.Default
+    private boolean depositRequired = false;
+
+    @Column(name = "deposit_percent", precision = 5, scale = 2)
+    private java.math.BigDecimal depositPercent;
+
+    // ── Location coordinates ───────────────────────────────────────────────────
+
+    @Column(name = "latitude", precision = 10, scale = 7)
+    private java.math.BigDecimal latitude;
+
+    @Column(name = "longitude", precision = 10, scale = 7)
+    private java.math.BigDecimal longitude;
+
+    @Column(name = "ical_export_token", length = 64)
+    private String icalExportToken;
 }

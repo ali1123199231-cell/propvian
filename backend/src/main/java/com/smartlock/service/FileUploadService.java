@@ -83,13 +83,16 @@ public class FileUploadService {
         }
     }
 
-    public String generateSignedUrl(String filePath, String baseUrl) {
-        String token = Jwts.builder()
+    public String generateToken(String filePath) {
+        return Jwts.builder()
                 .subject(filePath)
                 .expiration(new Date(System.currentTimeMillis() + SIGNED_URL_TTL))
                 .signWith(signingKey)
                 .compact();
-        return baseUrl + "/api/v1/files/view?token=" + token;
+    }
+
+    public String generateSignedUrl(String filePath, String baseUrl) {
+        return baseUrl + "/api/v1/files/view?token=" + generateToken(filePath);
     }
 
     public Resource loadSigned(String token) {
@@ -97,10 +100,17 @@ public class FileUploadService {
             Claims claims = Jwts.parser().verifyWith(signingKey).build()
                     .parseSignedClaims(token).getPayload();
             String filePath = claims.getSubject();
-            Path path = Paths.get(uploadDir).resolve(filePath).normalize();
+            Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path path = uploadRoot.resolve(filePath).normalize();
+            // Prevent path traversal outside upload directory
+            if (!path.startsWith(uploadRoot)) {
+                throw new AppException("Access denied", HttpStatus.FORBIDDEN);
+            }
             Resource resource = new UrlResource(path.toUri());
             if (!resource.exists()) throw new AppException("File not found", HttpStatus.NOT_FOUND);
             return resource;
+        } catch (AppException e) {
+            throw e;
         } catch (JwtException e) {
             throw new AppException("Invalid or expired file link", HttpStatus.FORBIDDEN);
         } catch (MalformedURLException e) {

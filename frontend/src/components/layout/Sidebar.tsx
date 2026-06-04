@@ -1,13 +1,14 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Calendar, Lock, Bell,
-  Settings, LogOut, CreditCard, Plug, Lock as LockIcon,
+  Settings, LogOut, CreditCard, Plug,
   ShieldCheck, Globe, Star, MessageCircle, BarChart2,
-  Home, Wallet, CheckSquare, SlidersHorizontal,
+  Home, Wallet, CheckSquare, Shield, CalendarDays,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useSystemStore } from '@/store/systemStore'
 import { authApi } from '@/api/auth'
+import { PropvianLogo } from '@/components/PropvianLogo'
 import clsx from 'clsx'
 
 // ── TTLock navigation ─────────────────────────────────────────────────────────
@@ -22,12 +23,8 @@ const ttlockNavItems = [
 ]
 
 const ttlockBottomItems = [
-  { icon: CreditCard,          label: 'Billing',       to: '/billing' },
-  { icon: Settings,            label: 'Settings',      to: '/settings' },
-]
-
-const ttlockAdminItems = [
-  { icon: SlidersHorizontal,   label: 'System Config', to: '/system-config' },
+  { icon: CreditCard, label: 'Billing',  to: '/billing' },
+  { icon: Settings,   label: 'Settings', to: '/settings' },
 ]
 
 // ── Direct Booking navigation ─────────────────────────────────────────────────
@@ -36,15 +33,16 @@ const dbNavSections = [
   {
     heading: null,
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard',    to: '/dashboard' },
+      { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard' },
     ],
   },
   {
     heading: 'Manage',
     items: [
-      { icon: Building2, label: 'Properties',   to: '/properties' },
-      { icon: Calendar,  label: 'Calendar',     to: '/calendar' },
-      { icon: CheckSquare, label: 'Reservations', to: '/reservations' },
+      { icon: Building2,    label: 'Properties',   to: '/properties' },
+      { icon: Calendar,     label: 'Calendar',     to: '/calendar' },
+      { icon: CheckSquare,  label: 'Reservations', to: '/reservations' },
+      { icon: CalendarDays, label: 'Integrations', to: '/integrations' },
     ],
   },
   {
@@ -60,7 +58,7 @@ const dbNavSections = [
     items: [
       { icon: Home,         label: 'Website Builder', to: '/website' },
       { icon: Globe,        label: 'Domains',         to: '/domains' },
-      { icon: MessageCircle,label: 'Messaging',        to: '/messaging' },
+      { icon: MessageCircle,label: 'Messaging',       to: '/messaging' },
     ],
   },
   {
@@ -73,12 +71,8 @@ const dbNavSections = [
 ]
 
 const dbBottomItems = [
-  { icon: CreditCard,          label: 'Billing',       to: '/billing' },
-  { icon: Settings,            label: 'Settings',      to: '/settings' },
-]
-
-const dbAdminItems = [
-  { icon: SlidersHorizontal,   label: 'System Config', to: '/system-config' },
+  { icon: CreditCard, label: 'Billing',  to: '/billing' },
+  { icon: Settings,   label: 'Settings', to: '/settings' },
 ]
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -89,10 +83,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { user, activeOrg, logout } = useAuthStore()
-  const { isDirectBooking }         = useSystemStore()
-  const navigate                    = useNavigate()
-  const isDirect                    = isDirectBooking()
+  const { user, logout } = useAuthStore()
+  const { isDirectBooking } = useSystemStore()
+  const navigate = useNavigate()
+  const isDirect = isDirectBooking()
+  const isAdmin  = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
 
   const handleLogout = async () => {
     await authApi.logout()
@@ -119,31 +114,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-200">
-        <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-          <LockIcon size={16} className="text-white" />
-        </div>
-        <span className="font-semibold text-gray-900 text-lg">Propvian</span>
+      <div className="px-6 py-5 border-b border-gray-200">
+        <PropvianLogo size={32} textClassName="font-semibold text-gray-900 text-lg" />
       </div>
-
-      {/* Account name */}
-      {activeOrg && (
-        <div className="px-4 py-3 border-b border-gray-200">
-          <div className="flex items-center gap-2 px-3 py-2">
-            <div className="w-6 h-6 bg-primary-50 rounded-md flex items-center justify-center flex-shrink-0">
-              <span className="text-primary-600 text-xs font-bold">
-                {activeOrg.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <span className="text-sm text-gray-700 font-medium truncate">{activeOrg.name}</span>
-          </div>
-        </div>
-      )}
 
       {/* Main nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {isDirect ? (
-          // ── Direct booking navigation ──────────────────────────────────────
           <div className="space-y-4">
             {dbNavSections.map((section) => (
               <div key={section.heading ?? 'main'}>
@@ -161,7 +138,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             ))}
           </div>
         ) : (
-          // ── TTLock navigation ──────────────────────────────────────────────
           <div className="space-y-0.5">
             {ttlockNavItems.map((item) => (
               <NavItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
@@ -175,9 +151,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {(isDirect ? dbBottomItems : ttlockBottomItems).map((item) => (
           <NavItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
         ))}
-        {user?.role === 'SUPER_ADMIN' && (isDirect ? dbAdminItems : ttlockAdminItems).map((item) => (
-          <NavItem key={item.to} to={item.to} icon={item.icon} label={item.label} />
-        ))}
+
+        {/* Admin panel link — only for admin users */}
+        {isAdmin && (
+          <NavLink
+            to="/admin"
+            onClick={onClose}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 mt-1"
+          >
+            <Shield size={16} className="flex-shrink-0" />
+            <span>Admin Panel</span>
+          </NavLink>
+        )}
 
         {/* User info */}
         <div className="pt-2 mt-2 border-t border-gray-200">

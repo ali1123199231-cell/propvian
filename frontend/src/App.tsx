@@ -1,6 +1,46 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { GuestBookingPage } from '@/pages/public/GuestBookingPage'
+import { OrgListingPage } from '@/pages/public/OrgListingPage'
+
+// Subdomain detection: beachvilla.propvian.com → slug = "beachvilla"
+const hostname = window.location.hostname
+const PLATFORM_DOMAINS = ['propvian.com', 'www.propvian.com', 'localhost', '127.0.0.1']
+const isSubdomain = !PLATFORM_DOMAINS.includes(hostname) && hostname.endsWith('.propvian.com')
+const subdomainSlug = isSubdomain ? hostname.replace(/\.propvian\.com$/, '') : null
+
+function GuestBookingRoute() {
+  const { slug } = useParams<{ slug: string }>()
+  return <GuestBookingPage slug={slug!} />
+}
+
+// Path-based routes for /sites/:orgSlug
+function OrgListingRoute() {
+  const { orgSlug } = useParams<{ orgSlug: string }>()
+  return <OrgListingPage orgSlug={orgSlug!} getPropertyUrl={(s) => `/sites/${orgSlug}/property/${s}`} />
+}
+
+function OrgPropertyRoute() {
+  const { propertySlug } = useParams<{ propertySlug: string }>()
+  return <GuestBookingPage slug={propertySlug!} />
+}
+
+// Subdomain property route: myco.propvian.com/property/:propertySlug
+function SubdomainPropertyRoute() {
+  const { propertySlug } = useParams<{ propertySlug: string }>()
+  return <GuestBookingPage slug={propertySlug!} />
+}
 import { AppLayout } from '@/components/layout/AppLayout'
+import { AdminLayout } from '@/components/layout/AdminLayout'
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
+import { AdminVerificationsPage } from '@/pages/admin/AdminVerificationsPage'
+import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
+import { AdminOrganizationsPage } from '@/pages/admin/AdminOrganizationsPage'
+import { AdminSubscriptionsPage } from '@/pages/admin/AdminSubscriptionsPage'
+import { AdminErrorLogsPage } from '@/pages/admin/AdminErrorLogsPage'
+import { AdminSupportPage } from '@/pages/admin/AdminSupportPage'
 import { LandingPage } from '@/pages/LandingPage'
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { OnboardingPage } from '@/pages/OnboardingPage'
 import { DirectBookingOnboardingPage } from '@/pages/DirectBookingOnboardingPage'
 import { CheckinPage } from '@/pages/CheckinPage'
@@ -14,11 +54,8 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { BillingPage } from '@/pages/BillingPage'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AuditLogsPage } from '@/pages/AuditLogsPage'
-import { SystemConfigPage } from '@/pages/SystemConfigPage'
-
 // Direct Booking pages
 import { VerificationPage } from '@/pages/VerificationPage'
-import { AdminVerificationPage } from '@/pages/AdminVerificationPage'
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage'
 import { OAuthConnectPage } from '@/pages/OAuthConnectPage'
 import { DirectDashboardPage } from '@/pages/db/DirectDashboardPage'
@@ -74,15 +111,41 @@ function AnalyticsRouter() {
 }
 
 export default function App() {
+  // Subdomain: myco.propvian.com → org listing; /property/:slug → individual booking
+  if (subdomainSlug) {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/"
+            element={<OrgListingPage orgSlug={subdomainSlug} getPropertyUrl={(s) => `/property/${s}`} />}
+          />
+          <Route path="/property/:propertySlug" element={<SubdomainPropertyRoute />} />
+          <Route path="*"
+            element={<OrgListingPage orgSlug={subdomainSlug} getPropertyUrl={(s) => `/property/${s}`} />}
+          />
+        </Routes>
+      </BrowserRouter>
+    )
+  }
+
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public guest booking by path — works without subdomain DNS */}
+        <Route path="/book/:slug" element={<GuestBookingRoute />} />
+
+        {/* Org listing site — path-based fallback for /sites/:orgSlug */}
+        <Route path="/sites/:orgSlug" element={<OrgListingRoute />} />
+        <Route path="/sites/:orgSlug/property/:propertySlug" element={<OrgPropertyRoute />} />
+
         {/* Landing / auth */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
         <Route path="/oauth-connect"  element={<OAuthConnectPage />} />
         <Route path="/login" element={<Navigate to="/" replace />} />
         <Route path="/register" element={<Navigate to="/" replace />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Onboarding — two flavours */}
         <Route path="/onboarding"        element={<OnboardingPage />} />
@@ -118,7 +181,6 @@ export default function App() {
           <Route path="/billing"      element={<BillingPage />} />
           <Route path="/analytics"    element={<AnalyticsRouter />} />
           <Route path="/audit-logs"   element={<AuditLogsPage />} />
-          <Route path="/system-config" element={<SystemConfigPage />} />
 
           {/* TTLock-specific */}
           <Route path="/locks"        element={<LocksPage />} />
@@ -126,13 +188,23 @@ export default function App() {
 
           {/* Direct Booking-specific */}
           <Route path="/verification"       element={<VerificationPage />} />
-          <Route path="/admin/verification" element={<AdminVerificationPage />} />
           <Route path="/calendar"     element={<CalendarPage />} />
           <Route path="/payments"     element={<PaymentsPage />} />
           <Route path="/website"      element={<WebsitePage />} />
           <Route path="/domains"      element={<DomainsPage />} />
           <Route path="/reviews"      element={<ReviewsPage />} />
           <Route path="/messaging"    element={<MessagingPage />} />
+        </Route>
+
+        {/* Admin panel — separate layout, dark theme */}
+        <Route element={<AdminLayout />}>
+          <Route path="/admin"                  element={<AdminDashboardPage />} />
+          <Route path="/admin/verifications"    element={<AdminVerificationsPage />} />
+          <Route path="/admin/users"            element={<AdminUsersPage />} />
+          <Route path="/admin/organizations"    element={<AdminOrganizationsPage />} />
+          <Route path="/admin/subscriptions"    element={<AdminSubscriptionsPage />} />
+          <Route path="/admin/support"          element={<AdminSupportPage />} />
+          <Route path="/admin/errors"           element={<AdminErrorLogsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

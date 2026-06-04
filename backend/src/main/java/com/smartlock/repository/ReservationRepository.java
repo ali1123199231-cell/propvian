@@ -48,4 +48,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
 
     @Query("SELECT r FROM Reservation r WHERE r.propertyId IN :propertyIds AND r.hostNotifiedAt IS NULL AND r.status = com.smartlock.domain.enums.ReservationStatus.CONFIRMED AND r.checkInDate >= :from AND r.checkInDate < :to AND r.deletedAt IS NULL")
     List<Reservation> findPendingHostNotifications(@Param("propertyIds") List<UUID> propertyIds, @Param("from") Instant from, @Param("to") Instant to);
+
+    @Query("SELECT r FROM Reservation r WHERE r.propertyId = :propertyId AND r.status <> com.smartlock.domain.enums.ReservationStatus.CANCELLED AND r.deletedAt IS NULL ORDER BY r.checkInDate ASC")
+    List<Reservation> findByPropertyIdAndStatusNotCancelled(@Param("propertyId") UUID propertyId);
 }

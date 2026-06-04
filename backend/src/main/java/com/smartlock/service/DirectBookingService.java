@@ -1,20 +1,27 @@
 package com.smartlock.service;
 
 import com.smartlock.domain.DirectBooking;
+import com.smartlock.domain.Organization;
+import com.smartlock.domain.Property;
 import com.smartlock.domain.enums.DirectBookingStatus;
 import com.smartlock.dto.request.directbooking.CreateDirectBookingRequest;
 import com.smartlock.dto.response.common.PageResponse;
 import com.smartlock.dto.response.directbooking.DirectBookingResponse;
 import com.smartlock.exception.AppException;
 import com.smartlock.repository.DirectBookingRepository;
+import com.smartlock.repository.OrganizationRepository;
+import com.smartlock.repository.PropertyRepository;
+import com.smartlock.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,27 +30,41 @@ import java.util.UUID;
 @Slf4j
 public class DirectBookingService {
 
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM yyyy");
+
     private final DirectBookingRepository bookingRepository;
     private final VerificationService verificationService;
+    private final PropertyRepository propertyRepository;
+    private final OrganizationRepository organizationRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final OrganizationSecurityService orgSecurity;
+    private final CalendarEngine calendarEngine;
+    private final CleanerTaskService cleanerTaskService;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Transactional
     public DirectBookingResponse createBooking(UUID orgId, CreateDirectBookingRequest req) {
+        orgSecurity.requireOrgAccess(orgId);
         // Enforce booking gate
         if (!verificationService.isBookingEnabled(orgId)) {
             throw new AppException("Bookings are disabled until verification is complete", HttpStatus.FORBIDDEN);
         }
 
         UUID propertyId = UUID.fromString(req.getPropertyId());
+        // Verify the property belongs to this org
+        propertyRepository.findById(propertyId)
+                .filter(p -> p.getOrganizationId().equals(orgId))
+                .orElseThrow(() -> new AppException("Property not found in this organization", HttpStatus.NOT_FOUND));
 
-        // Check availability
-        List<DirectBooking> conflicts = bookingRepository.findConflictingBookings(
+        // CalendarEngine handles: advisory lock + availability check + stay rule validation
+        // This replaces the old findConflictingBookings() call
+        CalendarEngine.AvailabilityResult avail = calendarEngine.checkAvailability(
                 propertyId, req.getCheckInDate(), req.getCheckOutDate());
-        if (!conflicts.isEmpty()) {
-            throw new AppException("Property is not available for the selected dates", HttpStatus.CONFLICT);
-        }
-
-        if (!req.getCheckOutDate().isAfter(req.getCheckInDate())) {
-            throw new AppException("Check-out date must be after check-in date", HttpStatus.BAD_REQUEST);
+        if (!avail.available()) {
+            throw new AppException(avail.reason(), HttpStatus.CONFLICT);
         }
 
         DirectBooking booking = DirectBooking.builder()
@@ -60,11 +81,19 @@ public class DirectBookingService {
                 .notes(req.getNotes())
                 .build();
 
-        return toResponse(bookingRepository.save(booking));
+        booking = bookingRepository.save(booking);
+
+        // Register dates in the calendar engine (advisory lock + GIST constraint protection)
+        calendarEngine.registerBookedInterval(
+                propertyId, req.getCheckInDate(), req.getCheckOutDate(),
+                booking.getId(), "DirectBooking: " + req.getGuestEmail());
+
+        return toResponse(booking);
     }
 
     @Transactional(readOnly = true)
     public PageResponse<DirectBookingResponse> listBookings(UUID orgId, Pageable pageable) {
+        orgSecurity.requireOrgAccess(orgId);
         return PageResponse.from(
                 bookingRepository.findByOrganizationId(orgId, pageable).map(this::toResponse));
     }
@@ -84,7 +113,27 @@ public class DirectBookingService {
         DirectBooking booking = requireBooking(orgId, bookingId);
         booking.setStatus(DirectBookingStatus.CONFIRMED);
         booking.setPaymentStatus("PAID");
-        return toResponse(bookingRepository.save(booking));
+        bookingRepository.save(booking);
+        notifyHostOfConfirmedBooking(orgId, booking);
+        return toResponse(booking);
+    }
+
+    private void notifyHostOfConfirmedBooking(UUID orgId, DirectBooking booking) {
+        try {
+            Organization org = organizationRepository.findById(orgId).orElse(null);
+            if (org == null) return;
+            userRepository.findById(org.getOwnerId()).ifPresent(owner -> {
+                Property property = propertyRepository.findById(booking.getPropertyId()).orElse(null);
+                String propertyName = property != null ? property.getName() : "your property";
+                String checkIn = DATE_FMT.format(booking.getCheckInDate());
+                String checkOut = DATE_FMT.format(booking.getCheckOutDate());
+                emailService.sendNewReservationEmail(
+                        owner.getEmail(), booking.getGuestName(), propertyName,
+                        checkIn, checkOut, "DIRECT", frontendUrl + "/reservations");
+            });
+        } catch (Exception e) {
+            log.error("Failed to notify host of confirmed booking {}: {}", booking.getId(), e.getMessage());
+        }
     }
 
     @Transactional
@@ -96,7 +145,37 @@ public class DirectBookingService {
         booking.setStatus(DirectBookingStatus.CANCELLED);
         booking.setCancelledAt(java.time.Instant.now());
         booking.setCancellationReason(reason);
+        bookingRepository.save(booking);
+
+        // Release calendar dates (removes BOOKED + BUFFER intervals)
+        calendarEngine.cancelBookingDates(booking.getId());
+
+        return toResponse(booking);
+    }
+
+    @Transactional
+    public DirectBookingResponse checkInBooking(UUID orgId, UUID bookingId) {
+        DirectBooking booking = requireBooking(orgId, bookingId);
+        if (booking.getStatus() != DirectBookingStatus.CONFIRMED) {
+            throw new AppException("Booking must be CONFIRMED to check in (current: " + booking.getStatus() + ")", HttpStatus.BAD_REQUEST);
+        }
+        booking.setStatus(DirectBookingStatus.CHECKED_IN);
         return toResponse(bookingRepository.save(booking));
+    }
+
+    @Transactional
+    public DirectBookingResponse checkOutBooking(UUID orgId, UUID bookingId) {
+        DirectBooking booking = requireBooking(orgId, bookingId);
+        if (booking.getStatus() != DirectBookingStatus.CHECKED_IN) {
+            throw new AppException("Booking must be CHECKED_IN to check out (current: " + booking.getStatus() + ")", HttpStatus.BAD_REQUEST);
+        }
+        booking.setStatus(DirectBookingStatus.CHECKED_OUT);
+        bookingRepository.save(booking);
+
+        // Create a cleaner task for this checkout
+        cleanerTaskService.createCleanerTaskForDirectBooking(bookingId, orgId);
+
+        return toResponse(booking);
     }
 
     @Transactional(readOnly = true)

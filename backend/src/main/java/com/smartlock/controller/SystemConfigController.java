@@ -18,13 +18,22 @@ public class SystemConfigController {
 
     private final SystemConfigService systemConfigService;
 
-    @GetMapping("/config")
+    /** Public: only non-sensitive UI/feature-flag keys. */
+    @GetMapping("/public-config")
     public ResponseEntity<ApiResponse<Map<String, String>>> getPublicConfig() {
-        return ResponseEntity.ok(ApiResponse.success(systemConfigService.getAllPublicConfig()));
+        return ResponseEntity.ok(ApiResponse.success(systemConfigService.getPublicConfig()));
     }
 
+    /** Admin only: full config including secret keys. */
+    @GetMapping("/config")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, String>>> getFullConfig() {
+        return ResponseEntity.ok(ApiResponse.success(systemConfigService.getAllConfig()));
+    }
+
+    /** Admin only: update any config key including secrets. */
     @PutMapping("/config")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> updateConfig(@RequestBody Map<String, String> updates) {
         systemConfigService.setMultiple(updates);
         return ResponseEntity.ok(ApiResponse.<Void>builder().success(true).message("Config updated").build());

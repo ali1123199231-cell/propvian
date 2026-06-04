@@ -1,7 +1,9 @@
 package com.smartlock.service;
 
 import com.smartlock.domain.Organization;
+import com.smartlock.domain.Property;
 import com.smartlock.domain.Reservation;
+import com.smartlock.domain.User;
 import com.smartlock.domain.enums.ReservationSource;
 import com.smartlock.domain.enums.ReservationStatus;
 import com.smartlock.dto.request.reservation.CreateReservationRequest;
@@ -14,8 +16,10 @@ import com.smartlock.repository.AccessCodeRepository;
 import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
+import com.smartlock.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Service
@@ -33,12 +39,19 @@ public class ReservationService {
 
     private static final SecureRandom CHECKIN_CODE_RANDOM = new SecureRandom();
     private static final String CHECKIN_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm");
 
     private final ReservationRepository reservationRepository;
     private final PropertyRepository propertyRepository;
     private final AccessCodeRepository accessCodeRepository;
     private final OrganizationRepository organizationRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
     private final ApplicationEventPublisher eventPublisher;
+    private final OrganizationSecurityService orgSecurity;
+
+    @Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Transactional
     public ReservationResponse createReservation(UUID propertyId, UUID orgId, CreateReservationRequest request) {
@@ -64,12 +77,12 @@ public class ReservationService {
 
         reservation = reservationRepository.save(reservation);
 
-        boolean automationEnabled = organizationRepository.findById(orgId)
-                .map(Organization::isAutomationEnabled)
-                .orElse(false);
-
-        if (automationEnabled) {
-            eventPublisher.publishEvent(new ReservationCreatedEvent(this, reservation.getId(), orgId));
+        Organization org = organizationRepository.findById(orgId).orElse(null);
+        if (org != null) {
+            if (org.isAutomationEnabled()) {
+                eventPublisher.publishEvent(new ReservationCreatedEvent(this, reservation.getId(), orgId));
+            }
+            notifyHostOfNewReservation(reservation, org);
         }
 
         return toResponse(reservation, null);
@@ -77,12 +90,14 @@ public class ReservationService {
 
     @Transactional(readOnly = true)
     public Page<ReservationResponse> getReservationsByOrg(UUID orgId, Pageable pageable) {
+        orgSecurity.requireOrgAccess(orgId);
         return reservationRepository.findByOrganizationId(orgId, pageable)
                 .map(r -> toResponse(r, null));
     }
 
     @Transactional(readOnly = true)
     public Page<ReservationResponse> getReservationsByProperty(UUID propertyId, Pageable pageable) {
+        orgSecurity.requirePropertyAccess(propertyId);
         return reservationRepository.findByPropertyId(propertyId, pageable)
                 .map(r -> toResponse(r, null));
     }
@@ -91,6 +106,8 @@ public class ReservationService {
     public ReservationResponse getReservation(UUID reservationId) {
         Reservation r = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", reservationId));
+        // Verify caller owns the property this reservation belongs to
+        orgSecurity.requirePropertyAccess(r.getPropertyId());
         long codeCount = accessCodeRepository.countByReservationId(reservationId);
         return toResponse(r, codeCount > 0);
     }
@@ -99,6 +116,7 @@ public class ReservationService {
     public ReservationResponse cancelReservation(UUID reservationId, UUID orgId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", reservationId));
+        orgSecurity.requirePropertyAccess(reservation.getPropertyId());
 
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservation = reservationRepository.save(reservation);
@@ -112,6 +130,7 @@ public class ReservationService {
     public ReservationResponse checkOut(UUID reservationId, UUID orgId) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", reservationId));
+        orgSecurity.requirePropertyAccess(reservation.getPropertyId());
 
         reservation.setStatus(ReservationStatus.CHECKED_OUT);
         reservation = reservationRepository.save(reservation);
@@ -119,6 +138,25 @@ public class ReservationService {
         eventPublisher.publishEvent(new ReservationCheckedOutEvent(this, reservation.getId(), orgId));
 
         return toResponse(reservation, null);
+    }
+
+    private void notifyHostOfNewReservation(Reservation reservation, Organization org) {
+        try {
+            userRepository.findById(org.getOwnerId()).ifPresent(owner -> {
+                Property property = propertyRepository.findById(reservation.getPropertyId()).orElse(null);
+                String propertyName = property != null ? property.getName() : "your property";
+                ZoneId zone = ZoneId.of("UTC");
+                String checkIn = DATE_FMT.format(reservation.getCheckInDate().atZone(zone));
+                String checkOut = DATE_FMT.format(reservation.getCheckOutDate().atZone(zone));
+                String source = reservation.getSource() != null ? reservation.getSource().name() : "MANUAL";
+                String dashboardUrl = frontendUrl + "/reservations";
+                emailService.sendNewReservationEmail(
+                        owner.getEmail(), reservation.getGuestName(), propertyName,
+                        checkIn, checkOut, source, dashboardUrl);
+            });
+        } catch (Exception e) {
+            log.error("Failed to notify host of new reservation {}: {}", reservation.getId(), e.getMessage());
+        }
     }
 
     private String generateCheckinCode() {

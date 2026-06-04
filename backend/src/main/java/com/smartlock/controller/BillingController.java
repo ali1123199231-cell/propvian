@@ -8,6 +8,7 @@ import com.smartlock.dto.request.billing.UpdateQuotaRequest;
 import com.smartlock.dto.response.billing.BillingStatusResponse;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.exception.ResourceNotFoundException;
+import com.smartlock.service.OrganizationSecurityService;
 import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.UserRepository;
 import com.smartlock.security.CustomUserDetails;
@@ -40,6 +41,7 @@ public class BillingController {
     private final PayPalService payPalService;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final OrganizationSecurityService orgSecurity;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -48,6 +50,7 @@ public class BillingController {
     public ResponseEntity<ApiResponse<BillingStatusResponse>> getBillingStatus(
             @PathVariable UUID orgId,
             @AuthenticationPrincipal CustomUserDetails principal) {
+        orgSecurity.requireOrgAccess(orgId);
         Subscription sub = billingService.getSubscription(orgId);
         long usedLocks = billingService.getUsedLockCount(orgId);
 

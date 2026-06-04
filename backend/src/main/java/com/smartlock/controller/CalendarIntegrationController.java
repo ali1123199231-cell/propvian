@@ -5,11 +5,14 @@ import com.smartlock.dto.response.calendar.CalendarIntegrationResponse;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.CalendarIntegrationService;
+import com.smartlock.service.ICalExportService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +28,7 @@ import java.util.UUID;
 public class CalendarIntegrationController {
 
     private final CalendarIntegrationService calendarIntegrationService;
+    private final ICalExportService icalExportService;
 
     @PostMapping("/properties/{propertyId}/calendar-integrations")
     public ResponseEntity<ApiResponse<CalendarIntegrationResponse>> create(
@@ -55,5 +59,23 @@ public class CalendarIntegrationController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         calendarIntegrationService.triggerSync(integrationId, userDetails.getActiveOrgId());
         return ResponseEntity.ok(ApiResponse.success("Sync triggered"));
+    }
+
+    /** Get (or auto-create) the iCal export token for a property. */
+    @GetMapping("/properties/{propertyId}/calendar-integrations/export-token")
+    public ResponseEntity<ApiResponse<String>> getExportToken(
+            @PathVariable UUID propertyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String token = icalExportService.getOrCreateExportToken(propertyId, userDetails.getActiveOrgId());
+        return ResponseEntity.ok(ApiResponse.success(token));
+    }
+
+    /** Rotate (regenerate) the export token, invalidating the old feed URL. */
+    @PostMapping("/properties/{propertyId}/calendar-integrations/rotate-token")
+    public ResponseEntity<ApiResponse<String>> rotateToken(
+            @PathVariable UUID propertyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String token = icalExportService.rotateExportToken(propertyId, userDetails.getActiveOrgId());
+        return ResponseEntity.ok(ApiResponse.success(token));
     }
 }

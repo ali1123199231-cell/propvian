@@ -41,18 +41,16 @@ public class StripeConnectController {
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
-    /** Resolves the Stripe secret key: env var takes precedence over DB. */
     private void initStripe() {
-        String key = secretKeyEnv != null && !secretKeyEnv.isBlank()
-                ? secretKeyEnv
-                : systemConfigService.get("stripe.secret_key", "");
+        String db  = systemConfigService.getActiveStripeSecretKey();
+        String key = !db.isBlank() ? db : (secretKeyEnv != null ? secretKeyEnv : "");
         if (!key.isBlank()) Stripe.apiKey = key;
     }
 
     @GetMapping("/connect-url")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<Map<String, String>>> connectUrl(@RequestParam String orgId) {
-        String clientId = systemConfigService.getStripeConnectClientId();
+        String clientId = systemConfigService.getActiveStripeConnectClientId();
 
         if (clientId.isBlank()) {
             // No client ID in DB yet — open the dev credential-entry form

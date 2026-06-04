@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#5B6EF5"/>
+      <stop offset="100%" stop-color="#3730C4"/>
+    </linearGradient>
+    <clipPath id="round">
+      <rect width="512" height="512" rx="115" ry="115"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="115" ry="115" fill="url(#bg)"/>
+
+  <!-- House body (white) -->
+  <g fill="white" clip-path="url(#round)">
+    <!-- Roof (triangle) -->
+    <polygon points="256,95 390,230 122,230"/>
+
+    <!-- Chimney -->
+    <rect x="178" y="138" width="44" height="72" rx="4"/>
+
+    <!-- House body -->
+    <rect x="142" y="218" width="228" height="210" rx="6"/>
+
+    <!-- Keyhole cut-out (dark, so we overlay dark shape) -->
+  </g>
+
+  <!-- Keyhole (dark indigo, layered on top of white house) -->
+  <!-- Circle part -->
+  <circle cx="256" cy="300" r="44" fill="#3730C4"/>
+  <!-- Rectangle part -->
+  <rect x="236" y="330" width="40" height="62" rx="6" fill="#3730C4"/>
+</svg>

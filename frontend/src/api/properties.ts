@@ -37,4 +37,8 @@ export const propertiesApi = {
     const { data } = await apiClient.get(`/organizations/${orgId}/properties/${propertyId}/photos`)
     return data.data ?? []
   },
+
+  deletePhoto: async (orgId: string, propertyId: string, photoId: string): Promise<void> => {
+    await apiClient.delete(`/organizations/${orgId}/properties/${propertyId}/photos/${photoId}`)
+  },
 }

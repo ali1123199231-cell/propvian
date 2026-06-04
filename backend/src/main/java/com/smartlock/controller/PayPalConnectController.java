@@ -41,21 +41,19 @@ public class PayPalConnectController {
     private String frontendUrl;
 
     private String apiBase() {
-        return systemConfigService.isPaypalSandbox()
-                ? "https://api-m.sandbox.paypal.com"
-                : "https://api-m.paypal.com";
+        return systemConfigService.getActivePaypalBaseUrl();
     }
 
     private String authBase() {
         return systemConfigService.isPaypalSandbox()
-                ? "https://www.sandbox.paypal.com"
-                : "https://www.paypal.com";
+                ? systemConfigService.get("paypal.sandbox.auth_base_url", "https://www.sandbox.paypal.com")
+                : systemConfigService.get("paypal.auth_base_url", "https://www.paypal.com");
     }
 
     @GetMapping("/connect-url")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<Map<String, String>>> connectUrl(@RequestParam String orgId) {
-        String clientId = systemConfigService.getPaypalClientId();
+        String clientId = systemConfigService.getActivePaypalClientId();
 
         if (clientId.isBlank()) {
             String devUrl = frontendUrl + "/oauth-connect?provider=paypal&orgId=" + orgId;
@@ -111,8 +109,8 @@ public class PayPalConnectController {
     }
 
     private String exchangeCodeForEmail(String code, String redirectUri) throws Exception {
-        String clientId     = systemConfigService.getPaypalClientId();
-        String clientSecret = systemConfigService.getPaypalClientSecret();
+        String clientId     = systemConfigService.getActivePaypalClientId();
+        String clientSecret = systemConfigService.getActivePaypalClientSecret();
 
         String credentials = Base64.getEncoder().encodeToString(
                 (clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));

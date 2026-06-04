@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New Reservation</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; color: #1e293b; }
+  .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .header { background: linear-gradient(135deg, #10b981, #059669); padding: 36px 40px; }
+  .header h1 { color: white; margin: 0 0 4px; font-size: 22px; }
+  .header p { color: rgba(255,255,255,0.85); margin: 0; font-size: 14px; }
+  .body { padding: 36px 40px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+  .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
+  .info-card .label { color: #64748b; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .info-card .value { color: #1e293b; font-weight: 600; font-size: 14px; }
+  .badge { display: inline-block; background: #10b981; color: white; font-size: 12px; font-weight: 700; border-radius: 20px; padding: 4px 12px; margin-bottom: 16px; }
+  .source-badge { display: inline-block; background: #6366f1; color: white; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 3px 8px; margin-left: 8px; vertical-align: middle; }
+  .cta-btn { display: inline-block; background: #6366f1; color: white !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; margin-top: 16px; }
+  .footer { background: #f8fafc; padding: 18px 40px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #f1f5f9; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>New reservation confirmed</h1>
+    <p th:text="${guestName != null ? guestName + ' has been booked at ' + propertyName : 'A guest has booked ' + propertyName}">Guest booked</p>
+  </div>
+  <div class="body">
+    <span class="badge">Confirmed</span>
+    <span class="source-badge" th:text="${source}">MANUAL</span>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="label">Guest</div>
+        <div class="value" th:text="${guestName != null ? guestName : 'Not specified'}">Guest Name</div>
+      </div>
+      <div class="info-card">
+        <div class="label">Property</div>
+        <div class="value" th:text="${propertyName}">Property</div>
+      </div>
+      <div class="info-card">
+        <div class="label">Check-in</div>
+        <div class="value" th:text="${checkIn}">1 Jan 2026</div>
+      </div>
+      <div class="info-card">
+        <div class="label">Check-out</div>
+        <div class="value" th:text="${checkOut}">5 Jan 2026</div>
+      </div>
+    </div>
+
+    <p style="font-size:14px; color:#475569;">
+      Log in to Propvian to view full details, manage the reservation, or assign access codes.
+    </p>
+
+    <a th:href="${dashboardUrl}" class="cta-btn">View in Dashboard</a>
+  </div>
+  <div class="footer">
+    <p>Powered by Propvian · Direct Booking Software</p>
+  </div>
+</div>
+</body>
+</html>

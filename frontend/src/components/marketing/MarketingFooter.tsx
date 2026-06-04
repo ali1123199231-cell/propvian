@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Lock } from 'lucide-react'
+import { PropvianLogo } from '@/components/PropvianLogo'
 
 export function MarketingFooter() {
   const year = new Date().getFullYear()
@@ -9,14 +9,11 @@ export function MarketingFooter() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link to="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <Lock size={16} className="text-white" />
-              </div>
-              <span className="text-lg font-bold text-white">Propvian</span>
+            <Link to="/" className="inline-block mb-4">
+              <PropvianLogo size={32} textClassName="text-lg font-bold text-white" />
             </Link>
             <p className="text-sm leading-relaxed max-w-xs">
-              Smart lock automation for Airbnb and Booking.com hosts. Automatically generate and revoke guest access codes.
+              Direct booking platform for short-term rental hosts. Accept bookings, manage properties, and automate guest access — all in one place.
             </p>
           </div>
 
@@ -36,7 +33,7 @@ export function MarketingFooter() {
             <ul className="space-y-2.5 text-sm">
               <li><Link to="/integrations/airbnb" className="hover:text-white transition-colors">Airbnb</Link></li>
               <li><Link to="/integrations/booking-com" className="hover:text-white transition-colors">Booking.com</Link></li>
-              <li><Link to="/integrations/ttlock" className="hover:text-white transition-colors">TTLock</Link></li>
+              <li><Link to="/integrations/airbnb-sync" className="hover:text-white transition-colors">Calendar Sync</Link></li>
             </ul>
           </div>
 
@@ -55,7 +52,7 @@ export function MarketingFooter() {
 
         <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
           <p>© {year} Propvian. All rights reserved.</p>
-          <p>Smart lock automation for short-term rental hosts worldwide.</p>
+          <p>Direct booking platform for short-term rental hosts worldwide.</p>
         </div>
       </div>
     </footer>

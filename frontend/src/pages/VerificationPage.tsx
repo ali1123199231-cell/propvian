@@ -7,7 +7,7 @@ import {
   CheckCircle, Clock, XCircle, Circle, ChevronRight, ChevronLeft,
   ShieldCheck, Home, Link, Calendar, CreditCard, Globe, BadgeCheck,
   Loader2, AlertTriangle, ExternalLink, Info, Upload, X, Copy,
-  RefreshCw, Check, Plug, WifiOff, Wifi,
+  RefreshCw, Check, Plug, WifiOff, Wifi, ArrowRight,
 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -105,7 +105,7 @@ function FileUpload({
     try {
       // Simulate progress
       const tick = setInterval(() => setProgress(p => Math.min(p + 15, 85)), 200)
-      const result = await fileUploadApi.upload(file, orgId)
+      const result = await fileUploadApi.upload(file)
       clearInterval(tick); setProgress(100)
       onChange({ name: file.name, url: result.url, path: result.path })
       setTimeout(() => setProgress(0), 600)
@@ -476,6 +476,24 @@ function PropertyVerifStep({ orgId, onDone, status, stepData, properties }: {
     }
   }
 
+  if (properties.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <div className="w-14 h-14 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Home size={26} className="text-primary-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Add a property first</h3>
+        <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+          You need at least one property in your account before you can submit verification documents.
+        </p>
+        <RouterLink to="/properties"
+          className="btn-primary inline-flex items-center gap-2 justify-center px-5 py-2.5">
+          Go to Properties <ArrowRight size={15} />
+        </RouterLink>
+      </div>
+    )
+  }
+
   if (status === 'APPROVED') return <ApprovedState label="Property" />
   if (status === 'PENDING')  return <PendingState label="property verification" />
 
@@ -566,6 +584,31 @@ function PropertyVerifStep({ orgId, onDone, status, stepData, properties }: {
   )
 }
 
+// ── Platform config ───────────────────────────────────────────────────────────
+
+const OTA_PLATFORMS = [
+  { id: 'airbnb',  label: 'Airbnb',      bg: 'bg-[#FF5A5F]', placeholder: 'https://www.airbnb.com/rooms/12345678' },
+  { id: 'booking', label: 'Booking.com', bg: 'bg-[#003580]', placeholder: 'https://www.booking.com/hotel/us/my-property.html' },
+  { id: 'vrbo',    label: 'VRBO',        bg: 'bg-[#1D5FA7]', placeholder: 'https://www.vrbo.com/1234567' },
+  { id: 'other',   label: 'Other',       bg: 'bg-gray-500',  placeholder: 'https://…' },
+]
+
+const ICAL_PLATFORMS = [
+  { id: 'airbnb',  label: 'Airbnb',      bg: 'bg-[#FF5A5F]', placeholder: 'https://www.airbnb.com/calendar/ical/12345678.ics?s=…' },
+  { id: 'booking', label: 'Booking.com', bg: 'bg-[#003580]', placeholder: 'https://ical.booking.com/v1/export?t=…' },
+  { id: 'vrbo',    label: 'VRBO',        bg: 'bg-[#1D5FA7]', placeholder: 'https://www.vrbo.com/icalendar/…ics' },
+  { id: 'other',   label: 'Other / PMS', bg: 'bg-gray-500',  placeholder: 'https://yourpms.com/calendar/export.ics' },
+]
+
+function PlatformBadge({ platformId, platforms }: { platformId: string; platforms: typeof OTA_PLATFORMS }) {
+  const p = platforms.find(x => x.id === platformId) ?? platforms[platforms.length - 1]
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold text-white flex-shrink-0 ${p.bg}`}>
+      {p.label}
+    </span>
+  )
+}
+
 // ── Step 3 (OTA Listings) ─────────────────────────────────────────────────────
 
 function OtaStep({ orgId, onDone, status, stepData }: {
@@ -576,28 +619,50 @@ function OtaStep({ orgId, onDone, status, stepData }: {
   const verificationNote = data[2] || ''
   const reviewCount      = parseInt(data[3] || '0', 10)
 
-  const schema = z.object({
-    airbnbListingUrl:  z.string().url('Enter a valid URL').optional().or(z.literal('')),
-    bookingListingUrl: z.string().url('Enter a valid URL').optional().or(z.literal('')),
-    vrboListingUrl:    z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  }).refine(d => d.airbnbListingUrl || d.bookingListingUrl || d.vrboListingUrl, {
-    message: 'Provide at least one active OTA listing URL',
-    path: ['airbnbListingUrl'],
-  })
+  const [listings, setListings] = useState<{ platform: string; url: string }[]>([])
+  const [selPlatform, setSelPlatform] = useState('airbnb')
+  const [urlInput, setUrlInput]       = useState('')
+  const [submitting, setSubmitting]   = useState(false)
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(schema),
-  })
+  const currentPlaceholder = OTA_PLATFORMS.find(p => p.id === selPlatform)?.placeholder ?? ''
 
-  const onSubmit = async (data: any) => {
+  const addListing = () => {
+    const url = urlInput.trim()
+    if (!url) return
+    try { new URL(url) } catch { toast.error('Enter a valid URL'); return }
+    setListings(ls => [...ls, { platform: selPlatform, url }])
+    setUrlInput('')
+  }
+
+  const removeListing = (i: number) => setListings(ls => ls.filter((_, j) => j !== i))
+
+  const handleSubmit = async () => {
+    if (listings.length === 0) { toast.error('Add at least one listing URL'); return }
+    setSubmitting(true)
     try {
-      await verificationApi.submitOta(orgId, data)
+      const byPlatform = listings.reduce((acc, l) => {
+        acc[l.platform] = acc[l.platform] ?? []
+        acc[l.platform].push(l.url)
+        return acc
+      }, {} as Record<string, string[]>)
+
+      await verificationApi.submitOta(orgId, {
+        airbnbListingUrl:  byPlatform['airbnb']?.[0],
+        bookingListingUrl: byPlatform['booking']?.[0],
+        vrboListingUrl:    byPlatform['vrbo']?.[0],
+        otherListingUrls:  [
+          ...(byPlatform['other']   ?? []),
+          ...(byPlatform['airbnb']?.slice(1)  ?? []),
+          ...(byPlatform['booking']?.slice(1) ?? []),
+          ...(byPlatform['vrbo']?.slice(1)    ?? []),
+        ],
+      })
       qc.invalidateQueries({ queryKey: ['verification', orgId] })
       toast.success('OTA listings submitted — checking automatically…')
       onDone()
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Submission failed')
-    }
+    } finally { setSubmitting(false) }
   }
 
   if (status === 'APPROVED') return <ApprovedState label="OTA listings" note={verificationNote || undefined} />
@@ -605,19 +670,17 @@ function OtaStep({ orgId, onDone, status, stepData }: {
     return (
       <div>
         <PendingState label="OTA listings" />
-        {verificationNote && (
-          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <div className="flex items-start gap-2">
-              <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-700">{verificationNote}</p>
-            </div>
-            {reviewCount > 0 && reviewCount < 3 && (
-              <p className="text-xs text-amber-600 mt-2 ml-5">
-                We currently work only with experienced hosts and require at least 3 reviews. Your listing shows {reviewCount} review(s).
-              </p>
-            )}
+        <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-700">{verificationNote}</p>
           </div>
-        )}
+          {reviewCount > 0 && reviewCount < 3 && (
+            <p className="text-xs text-amber-600 mt-2 ml-5">
+              We require at least 3 reviews. Your listing shows {reviewCount} review(s).
+            </p>
+          )}
+        </div>
       </div>
     )
   }
@@ -627,54 +690,65 @@ function OtaStep({ orgId, onDone, status, stepData }: {
     <div>
       <h3 className="text-lg font-semibold text-gray-900 mb-1">OTA Listing Verification</h3>
       <p className="text-sm text-gray-500 mb-4">
-        Provide at least one active OTA listing. We verify you're an experienced host automatically.
+        Add your active OTA listings. We verify you're an experienced host automatically.
       </p>
 
       {status === 'REJECTED' && <div className="mb-4"><RejectedState label="OTA" reason={stepData?.rejectionReason} /></div>}
 
       <InfoBox>
-        <strong>Auto-verification:</strong> We check your listing automatically. You must have at least 3 guest reviews to qualify. We currently work only with experienced hosts.
+        <strong>Auto-verification:</strong> We check your listing automatically. You need at least 3 guest reviews to qualify.
       </InfoBox>
 
-      <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2">
-        <p className="text-sm font-medium text-gray-700">How to find your listing URL:</p>
-        <a href="https://www.airbnb.com/hosting/listings" target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs text-primary-600 hover:underline">
-          <ExternalLink size={11} /> Airbnb → Listings → click your property → copy URL from browser
-        </a>
-        <a href="https://partner.booking.com/" target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs text-primary-600 hover:underline">
-          <ExternalLink size={11} /> Booking.com → Partner Portal → Property → copy property URL
-        </a>
-        <a href="https://www.vrbo.com/en-us/owner" target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs text-primary-600 hover:underline">
-          <ExternalLink size={11} /> VRBO → My Properties → click property → copy URL from browser
-        </a>
+      {/* Add listing row */}
+      <div className="mt-5 p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
+        <p className="text-sm font-semibold text-gray-700">Add a listing</p>
+        <div className="flex gap-2">
+          <select value={selPlatform} onChange={e => { setSelPlatform(e.target.value); setUrlInput('') }}
+            className="input-base w-36 flex-shrink-0 text-sm">
+            {OTA_PLATFORMS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+          <input
+            value={urlInput}
+            onChange={e => setUrlInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addListing())}
+            placeholder={currentPlaceholder}
+            className="input-base flex-1 text-sm"
+          />
+          <button type="button" onClick={addListing}
+            className="btn-primary px-4 text-sm flex-shrink-0">
+            Add
+          </button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-5">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Airbnb listing URL</label>
-          <input {...register('airbnbListingUrl')} className="input-base"
-            placeholder="https://www.airbnb.com/rooms/12345678" />
-          {errors.airbnbListingUrl && <p className="mt-1 text-xs text-red-500">{String(errors.airbnbListingUrl.message)}</p>}
+      {/* Added listings */}
+      {listings.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Added listings ({listings.length})</p>
+          {listings.map((l, i) => (
+            <div key={i} className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl">
+              <PlatformBadge platformId={l.platform} platforms={OTA_PLATFORMS} />
+              <span className="flex-1 text-xs text-gray-700 truncate">{l.url}</span>
+              <button onClick={() => removeListing(i)}
+                className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
+                <X size={14} />
+              </button>
+            </div>
+          ))}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Booking.com listing URL</label>
-          <input {...register('bookingListingUrl')} className="input-base"
-            placeholder="https://www.booking.com/hotel/us/my-property.html" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">VRBO listing URL</label>
-          <input {...register('vrboListingUrl')} className="input-base"
-            placeholder="https://www.vrbo.com/1234567" />
-        </div>
+      )}
 
-        <button type="submit" disabled={isSubmitting} className="btn-primary justify-center py-2.5">
-          {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />}
-          {isSubmitting ? 'Verifying…' : 'Verify OTA listings'}
-        </button>
-      </form>
+      {listings.length === 0 && (
+        <p className="mt-4 text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-xl">
+          No listings added yet — select a platform and paste your URL above
+        </p>
+      )}
+
+      <button onClick={handleSubmit} disabled={submitting || listings.length === 0}
+        className="btn-primary justify-center py-2.5 w-full mt-5 disabled:opacity-40">
+        {submitting ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />}
+        {submitting ? 'Verifying…' : 'Verify OTA listings'}
+      </button>
     </div>
   )
 }
@@ -685,74 +759,69 @@ function CalendarStep({ orgId, onDone, status }: {
   orgId: string; onDone: () => void; status: VerificationStatus
 }) {
   const qc = useQueryClient()
-  const schema = z.object({
-    airbnbIcalUrl:  z.string().url('Enter a valid iCal URL').optional().or(z.literal('')),
-    bookingIcalUrl: z.string().url('Enter a valid iCal URL').optional().or(z.literal('')),
-    otherUrl:       z.string().url('Enter a valid URL').optional().or(z.literal('')),
-  })
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm({ resolver: zodResolver(schema) })
 
-  const [testResults, setTestResults] = useState<Record<string, 'testing' | 'ok' | 'fail'>>({})
-  const [testMessages, setTestMessages] = useState<Record<string, string>>({})
+  const [feeds, setFeeds] = useState<{ platform: string; url: string }[]>([])
+  const [selPlatform, setSelPlatform] = useState('airbnb')
+  const [urlInput, setUrlInput]       = useState('')
+  const [submitting, setSubmitting]   = useState(false)
+  const [testResults, setTestResults] = useState<Record<number, 'testing' | 'ok' | 'fail'>>({})
+  const [testMessages, setTestMessages] = useState<Record<number, string>>({})
 
-  const testUrl = async (field: string, url: string) => {
+  const currentPlaceholder = ICAL_PLATFORMS.find(p => p.id === selPlatform)?.placeholder ?? ''
+
+  const addFeed = () => {
+    const url = urlInput.trim()
     if (!url) return
-    setTestResults(r => ({ ...r, [field]: 'testing' }))
+    try { new URL(url) } catch { toast.error('Enter a valid URL'); return }
+    setFeeds(fs => [...fs, { platform: selPlatform, url }])
+    setUrlInput('')
+  }
+
+  const removeFeed = (i: number) => {
+    setFeeds(fs => fs.filter((_, j) => j !== i))
+    setTestResults(r => { const n = { ...r }; delete n[i]; return n })
+    setTestMessages(m => { const n = { ...m }; delete n[i]; return n })
+  }
+
+  const testFeed = async (i: number, url: string) => {
+    setTestResults(r => ({ ...r, [i]: 'testing' }))
     try {
       const res = await verificationApi.testIcal(url)
-      setTestResults(r => ({ ...r, [field]: res.success ? 'ok' : 'fail' }))
-      setTestMessages(m => ({ ...m, [field]: res.message }))
+      setTestResults(r => ({ ...r, [i]: res.success ? 'ok' : 'fail' }))
+      setTestMessages(m => ({ ...m, [i]: res.message }))
     } catch {
-      setTestResults(r => ({ ...r, [field]: 'fail' }))
-      setTestMessages(m => ({ ...m, [field]: 'Connection failed' }))
+      setTestResults(r => ({ ...r, [i]: 'fail' }))
+      setTestMessages(m => ({ ...m, [i]: 'Connection failed' }))
     }
   }
 
-  const onSubmit = async (data: any) => {
-    const others = data.otherUrl ? [data.otherUrl] : []
+  const handleSubmit = async () => {
+    if (feeds.length === 0) { toast.error('Add at least one iCal feed'); return }
+    setSubmitting(true)
     try {
+      const byPlatform = feeds.reduce((acc, f) => {
+        acc[f.platform] = acc[f.platform] ?? []
+        acc[f.platform].push(f.url)
+        return acc
+      }, {} as Record<string, string[]>)
+
       await verificationApi.connectCalendar(orgId, {
-        airbnbIcalUrl:  data.airbnbIcalUrl || undefined,
-        bookingIcalUrl: data.bookingIcalUrl || undefined,
-        otherIcalUrls:  others,
+        airbnbIcalUrl:  byPlatform['airbnb']?.[0],
+        bookingIcalUrl: byPlatform['booking']?.[0],
+        vrboIcalUrl:    byPlatform['vrbo']?.[0],
+        otherIcalUrls:  [
+          ...(byPlatform['other']   ?? []),
+          ...(byPlatform['airbnb']?.slice(1)  ?? []),
+          ...(byPlatform['booking']?.slice(1) ?? []),
+          ...(byPlatform['vrbo']?.slice(1)    ?? []),
+        ],
       })
       qc.invalidateQueries({ queryKey: ['verification', orgId] })
-      toast.success('Calendar connected!')
+      toast.success('Calendars connected!')
       onDone()
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Connection failed')
-    }
-  }
-
-  function ICalField({ field, label, placeholder }: { field: string; label: string; placeholder: string }) {
-    const url = watch(field as any) || ''
-    const result = testResults[field]
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
-        <div className="flex gap-2">
-          <input {...register(field as any)} className="input-base flex-1" placeholder={placeholder} />
-          <button type="button" onClick={() => testUrl(field, url)}
-            disabled={!url || result === 'testing'}
-            className="btn-secondary text-xs px-3 flex items-center gap-1.5 flex-shrink-0 disabled:opacity-40">
-            {result === 'testing' ? <Loader2 size={12} className="animate-spin" /> : 'Test'}
-          </button>
-        </div>
-        {result === 'ok' && (
-          <div className="flex items-center gap-1.5 mt-1.5 text-xs text-green-600">
-            <Wifi size={11} /> {testMessages[field] || 'Connection successful'}
-          </div>
-        )}
-        {result === 'fail' && (
-          <div className="flex items-center gap-1.5 mt-1.5 text-xs text-red-500">
-            <WifiOff size={11} /> {testMessages[field] || 'Connection failed'}
-          </div>
-        )}
-        {errors[field as keyof typeof errors] && (
-          <p className="mt-1 text-xs text-red-500">{String((errors[field as keyof typeof errors] as any)?.message)}</p>
-        )}
-      </div>
-    )
+    } finally { setSubmitting(false) }
   }
 
   if (status === 'APPROVED') return <ApprovedState label="Calendar" note="Your calendar syncs every 15 minutes automatically." />
@@ -761,11 +830,11 @@ function CalendarStep({ orgId, onDone, status }: {
     <div>
       <h3 className="text-lg font-semibold text-gray-900 mb-1">Calendar Synchronization</h3>
       <p className="text-sm text-gray-500 mb-4">
-        Connect your iCal feeds to prevent double bookings. At least one is required. Calendars sync every 15 minutes.
+        Connect your iCal feeds to prevent double bookings. Calendars sync every 15 minutes.
       </p>
 
       <InfoBox>
-        <strong>Why iCal sync?</strong> We import your existing reservations so guests can't book dates that are already taken on Airbnb or Booking.com. Conflict detection happens in real time.
+        <strong>Why iCal sync?</strong> We import your existing reservations so guests can't book already-taken dates. Conflict detection happens in real time.
       </InfoBox>
 
       <div className="mt-4 p-3.5 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-between">
@@ -778,27 +847,81 @@ function CalendarStep({ orgId, onDone, status }: {
         </RouterLink>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-5">
-        <ICalField field="airbnbIcalUrl" label="Airbnb iCal URL"
-          placeholder="https://www.airbnb.com/calendar/ical/12345678.ics?s=…" />
-        <ICalField field="bookingIcalUrl" label="Booking.com iCal URL"
-          placeholder="https://ical.booking.com/v1/export?t=…" />
-        <ICalField field="otherUrl" label="Other PMS / iCal URL (optional)"
-          placeholder="https://yourpms.com/calendar/export.ics" />
+      {/* Add feed row */}
+      <div className="mt-5 p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
+        <p className="text-sm font-semibold text-gray-700">Add a calendar feed</p>
+        <div className="flex gap-2">
+          <select value={selPlatform} onChange={e => { setSelPlatform(e.target.value); setUrlInput('') }}
+            className="input-base w-36 flex-shrink-0 text-sm">
+            {ICAL_PLATFORMS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+          <input
+            value={urlInput}
+            onChange={e => setUrlInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFeed())}
+            placeholder={currentPlaceholder}
+            className="input-base flex-1 text-sm"
+          />
+          <button type="button" onClick={addFeed}
+            className="btn-primary px-4 text-sm flex-shrink-0">
+            Add
+          </button>
+        </div>
+      </div>
 
-        <button type="submit" disabled={isSubmitting} className="btn-primary justify-center py-2.5">
-          {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />}
-          {isSubmitting ? 'Connecting…' : 'Connect calendars'}
-        </button>
-      </form>
+      {/* Added feeds */}
+      {feeds.length > 0 && (
+        <div className="mt-4 space-y-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Added feeds ({feeds.length})</p>
+          {feeds.map((f, i) => (
+            <div key={i} className="p-3 bg-white border border-gray-200 rounded-xl space-y-2">
+              <div className="flex items-center gap-3">
+                <PlatformBadge platformId={f.platform} platforms={ICAL_PLATFORMS} />
+                <span className="flex-1 text-xs text-gray-700 truncate">{f.url}</span>
+                <button type="button" onClick={() => testFeed(i, f.url)}
+                  disabled={testResults[i] === 'testing'}
+                  className="btn-secondary text-xs px-2.5 py-1 flex items-center gap-1 flex-shrink-0 disabled:opacity-40">
+                  {testResults[i] === 'testing' ? <Loader2 size={11} className="animate-spin" /> : 'Test'}
+                </button>
+                <button onClick={() => removeFeed(i)}
+                  className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
+                  <X size={14} />
+                </button>
+              </div>
+              {testResults[i] === 'ok' && (
+                <div className="flex items-center gap-1.5 text-xs text-green-600 ml-1">
+                  <Wifi size={11} /> {testMessages[i] || 'Connection successful'}
+                </div>
+              )}
+              {testResults[i] === 'fail' && (
+                <div className="flex items-center gap-1.5 text-xs text-red-500 ml-1">
+                  <WifiOff size={11} /> {testMessages[i] || 'Connection failed'}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {feeds.length === 0 && (
+        <p className="mt-4 text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-xl">
+          No feeds added yet — select a platform and paste your iCal URL above
+        </p>
+      )}
+
+      <button onClick={handleSubmit} disabled={submitting || feeds.length === 0}
+        className="btn-primary justify-center py-2.5 w-full mt-5 disabled:opacity-40">
+        {submitting ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />}
+        {submitting ? 'Connecting…' : 'Connect calendars'}
+      </button>
     </div>
   )
 }
 
 // ── Step 5 (Domain) ───────────────────────────────────────────────────────────
 
-function DomainStep({ orgId, onDone, status, stepData, orgSlug }: {
-  orgId: string; onDone: () => void; status: VerificationStatus; stepData: any; orgSlug: string
+function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDomain }: {
+  orgId: string; onDone: () => void; status: VerificationStatus; stepData: any; orgSlug: string; requireCustomDomain: boolean
 }) {
   const qc = useQueryClient()
   const data: string[] = stepData?.data ?? []
@@ -891,15 +1014,25 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug }: {
         </div>
       )}
 
-      <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-5">
-        <p className="text-sm font-semibold text-green-800 mb-1">Quick option: Use a Propvian subdomain</p>
-        <p className="text-xs text-green-600 mb-3">Skip DNS setup — use <strong>{subdomainUrl}</strong> instantly, no configuration needed.</p>
-        <button onClick={useSubdomain} className="btn-primary text-sm py-2 px-4">
-          Use {subdomainUrl}
-        </button>
-      </div>
+      {requireCustomDomain ? (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 flex items-start gap-3">
+          <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Custom domain required</p>
+            <p className="text-xs text-amber-700 mt-0.5">The platform is configured to require a custom domain. Propvian subdomains are not accepted — please connect your own domain below.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-5">
+          <p className="text-sm font-semibold text-green-800 mb-1">Quick option: Use a Propvian subdomain</p>
+          <p className="text-xs text-green-600 mb-3">Skip DNS setup — use <strong>{subdomainUrl}</strong> instantly, no configuration needed.</p>
+          <button onClick={useSubdomain} className="btn-primary text-sm py-2 px-4">
+            Use {subdomainUrl}
+          </button>
+        </div>
+      )}
 
-      <p className="text-sm font-medium text-gray-700 mb-3">Or connect your own domain:</p>
+      <p className="text-sm font-medium text-gray-700 mb-3">{requireCustomDomain ? 'Connect your domain:' : 'Or connect your own domain:'}</p>
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5 space-y-2">
         <p className="text-sm font-medium text-gray-700">DNS setup instructions</p>
         <p className="text-xs text-gray-500">After submitting, add this CNAME at your DNS provider:</p>
@@ -1047,7 +1180,8 @@ export function VerificationPage() {
   })
 
   const properties = propertiesPage?.content ?? []
-  const adminAutoApprove = sysConfig?.['verification.admin_auto_approve'] === 'true'
+  const adminAutoApprove    = sysConfig?.['verification.admin_auto_approve']    === 'true'
+  const requireCustomDomain = sysConfig?.['verification.domain_require_custom'] === 'true'
 
   const [activeKey, setActiveKey] = useState<string>('')
 
@@ -1163,7 +1297,7 @@ export function VerificationPage() {
             <CalendarStep orgId={orgId} onDone={goNext} status={activeStatus} />
           )}
           {activeKey === 'domain' && (
-            <DomainStep orgId={orgId} onDone={goNext} status={activeStatus} stepData={activeStepData} orgSlug={orgSlug} />
+            <DomainStep orgId={orgId} onDone={goNext} status={activeStatus} stepData={activeStepData} orgSlug={orgSlug} requireCustomDomain={requireCustomDomain} />
           )}
           {activeKey === 'admin' && (
             <AdminApprovalStep progress={progress} autoApprove={adminAutoApprove} />

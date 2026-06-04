@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 const SITE_NAME = 'Propvian'
 const SITE_URL = 'https://propvian.com'
 const SITE_DESCRIPTION =
-  'Automatically create and revoke TTLock guest codes from Airbnb and Booking.com reservations. Smart lock automation for short-term rentals. Free 1-month trial.'
+  'Accept direct bookings, automate guest access, and manage your short-term rental properties — all in one place. Start your free trial today.'
 
 interface SEOHeadProps {
   title?: string
@@ -31,7 +31,7 @@ export function SEOHead({
   noIndex = false,
   schema,
 }: SEOHeadProps) {
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Smart Lock Automation for Short-Term Rentals`
+  const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Direct Booking Platform for Short-Term Rentals`
   const canonicalUrl = canonical ? `${SITE_URL}${canonical}` : undefined
 
   const schemas = schema ? (Array.isArray(schema) ? schema : [schema]) : []

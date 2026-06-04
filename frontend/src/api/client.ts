@@ -1,5 +1,4 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
-import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 
 const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
@@ -72,11 +71,6 @@ apiClient.interceptors.response.use(
       } finally {
         isRefreshing = false
       }
-    }
-
-    const message = (error.response?.data as any)?.message || error.message
-    if (error.response?.status !== 401) {
-      toast.error(message || 'An error occurred')
     }
 
     return Promise.reject(error)

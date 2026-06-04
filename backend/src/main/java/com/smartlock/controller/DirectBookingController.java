@@ -67,6 +67,20 @@ public class DirectBookingController {
         return ResponseEntity.ok(ApiResponse.success(bookingService.cancelBooking(orgId, bookingId, reason)));
     }
 
+    @PostMapping("/{bookingId}/check-in")
+    public ResponseEntity<ApiResponse<DirectBookingResponse>> checkIn(
+            @PathVariable UUID orgId,
+            @PathVariable UUID bookingId) {
+        return ResponseEntity.ok(ApiResponse.success(bookingService.checkInBooking(orgId, bookingId)));
+    }
+
+    @PostMapping("/{bookingId}/check-out")
+    public ResponseEntity<ApiResponse<DirectBookingResponse>> checkOut(
+            @PathVariable UUID orgId,
+            @PathVariable UUID bookingId) {
+        return ResponseEntity.ok(ApiResponse.success(bookingService.checkOutBooking(orgId, bookingId)));
+    }
+
     @GetMapping("/unavailable-dates")
     public ResponseEntity<ApiResponse<List<LocalDate>>> unavailableDates(
             @PathVariable UUID orgId,

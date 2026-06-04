@@ -105,6 +105,12 @@ public class HostVerification {
     @Column(name = "booking_listing_url", columnDefinition = "text")
     private String bookingListingUrl;
 
+    @Column(name = "vrbo_listing_url", columnDefinition = "text")
+    private String vrboListingUrl;
+
+    @Column(name = "other_listing_urls", columnDefinition = "text")
+    private String otherListingUrls;
+
     @Column(name = "ota_submitted_at")
     private Instant otaSubmittedAt;
 
@@ -131,7 +137,10 @@ public class HostVerification {
     @Column(name = "booking_ical_url", columnDefinition = "text")
     private String bookingIcalUrl;
 
-    @Column(name = "other_ical_urls", columnDefinition = "jsonb")
+    @Column(name = "vrbo_ical_url", columnDefinition = "text")
+    private String vrboIcalUrl;
+
+    @Column(name = "other_ical_urls", columnDefinition = "text")
     @Builder.Default
     private String otherIcalUrls = "[]";
 

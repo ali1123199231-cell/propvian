@@ -30,14 +30,15 @@ public class FileUploadController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<Map<String, String>>> upload(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("orgId") String orgId,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
+        // Always derive orgId from the JWT — never trust a client-supplied value
+        String orgId = currentUser.getActiveOrgId() != null
+                ? currentUser.getActiveOrgId().toString()
+                : currentUser.getUserId().toString();
         String storedPath = fileUploadService.store(file, orgId);
-        String signedUrl  = fileUploadService.generateSignedUrl(storedPath,
-                "http://localhost:8080"); // will be overridden by frontend proxy
         return ResponseEntity.ok(ApiResponse.success(Map.of(
                 "path", storedPath,
-                "url",  "/api/v1/files/view?token=" + extractToken(signedUrl)
+                "url",  "/api/v1/files/view?token=" + fileUploadService.generateToken(storedPath)
         )));
     }
 
@@ -52,7 +53,15 @@ public class FileUploadController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Resource> view(@PathVariable String orgId,
                                          @PathVariable String filename,
+                                         @AuthenticationPrincipal CustomUserDetails currentUser,
                                          HttpServletRequest request) {
+        // Restrict direct access to the caller's own org files
+        String callerOrgId = currentUser.getActiveOrgId() != null
+                ? currentUser.getActiveOrgId().toString() : "";
+        if (!"ADMIN".equals(currentUser.getRole()) && !orgId.equals(callerOrgId)) {
+            throw new com.smartlock.exception.AppException(
+                    "Access denied", org.springframework.http.HttpStatus.FORBIDDEN, "ORG_ACCESS_DENIED");
+        }
         Resource resource = fileUploadService.loadDirect(orgId, filename);
         return buildResourceResponse(resource, request);
     }

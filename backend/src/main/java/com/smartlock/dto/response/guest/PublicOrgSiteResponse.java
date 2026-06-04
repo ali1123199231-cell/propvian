@@ -1,0 +1,58 @@
+package com.smartlock.dto.response.guest;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PublicOrgSiteResponse {
+
+    private String orgSlug;
+    private String orgName;
+
+    // Website branding (from WebsiteConfig; falls back to org defaults)
+    private String brandName;
+    private String brandLogoUrl;
+    private String primaryColor;
+    private String accentColor;
+    private String fontFamily;
+    private String themeStyle;
+    private String pageTitle;
+    private String metaDescription;
+    private String ogImageUrl;
+    private String gaTrackingId;
+    private String gtmContainerId;
+    private String metaPixelId;
+    private String tiktokPixelId;
+
+    private List<PublicPropertyCard> properties;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PublicPropertyCard {
+        private String id;
+        private String slug;
+        private String name;
+        private String imageUrl;
+        private String city;
+        private String country;
+        private Integer bedrooms;
+        private Integer bathrooms;
+        private Integer maxGuests;
+        private BigDecimal baseNightlyRate;
+        private BigDecimal cleaningFee;
+        private String propertyType;
+        private int minStayNights;
+        private String checkInTime;
+        private String checkOutTime;
+    }
+}

@@ -82,19 +82,16 @@ public class HostNotificationScheduler {
 
         for (Reservation reservation : pending) {
             try {
-                List<AccessCode> activeCodes = accessCodeRepository.findByReservationId(reservation.getId())
-                        .stream()
-                        .filter(ac -> ac.getStatus() == AccessCodeStatus.ACTIVE)
-                        .toList();
-
-                if (activeCodes.isEmpty()) continue;
-
-                AccessCode code = activeCodes.get(0);
                 Property property = properties.stream()
                         .filter(p -> p.getId().equals(reservation.getPropertyId()))
                         .findFirst()
                         .orElse(null);
                 if (property == null) continue;
+
+                List<AccessCode> activeCodes = accessCodeRepository.findByReservationId(reservation.getId())
+                        .stream()
+                        .filter(ac -> ac.getStatus() == AccessCodeStatus.ACTIVE)
+                        .toList();
 
                 ZoneId zone = safeZone(reservation.getTimezone());
                 String checkIn = FORMATTER.format(reservation.getCheckInDate().atZone(zone));
@@ -103,15 +100,30 @@ public class HostNotificationScheduler {
                         ? frontendUrl + "/checkin/" + reservation.getCheckinCode()
                         : null;
 
-                emailService.sendHostNotificationEmail(
-                        hostEmail,
-                        reservation.getGuestName(),
-                        property.getName(),
-                        code.getPin(),
-                        checkIn,
-                        checkOut,
-                        checkinPageUrl
-                );
+                if (!activeCodes.isEmpty()) {
+                    // Send full notification with access PIN
+                    AccessCode code = activeCodes.get(0);
+                    emailService.sendHostNotificationEmail(
+                            hostEmail,
+                            reservation.getGuestName(),
+                            property.getName(),
+                            code.getPin(),
+                            checkIn,
+                            checkOut,
+                            checkinPageUrl
+                    );
+                } else {
+                    // Send notification without PIN (no lock configured)
+                    emailService.sendNewReservationEmail(
+                            hostEmail,
+                            reservation.getGuestName(),
+                            property.getName(),
+                            checkIn,
+                            checkOut,
+                            reservation.getSource() != null ? reservation.getSource().name() : "MANUAL",
+                            frontendUrl + "/reservations"
+                    );
+                }
 
                 reservation.setHostNotifiedAt(Instant.now());
                 reservationRepository.save(reservation);

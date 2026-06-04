@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Building2, Menu, X, ChevronDown } from 'lucide-react'
+import { Menu, X, ChevronDown } from 'lucide-react'
+import { PropvianLogo } from '@/components/PropvianLogo'
 import { systemConfigApi } from '@/api/systemConfig'
 
 const integrationsDB = [
@@ -44,11 +45,8 @@ export function MarketingNav() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <Building2 size={16} className="text-white" />
-            </div>
-            <span className="text-lg font-bold text-gray-900 tracking-tight">Propvian</span>
+          <Link to="/" className="flex-shrink-0">
+            <PropvianLogo size={32} textClassName="text-lg font-bold text-gray-900 tracking-tight" />
           </Link>
 
           {/* Desktop nav */}

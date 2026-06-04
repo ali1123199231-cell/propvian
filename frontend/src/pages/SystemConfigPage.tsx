@@ -168,8 +168,9 @@ function VerificationTab({
   const [provider,       setProvider]       = useState(cfg['verification.identity_provider'] ?? 'manual')
   const [apiKey,         setApiKey]         = useState(cfg['verification.identity_provider_api_key'] ?? '')
   const [webhookSecret,  setWebhookSecret]  = useState(cfg['verification.identity_provider_webhook_secret'] ?? '')
-  const [autoApproveId,  setAutoApproveId]  = useState(cfg['verification.identity_auto_approve'] === 'true')
-  const [autoApproveAdm, setAutoApproveAdm] = useState(cfg['verification.admin_auto_approve'] === 'true')
+  const [autoApproveId,      setAutoApproveId]      = useState(cfg['verification.identity_auto_approve'] === 'true')
+  const [autoApproveAdm,     setAutoApproveAdm]     = useState(cfg['verification.admin_auto_approve'] === 'true')
+  const [requireCustomDomain, setRequireCustomDomain] = useState(cfg['verification.domain_require_custom'] === 'true')
   const [steps, setSteps] = useState({
     identity_check:  cfg['verification.identity_check.enabled']  !== 'false',
     property_check:  cfg['verification.property_check.enabled']  !== 'false',
@@ -228,6 +229,12 @@ function VerificationTab({
           label="Auto-approve admin"
           hint="Automatically grant admin approval when all other required steps pass."
         />
+        <Toggle
+          value={requireCustomDomain}
+          onChange={setRequireCustomDomain}
+          label="Require custom domain"
+          hint="When enabled, hosts must connect their own domain. The 'Use propvian.com subdomain' shortcut is hidden and rejected."
+        />
       </div>
 
       <div>
@@ -252,6 +259,7 @@ function VerificationTab({
             'verification.identity_provider_webhook_secret': webhookSecret,
             'verification.identity_auto_approve':            String(autoApproveId),
             'verification.admin_auto_approve':               String(autoApproveAdm),
+            'verification.domain_require_custom':            String(requireCustomDomain),
             ...Object.fromEntries(
               STEP_LABELS.map(({ key }) => [`verification.${key}.enabled`, String(steps[key])])
             ),

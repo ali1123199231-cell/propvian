@@ -6,8 +6,12 @@ import com.smartlock.dto.request.verification.*;
 import com.smartlock.dto.response.verification.VerificationStatusResponse;
 import com.smartlock.exception.AppException;
 import com.smartlock.integration.ical.ICalFetcher;
+import com.smartlock.domain.CalendarIntegration;
+import com.smartlock.repository.CalendarIntegrationRepository;
+import org.springframework.context.annotation.Lazy;
 import com.smartlock.repository.HostVerificationRepository;
 import com.smartlock.repository.OrganizationRepository;
+import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +31,18 @@ import java.util.stream.Stream;
 @Slf4j
 public class VerificationService {
 
-    private final HostVerificationRepository verificationRepository;
-    private final SystemConfigService        systemConfigService;
-    private final OtaVerificationService     otaVerificationService;
-    private final ICalFetcher                icalFetcher;
-    private final EmailService               emailService;
-    private final OrganizationRepository     organizationRepository;
-    private final UserRepository             userRepository;
+    private final HostVerificationRepository    verificationRepository;
+    private final SystemConfigService           systemConfigService;
+    private final OtaVerificationService        otaVerificationService;
+    private final ICalFetcher                   icalFetcher;
+    private final EmailService                  emailService;
+    private final NotificationService           notificationService;
+    private final OrganizationRepository        organizationRepository;
+    private final UserRepository                userRepository;
+    private final OrganizationSecurityService   orgSecurity;
+    private final PropertyRepository            propertyRepository;
+    private final CalendarIntegrationRepository calendarIntegrationRepository;
+    private final CalendarIntegrationService    calendarIntegrationService;
 
     private static final String CNAME_TARGET = "booking.propvian.com";
 
@@ -41,6 +50,7 @@ public class VerificationService {
 
     @Transactional(readOnly = true)
     public VerificationStatusResponse getStatus(UUID orgId) {
+        orgSecurity.requireOrgAccess(orgId);
         return toResponse(getOrCreate(orgId));
     }
 
@@ -61,6 +71,7 @@ public class VerificationService {
 
     @Transactional
     public VerificationStatusResponse submitIdentity(UUID orgId, SubmitIdentityRequest req) {
+        orgSecurity.requireOrgAccess(orgId);
         assertStepEnabled("identity_check");
         HostVerification v = getOrCreate(orgId);
         v.setIdentityDocumentUrl(req.getIdentityDocumentUrl());
@@ -94,19 +105,29 @@ public class VerificationService {
         assertStepEnabled("ota_check");
         HostVerification v = getOrCreate(orgId);
 
-        // Store URLs
+        // Always save all submitted URLs first
         v.setAirbnbListingUrl(req.getAirbnbListingUrl());
         v.setBookingListingUrl(req.getBookingListingUrl());
+        v.setVrboListingUrl(req.getVrboListingUrl());
+        if (req.getOtherListingUrls() != null && !req.getOtherListingUrls().isEmpty()) {
+            v.setOtherListingUrls(String.join("\n", req.getOtherListingUrls()));
+        }
         v.setOtaSubmittedAt(Instant.now());
 
-        // Auto-verify: try each provided URL
+        // Look up the org owner's first name for name-matching
+        String userFirstName = organizationRepository.findById(orgId)
+                .flatMap(org -> userRepository.findById(org.getOwnerId()))
+                .map(u -> u.getFirstName())
+                .orElse(null);
+
+        // Auto-verify: try each provided known-platform URL
         String primaryUrl = Stream.of(req.getAirbnbListingUrl(), req.getBookingListingUrl(),
                         req.getVrboListingUrl())
                 .filter(url -> url != null && !url.isBlank())
                 .findFirst().orElse(null);
 
         if (primaryUrl != null) {
-            OtaVerificationService.OtaVerificationResult result = otaVerificationService.verify(primaryUrl);
+            OtaVerificationService.OtaVerificationResult result = otaVerificationService.verify(primaryUrl, userFirstName);
             v.setOtaAutoVerified(result.autoApproved());
             v.setOtaReviewCount(result.reviewCount());
             v.setOtaVerificationNote(result.note());
@@ -114,13 +135,13 @@ public class VerificationService {
             if (result.autoApproved()) {
                 v.setOtaStatus(VerificationStatus.APPROVED);
                 v.setOtaReviewedAt(Instant.now());
-                log.info("OTA auto-approved for org={} reviewCount={}", orgId, result.reviewCount());
-            } else if (!result.urlValid()) {
-                throw new AppException(result.note(), HttpStatus.BAD_REQUEST);
+                log.info("OTA auto-approved for org={} reviewCount={} hostName={}", orgId, result.reviewCount(), result.hostName());
             } else {
-                // URL valid but not enough reviews — put PENDING for manual review
                 v.setOtaStatus(VerificationStatus.PENDING);
             }
+        } else if (req.getOtherListingUrls() != null && !req.getOtherListingUrls().isEmpty()) {
+            v.setOtaVerificationNote("Your listing has been submitted for review.");
+            v.setOtaStatus(VerificationStatus.PENDING);
         } else {
             v.setOtaStatus(VerificationStatus.PENDING);
         }
@@ -142,13 +163,50 @@ public class VerificationService {
         HostVerification v = getOrCreate(orgId);
         v.setAirbnbIcalUrl(req.getAirbnbIcalUrl());
         v.setBookingIcalUrl(req.getBookingIcalUrl());
+        v.setVrboIcalUrl(req.getVrboIcalUrl());
         if (req.getOtherIcalUrls() != null && !req.getOtherIcalUrls().isEmpty()) {
             v.setOtherIcalUrls(req.getOtherIcalUrls().toString());
         }
         v.setCalendarStatus(VerificationStatus.APPROVED);
         v.setCalendarConnectedAt(Instant.now());
         recalculate(v);
-        return toResponse(verificationRepository.save(v));
+        VerificationStatusResponse response = toResponse(verificationRepository.save(v));
+
+        // Auto-provision CalendarIntegration records for the org's first property
+        // so reservations sync immediately and appear in the Integrations page
+        List<com.smartlock.domain.Property> properties = propertyRepository.findByOrganizationId(orgId);
+        if (!properties.isEmpty()) {
+            UUID propertyId = properties.get(0).getId();
+            provisionCalendarIntegration(propertyId, "AIRBNB",  req.getAirbnbIcalUrl());
+            provisionCalendarIntegration(propertyId, "BOOKING", req.getBookingIcalUrl());
+            provisionCalendarIntegration(propertyId, "VRBO",    req.getVrboIcalUrl());
+            if (req.getOtherIcalUrls() != null) {
+                for (String url : req.getOtherIcalUrls()) {
+                    provisionCalendarIntegration(propertyId, "OTHER", url);
+                }
+            }
+        }
+
+        return response;
+    }
+
+    private void provisionCalendarIntegration(UUID propertyId, String platform, String icalUrl) {
+        if (icalUrl == null || icalUrl.isBlank()) return;
+        // Skip if already exists (idempotent)
+        if (calendarIntegrationRepository.existsByPropertyIdAndIcalUrlAndDeletedAtIsNull(propertyId, icalUrl)) return;
+
+        CalendarIntegration integration = CalendarIntegration.builder()
+                .propertyId(propertyId)
+                .platform(platform)
+                .icalUrl(icalUrl)
+                .displayName(platform.charAt(0) + platform.substring(1).toLowerCase() + " (from verification)")
+                .syncIntervalMinutes(15)
+                .enabled(true)
+                .build();
+
+        CalendarIntegration saved = calendarIntegrationRepository.save(integration);
+        // Trigger initial sync asynchronously (after tx commits) to avoid rollback contamination
+        calendarIntegrationService.triggerSync(saved.getId(), null);
     }
 
     @Transactional
@@ -191,6 +249,13 @@ public class VerificationService {
         v.setDomainCnameTarget(CNAME_TARGET);
         String token = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
         v.setDomainVerificationToken(token);
+
+        // Reject propvian subdomains when custom domain is required
+        boolean requireCustomDomain = Boolean.parseBoolean(
+                systemConfigService.get("verification.domain_require_custom", "false"));
+        if (requireCustomDomain && req.getDomain().endsWith(".propvian.com")) {
+            throw new AppException("A custom domain is required. Propvian subdomains are not accepted.", HttpStatus.BAD_REQUEST);
+        }
 
         // Check if it's a Propvian subdomain (instant approval)
         if (req.getDomain().endsWith(".propvian.com")) {
@@ -309,11 +374,13 @@ public class VerificationService {
         Instant now = Instant.now();
         VerificationStatus status = approved ? VerificationStatus.APPROVED : VerificationStatus.REJECTED;
 
+        String stepLabel;
         switch (step) {
             case "identity" -> {
                 v.setIdentityStatus(status);
                 v.setIdentityReviewedAt(now);
                 if (!approved) v.setIdentityRejectionReason(reason);
+                stepLabel = "Identity Verification";
             }
             case "property" -> {
                 v.setPropertyStatus(status);
@@ -321,17 +388,38 @@ public class VerificationService {
                 if (!approved) v.setPropertyRejectionReason(reason);
                 if (approved) notifyHostPropertyApproved(orgId);
                 else          notifyHostPropertyRejected(orgId, reason);
+                stepLabel = "Property Verification";
             }
             case "ota" -> {
                 v.setOtaStatus(status);
                 v.setOtaReviewedAt(now);
                 if (!approved) v.setOtaRejectionReason(reason);
                 if (approved) notifyHostOtaApproved(orgId);
+                stepLabel = "OTA Listing";
             }
             default -> throw new AppException("Unknown step: " + step, HttpStatus.BAD_REQUEST);
         }
         recalculate(v);
-        return toResponse(verificationRepository.save(v));
+        HostVerification saved = verificationRepository.save(v);
+
+        // In-app notification to host
+        getOrgOwnerUserId(orgId).ifPresent(userId -> {
+            com.smartlock.domain.enums.NotificationType notifType = approved
+                    ? com.smartlock.domain.enums.NotificationType.VERIFICATION_STEP_APPROVED
+                    : com.smartlock.domain.enums.NotificationType.VERIFICATION_STEP_REJECTED;
+            String message = approved
+                    ? stepLabel + " has been approved."
+                    : stepLabel + " requires attention: " + (reason != null ? reason : "Please review and resubmit.");
+            try {
+                notificationService.createNotification(userId, orgId, notifType,
+                        approved ? "Verification step approved" : "Verification step rejected",
+                        message, "verification", null);
+            } catch (Exception e) {
+                log.warn("Failed to create in-app notification for verification step {}: {}", step, e.getMessage());
+            }
+        });
+
+        return toResponse(saved);
     }
 
     // ── Booking gate ──────────────────────────────────────────────────────────
@@ -416,6 +504,15 @@ public class VerificationService {
                     .map(user -> user.getEmail());
         } catch (Exception e) {
             log.warn("Could not get host email for org {}: {}", orgId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private Optional<UUID> getOrgOwnerUserId(UUID orgId) {
+        try {
+            return organizationRepository.findById(orgId).map(org -> org.getOwnerId());
+        } catch (Exception e) {
+            log.warn("Could not get org owner for org {}: {}", orgId, e.getMessage());
             return Optional.empty();
         }
     }

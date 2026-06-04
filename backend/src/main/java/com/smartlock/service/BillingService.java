@@ -25,6 +25,7 @@ public class BillingService {
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final LockRepository lockRepository;
+    private final OrganizationSecurityService orgSecurity;
 
     @Transactional
     public Subscription getSubscription(UUID orgId) {
@@ -80,7 +81,33 @@ public class BillingService {
     }
 
     public long getUsedLockCount(UUID orgId) {
-        return lockRepository.findByOrganizationId(orgId).size();
+        return lockRepository.countConnectedByOrganizationId(orgId);
+    }
+
+    public int getPropertyQuota(Subscription sub) {
+        if (isTrialActive(sub)) return 1;
+        if (isPaidActive(sub)) {
+            return subscriptionPlanRepository.findById(sub.getPlanId())
+                    .map(SubscriptionPlan::getMaxProperties)
+                    .orElse(1);
+        }
+        return 0;
+    }
+
+    @Transactional(readOnly = true)
+    public void enforceCanAddProperty(UUID orgId, long currentCount) {
+        Subscription sub = getSubscription(orgId);
+        if (!isAccessActive(sub)) {
+            throw new AppException(
+                    "Your trial has expired or subscription is inactive. Please subscribe to add properties.",
+                    HttpStatus.PAYMENT_REQUIRED, "SUBSCRIPTION_INACTIVE");
+        }
+        int quota = getPropertyQuota(sub);
+        if (currentCount >= quota) {
+            throw new AppException(
+                    "Property limit reached (" + currentCount + "/" + quota + "). Upgrade your plan to add more properties.",
+                    HttpStatus.PAYMENT_REQUIRED, "PROPERTY_LIMIT_REACHED");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -119,14 +146,16 @@ public class BillingService {
     }
 
     @Transactional
-    public void applyPaypalSubscription(String paypalSubscriptionId, int quantity, UUID orgId) {
+    public void applyPaypalSubscription(String paypalSubscriptionId, int quantity, UUID orgId,
+                                        Instant periodStart, Instant periodEnd) {
         Subscription sub = getSubscription(orgId);
         sub.setStatus(SubscriptionStatus.ACTIVE);
         sub.setPaypalSubscriptionId(paypalSubscriptionId);
         sub.setLockQuota(quantity);
         sub.setPaymentProvider("PAYPAL");
-        sub.setCurrentPeriodStart(Instant.now());
-        sub.setCurrentPeriodEnd(Instant.now().plusSeconds(30L * 24 * 3600));
+        // Use real period from PayPal; fall back to 30-day default only when unavailable
+        sub.setCurrentPeriodStart(periodStart != null ? periodStart : Instant.now());
+        sub.setCurrentPeriodEnd(periodEnd != null ? periodEnd : Instant.now().plusSeconds(30L * 24 * 3600));
         sub.setFailedPaymentAt(null);
         subscriptionRepository.save(sub);
         log.info("PayPal subscription applied: org={} quantity={}", orgId, quantity);

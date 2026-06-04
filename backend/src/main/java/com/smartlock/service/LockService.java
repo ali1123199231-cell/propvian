@@ -33,6 +33,7 @@ public class LockService {
     private final DuplicateLockAttemptRepository duplicateLockAttemptRepository;
     private final OnboardingService onboardingService;
     private final BillingService billingService;
+    private final OrganizationSecurityService orgSecurity;
 
     @Transactional
     public LockResponse connectLock(UUID propertyId, ConnectLockRequest request, UUID userId) {
@@ -108,6 +109,7 @@ public class LockService {
 
     @Transactional(readOnly = true)
     public List<LockResponse> getLocksByProperty(UUID propertyId) {
+        orgSecurity.requirePropertyAccess(propertyId);
         return lockRepository.findByPropertyId(propertyId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -115,14 +117,17 @@ public class LockService {
 
     @Transactional(readOnly = true)
     public LockResponse getLock(UUID lockId) {
-        return toResponse(lockRepository.findById(lockId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId)));
+        Lock lock = lockRepository.findById(lockId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
+        orgSecurity.requirePropertyAccess(lock.getPropertyId());
+        return toResponse(lock);
     }
 
     @Transactional
     public void disconnectLock(UUID lockId) {
         Lock lock = lockRepository.findById(lockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
+        orgSecurity.requirePropertyAccess(lock.getPropertyId());
         lock.setStatus(LockStatus.DISCONNECTED);
         lock.setTtlockAccessToken(null);
         lock.setTtlockRefreshToken(null);
@@ -133,6 +138,7 @@ public class LockService {
     public void deleteLock(UUID lockId) {
         Lock lock = lockRepository.findById(lockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
+        orgSecurity.requirePropertyAccess(lock.getPropertyId());
         lock.softDelete();
         lockRepository.save(lock);
     }
@@ -141,6 +147,7 @@ public class LockService {
     public LockResponse syncLock(UUID lockId) {
         Lock lock = lockRepository.findById(lockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
+        orgSecurity.requirePropertyAccess(lock.getPropertyId());
 
         try {
             TTLockLockInfoResponse info = ttlockClient.getLockInfo(lock.getTtlockLockId(), lock.getTtlockAccessToken());

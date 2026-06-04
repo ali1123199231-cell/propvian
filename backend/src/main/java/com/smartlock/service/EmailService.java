@@ -103,6 +103,19 @@ public class EmailService {
     }
 
     @Async
+    public void sendNewReservationEmail(String hostEmail, String guestName, String propertyName,
+                                        String checkIn, String checkOut, String source, String dashboardUrl) {
+        Context context = new Context();
+        context.setVariable("guestName", guestName);
+        context.setVariable("propertyName", propertyName);
+        context.setVariable("checkIn", checkIn);
+        context.setVariable("checkOut", checkOut);
+        context.setVariable("source", source);
+        context.setVariable("dashboardUrl", dashboardUrl);
+        sendHtmlEmail(hostEmail, "New reservation — " + (guestName != null ? guestName + " at " : "") + propertyName, "email/new-reservation", context);
+    }
+
+    @Async
     public void sendEmail(String to, String subject, String templateName, Map<String, Object> variables) {
         Context context = new Context();
         variables.forEach(context::setVariable);

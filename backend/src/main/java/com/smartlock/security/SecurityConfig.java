@@ -39,20 +39,26 @@ public class SecurityConfig {
                     "/api/v1/auth/login",
                     "/api/v1/auth/refresh",
                     "/api/v1/auth/logout",
+                    "/api/v1/auth/forgot-password",
+                    "/api/v1/auth/reset-password",
                     "/api/v1/ttlock/oauth/callback",
                     "/api/v1/stripe/connect-callback",
                     "/api/v1/paypal/connect-callback",
                     "/api/v1/files/view",
                     "/api/public/**",
-                    "/actuator/health",
-                    "/actuator/info",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/api-docs/**",
-                    "/v3/api-docs/**"
+                    "/api/public/calendar/*/calendar.ics",
+                    "/actuator/health"
                 ).permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/system/**").permitAll()
-                .requestMatchers(HttpMethod.PUT, "/api/v1/system/config").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/v1/organizations/public/check-slug/**").permitAll()
+                // Only the business-model flag is public; /config requires ADMIN
+                .requestMatchers(HttpMethod.GET, "/api/v1/system/business-model").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/system/public-config").permitAll()
+                // Admin panel endpoints — ADMIN or SUPER_ADMIN only
+                .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                // Actuator management endpoints require authentication
+                .requestMatchers("/actuator/**").hasRole("ADMIN")
+                // Swagger only in non-prod (prod profile disables springdoc entirely)
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().authenticated()
             )

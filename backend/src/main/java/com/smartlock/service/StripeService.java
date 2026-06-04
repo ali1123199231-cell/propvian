@@ -12,16 +12,21 @@ import com.stripe.model.*;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.billingportal.SessionCreateParams;
 import com.stripe.param.checkout.SessionCreateParams.LineItem;
 import com.stripe.param.checkout.SessionCreateParams.Mode;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
@@ -33,27 +38,51 @@ import java.util.UUID;
 public class StripeService {
 
     @Value("${stripe.secret-key:}")
-    private String secretKey;
+    private String secretKeyEnv;
 
     @Value("${stripe.webhook-secret:}")
-    private String webhookSecret;
+    private String webhookSecretEnv;
 
     @Value("${stripe.price-id:}")
-    private String priceId;
+    private String priceIdEnv;
 
     private final SubscriptionRepository subscriptionRepository;
-    private final BillingService billingService;
+    private final BillingService         billingService;
+    private final SystemConfigService    systemConfigService;
+
+    @Lazy @Setter @Autowired
+    private GuestCheckoutService guestCheckoutService;
+
+    private String resolvedSecretKey() {
+        String db = systemConfigService.getActiveStripeSecretKey();
+        return !db.isBlank() ? db : (secretKeyEnv != null ? secretKeyEnv : "");
+    }
+    private String resolvedWebhookSecret() {
+        String db = systemConfigService.getActiveStripeWebhookSecret();
+        return !db.isBlank() ? db : (webhookSecretEnv != null ? webhookSecretEnv : "");
+    }
+    private String resolvedPriceId() {
+        String db = systemConfigService.getActiveStripePriceId();
+        return !db.isBlank() ? db : (priceIdEnv != null ? priceIdEnv : "");
+    }
+
+    private void initStripe() {
+        String key = resolvedSecretKey();
+        if (!key.isBlank()) Stripe.apiKey = key;
+    }
 
     @PostConstruct
     void init() {
-        if (secretKey != null && !secretKey.isBlank()) {
-            Stripe.apiKey = secretKey;
+        String key = resolvedSecretKey();
+        if (!key.isBlank()) {
+            Stripe.apiKey = key;
         }
     }
 
     public String createCheckoutSession(UUID orgId, String orgName, String ownerEmail,
                                         int quantity, String successUrl, String cancelUrl) throws StripeException {
-        if (secretKey == null || secretKey.isBlank()) {
+        initStripe();
+        if (resolvedSecretKey().isBlank()) {
             throw new AppException("Stripe payments are not configured on this server.", HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
         }
         Subscription sub = billingService.getSubscription(orgId);
@@ -75,7 +104,7 @@ public class StripeService {
                         .setMode(Mode.SUBSCRIPTION)
                         .setCustomer(customerId)
                         .addLineItem(LineItem.builder()
-                                .setPrice(priceId)
+                                .setPrice(resolvedPriceId())
                                 .setQuantity((long) quantity)
                                 .build())
                         .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
@@ -89,12 +118,13 @@ public class StripeService {
     }
 
     public String createCustomerPortalSession(UUID orgId, String returnUrl) throws StripeException {
-        if (secretKey == null || secretKey.isBlank()) {
+        initStripe();
+        if (resolvedSecretKey().isBlank()) {
             throw new AppException("Stripe payments are not configured on this server.", HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
         }
         Subscription sub = billingService.getSubscription(orgId);
         if (sub.getStripeCustomerId() == null) {
-            throw new IllegalStateException("No Stripe customer found for this organization.");
+            throw new AppException("No active Stripe subscription found. Please subscribe first.", HttpStatus.BAD_REQUEST, "NO_STRIPE_CUSTOMER");
         }
 
         com.stripe.model.billingportal.Session session = com.stripe.model.billingportal.Session.create(
@@ -110,7 +140,7 @@ public class StripeService {
     public void handleWebhook(String payload, String sigHeader) {
         Event event;
         try {
-            event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
+            event = Webhook.constructEvent(payload, sigHeader, resolvedWebhookSecret());
         } catch (SignatureVerificationException e) {
             log.error("Stripe webhook signature verification failed: {}", e.getMessage());
             throw new SecurityException("Invalid Stripe webhook signature");
@@ -119,11 +149,12 @@ public class StripeService {
         log.info("Stripe webhook: {}", event.getType());
 
         switch (event.getType()) {
-            case "checkout.session.completed" -> handleCheckoutCompleted(event);
+            case "checkout.session.completed"   -> handleCheckoutCompleted(event);
             case "customer.subscription.updated" -> handleSubscriptionUpdated(event);
             case "customer.subscription.deleted" -> handleSubscriptionDeleted(event);
-            case "invoice.payment_failed" -> handleInvoicePaymentFailed(event);
-            case "invoice.payment_succeeded" -> handleInvoicePaymentSucceeded(event);
+            case "invoice.payment_failed"        -> handleInvoicePaymentFailed(event);
+            case "invoice.payment_succeeded"     -> handleInvoicePaymentSucceeded(event);
+            case "payment_intent.succeeded"      -> handleGuestPaymentIntentSucceeded(event);
             default -> log.debug("Unhandled Stripe event: {}", event.getType());
         }
     }
@@ -144,7 +175,7 @@ public class StripeService {
             billingService.applyStripeSubscription(
                     stripeSub.getId(),
                     session.getCustomer(),
-                    priceId,
+                    resolvedPriceId(),
                     quantity,
                     orgId,
                     Instant.ofEpochSecond(stripeSub.getCurrentPeriodStart()),
@@ -216,5 +247,49 @@ public class StripeService {
                 subscriptionRepository.save(sub);
             }
         });
+    }
+
+    // ── Guest booking payment ─────────────────────────────────────────────────
+
+    /** Creates a Stripe PaymentIntent that transfers funds to the host's connected account. */
+    public String createGuestPaymentIntent(UUID bookingId, BigDecimal amount, String currency,
+                                           String hostStripeAccountId) throws StripeException {
+        initStripe();
+        if (resolvedSecretKey().isBlank()) {
+            throw new AppException("Stripe is not configured", HttpStatus.SERVICE_UNAVAILABLE);
+        }
+        long amountCents = amount.multiply(BigDecimal.valueOf(100)).longValue();
+
+        PaymentIntentCreateParams.Builder builder = PaymentIntentCreateParams.builder()
+                .setAmount(amountCents)
+                .setCurrency(currency.toLowerCase())
+                .addPaymentMethodType("card")
+                .putMetadata("bookingId", bookingId.toString())
+                .putMetadata("type", "guest_booking");
+
+        if (hostStripeAccountId != null && !hostStripeAccountId.isBlank()) {
+            builder.setTransferData(
+                    PaymentIntentCreateParams.TransferData.builder()
+                            .setDestination(hostStripeAccountId)
+                            .build());
+        }
+
+        return PaymentIntent.create(builder.build()).getClientSecret();
+    }
+
+    private void handleGuestPaymentIntentSucceeded(Event event) {
+        PaymentIntent intent = (PaymentIntent) event.getDataObjectDeserializer().getObject().orElse(null);
+        if (intent == null) return;
+        if (!"guest_booking".equals(intent.getMetadata().get("type"))) return;
+
+        String bookingIdStr = intent.getMetadata().get("bookingId");
+        if (bookingIdStr == null) return;
+
+        try {
+            guestCheckoutService.confirmStripeBooking(UUID.fromString(bookingIdStr), intent.getId());
+        } catch (Exception e) {
+            log.error("Failed to confirm guest booking via webhook: bookingId={} error={}",
+                    bookingIdStr, e.getMessage());
+        }
     }
 }

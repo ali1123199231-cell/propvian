@@ -99,11 +99,12 @@ public class AuthService {
                 .build();
         user = userRepository.save(user);
 
-        // Auto-create a default organization
-        String baseSlug = slugify(email.split("@")[0]);
-        String slug = baseSlug + "-" + UUID.randomUUID().toString().substring(0, 8);
+        // Auto-create a default organization — slug is a random internal ID,
+        // never derived from the user's email. The host picks a public-facing
+        // brand slug later in the website setup wizard.
+        String slug = "org-" + UUID.randomUUID().toString().substring(0, 8);
         while (organizationRepository.existsBySlug(slug)) {
-            slug = baseSlug + "-" + UUID.randomUUID().toString().substring(0, 8);
+            slug = "org-" + UUID.randomUUID().toString().substring(0, 8);
         }
         Organization org = Organization.builder()
                 .name("My Organization")
@@ -275,6 +276,39 @@ public class AuthService {
                         .organizationId(activeOrgId)
                         .build())
                 .build();
+    }
+
+    @Transactional
+    public void forgotPassword(String email) {
+        // Always return silently — don't reveal whether email exists
+        userRepository.findByEmail(email.toLowerCase()).ifPresent(user -> {
+            String token = UUID.randomUUID().toString().replace("-", "");
+            user.setPasswordResetToken(token);
+            user.setPasswordResetExpiresAt(Instant.now().plusSeconds(3600)); // 1 hour
+            userRepository.save(user);
+            emailService.sendEmail(
+                user.getEmail(),
+                "Reset your Propvian password",
+                "email/password-reset",
+                java.util.Map.of(
+                    "name",  user.getFirstName() != null ? user.getFirstName() : "there",
+                    "token", token
+                )
+            );
+        });
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepository.findByPasswordResetToken(token)
+            .orElseThrow(() -> new AppException("Invalid or expired reset link", HttpStatus.BAD_REQUEST));
+        if (user.getPasswordResetExpiresAt() == null || Instant.now().isAfter(user.getPasswordResetExpiresAt())) {
+            throw new AppException("Reset link has expired. Please request a new one.", HttpStatus.BAD_REQUEST);
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetExpiresAt(null);
+        userRepository.save(user);
     }
 
     public static String slugify(String text) {

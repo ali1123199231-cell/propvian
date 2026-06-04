@@ -25,8 +25,11 @@ public class CleanerTask {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "reservation_id", nullable = false)
+    @Column(name = "reservation_id")
     private UUID reservationId;
+
+    @Column(name = "direct_booking_id")
+    private UUID directBookingId;
 
     @Column(name = "organization_id", nullable = false)
     private UUID organizationId;

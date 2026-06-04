@@ -13,5 +13,8 @@ public class ConnectCalendarRequest {
     @URL
     private String bookingIcalUrl;
 
+    @URL
+    private String vrboIcalUrl;
+
     private List<String> otherIcalUrls;
 }

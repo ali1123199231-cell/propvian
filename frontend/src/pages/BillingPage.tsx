@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { CreditCard, Lock, Check, AlertTriangle, Clock, Minus, Plus, Zap, Building2, DollarSign, ArrowRight } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
@@ -33,7 +34,7 @@ function TrialBanner({ billing }: { billing: BillingStatus }) {
         </p>
         <p className="text-xs text-blue-600 mt-0.5">
           Trial ends {format(parseISO(billing.trialEnd), 'MMMM d, yyyy')}. Subscribe to keep
-          automation running and add more than 1 lock.
+          automation running and add more than 1 property.
         </p>
       </div>
     </div>
@@ -309,14 +310,20 @@ function ManageBillingCard({ orgId, billing }: { orgId: string; billing: Billing
 
 // ── Direct Booking Billing ────────────────────────────────────────────────────
 
-function DirectBookingBilling({ orgId }: { orgId: string }) {
+function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: () => void }) {
   const { data: propsData } = useQuery({
     queryKey: ['properties', orgId],
     queryFn: () => propertiesApi.list(orgId, 0, 100),
     enabled: !!orgId,
   })
+  const { data: billing } = useQuery({
+    queryKey: ['billing-status', orgId],
+    queryFn: () => billingApi.getStatus(orgId),
+    enabled: !!orgId,
+  })
   const activeCount = propsData?.content.filter(p => p.status === 'ACTIVE').length ?? 0
   const monthlyTotal = activeCount * 10
+  const statusInfo = billing ? STATUS_INFO[billing.status] ?? STATUS_INFO.EXPIRED : null
 
   return (
     <div className="space-y-4">
@@ -326,9 +333,16 @@ function DirectBookingBilling({ orgId }: { orgId: string }) {
           <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center">
             <CreditCard size={22} className="text-primary-600" />
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-sm text-gray-500">Current plan</p>
-            <p className="text-lg font-bold text-gray-900">Propvian Direct · $10 / property / month</p>
+            <div className="flex items-center gap-3 mt-0.5">
+              <p className="text-lg font-bold text-gray-900">Propvian Direct · $10 / property / month</p>
+              {statusInfo && (
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusInfo.color}`}>
+                  {statusInfo.label}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
@@ -346,6 +360,10 @@ function DirectBookingBilling({ orgId }: { orgId: string }) {
           </div>
         </div>
       </div>
+
+      {/* Trial / payment-failed banners */}
+      {billing && <TrialBanner billing={billing} />}
+      {billing && <PaymentFailedBanner billing={billing} />}
 
       {/* Billing model explanation */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-3">
@@ -405,7 +423,7 @@ function DirectBookingBilling({ orgId }: { orgId: string }) {
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h3 className="font-semibold text-gray-900 mb-3">Manage subscription</h3>
         <div className="flex flex-col sm:flex-row gap-3">
-          <button className="btn-primary py-2.5 px-5 text-sm flex items-center gap-2 justify-center">
+          <button onClick={onPortal} className="btn-primary py-2.5 px-5 text-sm flex items-center gap-2 justify-center">
             <CreditCard size={14} /> Update payment method
           </button>
           <button className="btn-secondary py-2.5 px-5 text-sm text-gray-600 justify-center">
@@ -495,13 +513,21 @@ export function BillingPage() {
   const orgId = activeOrg?.id
 
   if (isDirectBooking()) {
+    const handlePortal = async () => {
+      try {
+        const url = await billingApi.createStripePortal(orgId ?? '')
+        window.location.href = url
+      } catch {
+        toast.error('Could not open billing portal. Make sure Stripe is configured.')
+      }
+    }
     return (
       <div className="space-y-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Billing</h1>
           <p className="text-gray-500 mt-1">Subscription and payment management</p>
         </div>
-        <DirectBookingBilling orgId={orgId ?? ''} />
+        <DirectBookingBilling orgId={orgId ?? ''} onPortal={handlePortal} />
       </div>
     )
   }

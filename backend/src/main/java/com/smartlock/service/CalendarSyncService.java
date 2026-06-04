@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,8 +44,9 @@ public class CalendarSyncService {
     private final ICalParser icalParser;
     private final ApplicationEventPublisher eventPublisher;
     private final GuestService guestService;
+    private final CalendarEngine calendarEngine;
 
-    @Transactional
+    // Not @Transactional — each syncIntegration manages its own transaction independently
     public void syncAll() {
         List<CalendarIntegration> integrations = calendarIntegrationRepository.findAllEnabled();
         log.info("Starting calendar sync for {} integrations", integrations.size());
@@ -52,9 +55,6 @@ public class CalendarSyncService {
                 syncIntegration(integration);
             } catch (Exception e) {
                 log.error("Calendar sync failed for integration {}: {}", integration.getId(), e.getMessage());
-                integration.setLastSyncStatus("FAILED");
-                integration.setLastSyncError(e.getMessage());
-                calendarIntegrationRepository.save(integration);
             }
         }
     }
@@ -120,12 +120,30 @@ public class CalendarSyncService {
         if (existing.isPresent()) {
             Reservation res = existing.get();
             if (!res.getCheckInDate().equals(pr.getStartDate()) || !res.getCheckOutDate().equals(pr.getEndDate())) {
+                // Release old calendar interval before registering new dates
+                try {
+                    calendarEngine.cancelBookingDates(res.getId());
+                } catch (Exception e) {
+                    log.warn("Could not cancel old calendar interval for iCal reservation {}: {}", res.getId(), e.getMessage());
+                }
                 res.setCheckInDate(pr.getStartDate());
                 res.setCheckOutDate(pr.getEndDate());
                 res.setGuestName(pr.getGuestName());
                 res.setGuestEmail(pr.getGuestEmail());
                 res.setSyncedAt(Instant.now());
                 reservationRepository.save(res);
+                // Register new dates (future only)
+                LocalDate newCheckIn  = pr.getStartDate().atZone(ZoneOffset.UTC).toLocalDate();
+                LocalDate newCheckOut = pr.getEndDate().atZone(ZoneOffset.UTC).toLocalDate();
+                if (!newCheckIn.isBefore(LocalDate.now())) {
+                    try {
+                        calendarEngine.registerBookedInterval(
+                                propertyId, newCheckIn, newCheckOut,
+                                res.getId(), pr.getSummary() != null ? pr.getSummary() : "iCal update");
+                    } catch (Exception e) {
+                        log.warn("Could not register updated calendar interval for iCal reservation {}: {}", res.getId(), e.getMessage());
+                    }
+                }
                 return SyncResult.UPDATED;
             }
             return SyncResult.SKIPPED;
@@ -153,6 +171,20 @@ public class CalendarSyncService {
                 .build();
 
         reservation = reservationRepository.save(reservation);
+
+        // Register in CalendarEngine to block these dates for direct bookings (future only)
+        LocalDate checkIn  = pr.getStartDate().atZone(ZoneOffset.UTC).toLocalDate();
+        LocalDate checkOut = pr.getEndDate().atZone(ZoneOffset.UTC).toLocalDate();
+        if (!checkIn.isBefore(LocalDate.now())) {
+            try {
+                calendarEngine.registerBookedInterval(
+                        propertyId, checkIn, checkOut,
+                        reservation.getId(), pr.getSummary() != null ? pr.getSummary() : "iCal import");
+            } catch (Exception e) {
+                log.warn("Could not register calendar interval for iCal reservation {} on property {}: {}",
+                        pr.getUid(), propertyId, e.getMessage());
+            }
+        }
 
         if (orgId != null && automationEnabled) {
             eventPublisher.publishEvent(new ReservationCreatedEvent(this, reservation.getId(), orgId));

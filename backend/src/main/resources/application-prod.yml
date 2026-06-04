@@ -21,3 +21,20 @@ server:
   error:
     include-stacktrace: never
     include-message: never
+
+# Disable API documentation in production
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+# Expose only the health check endpoint in production
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

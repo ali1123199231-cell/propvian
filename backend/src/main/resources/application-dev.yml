@@ -4,6 +4,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  # Dev only: expose error messages for easier debugging
+  server:
+    error:
+      include-message: always
 
   mail:
     properties:

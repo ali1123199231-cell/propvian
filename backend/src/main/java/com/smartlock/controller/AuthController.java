@@ -4,9 +4,11 @@ import com.smartlock.dto.request.auth.*;
 import com.smartlock.dto.response.auth.AuthResponse;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.security.CustomUserDetails;
+import com.smartlock.security.LoginRateLimiter;
 import com.smartlock.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,18 +24,31 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final LoginRateLimiter rateLimiter;
 
     @PostMapping("/register")
     @Operation(summary = "Register a new account")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest) {
+        rateLimiter.check(resolveClientIp(httpRequest));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(authService.register(request)));
     }
 
     @PostMapping("/login")
     @Operation(summary = "Sign in")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest) {
+        rateLimiter.check(resolveClientIp(httpRequest));
         return ResponseEntity.ok(ApiResponse.success(authService.login(request)));
+    }
+
+    private String resolveClientIp(HttpServletRequest req) {
+        String forwarded = req.getHeader("X-Forwarded-For");
+        if (StringUtils.hasText(forwarded)) return forwarded.split(",")[0].trim();
+        return req.getRemoteAddr();
     }
 
     @PostMapping("/verify-email")
@@ -56,6 +71,20 @@ public class AuthController {
     @Operation(summary = "Refresh access token")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         return ResponseEntity.ok(ApiResponse.success(authService.refreshToken(request)));
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Request a password reset email")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("If that email is registered, a reset link has been sent."));
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Reset password using token from email")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success("Password reset successfully."));
     }
 
     @PostMapping("/logout")

@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.StreamSupport;
 import java.util.stream.Collectors;
 
@@ -24,7 +25,7 @@ public class SystemConfigService {
         return repository.findById(key)
                 .map(SystemConfig::getValue)
                 .orElseGet(() -> {
-                    log.warn("SystemConfig key '{}' not found, using default '{}'", key, defaultValue);
+                    log.debug("SystemConfig key '{}' not found, using default '{}'", key, defaultValue);
                     return defaultValue;
                 });
     }
@@ -56,9 +57,23 @@ public class SystemConfigService {
         return count;
     }
 
+    private static final Set<String> SECRET_KEYS = Set.of(
+            "stripe.secret_key", "stripe.webhook_secret",
+            "stripe.sandbox.secret_key", "stripe.sandbox.webhook_secret",
+            "paypal.client_secret", "paypal.sandbox.client_secret", "ttlock.client_secret"
+    );
+
     @Transactional(readOnly = true)
-    public Map<String, String> getAllPublicConfig() {
+    public Map<String, String> getAllConfig() {
         return StreamSupport.stream(repository.findAll().spliterator(), false)
+                .collect(Collectors.toMap(SystemConfig::getKey, SystemConfig::getValue));
+    }
+
+    /** Returns only non-sensitive keys safe to expose publicly. */
+    @Transactional(readOnly = true)
+    public Map<String, String> getPublicConfig() {
+        return StreamSupport.stream(repository.findAll().spliterator(), false)
+                .filter(c -> !SECRET_KEYS.contains(c.getKey()))
                 .collect(Collectors.toMap(SystemConfig::getKey, SystemConfig::getValue));
     }
 
@@ -88,6 +103,53 @@ public class SystemConfigService {
         return get("stripe.connect_client_id", "");
     }
 
+    public String getStripeSecretKey() {
+        return get("stripe.secret_key", "");
+    }
+
+    public String getStripePublishableKey() {
+        return get("stripe.publishable_key", "");
+    }
+
+    public String getStripeWebhookSecret() {
+        return get("stripe.webhook_secret", "");
+    }
+
+    public String getStripePriceId() {
+        return get("stripe.price_id", "");
+    }
+
+    public boolean isStripeSandbox() {
+        return Boolean.parseBoolean(get("stripe.sandbox", "false"));
+    }
+
+    // ── Stripe sandbox-aware active getters ──────────────────────────────────
+
+    public String getActiveStripeSecretKey() {
+        if (isStripeSandbox()) return get("stripe.sandbox.secret_key", "");
+        return get("stripe.secret_key", "");
+    }
+
+    public String getActiveStripePublishableKey() {
+        if (isStripeSandbox()) return get("stripe.sandbox.publishable_key", "");
+        return get("stripe.publishable_key", "");
+    }
+
+    public String getActiveStripeWebhookSecret() {
+        if (isStripeSandbox()) return get("stripe.sandbox.webhook_secret", "");
+        return get("stripe.webhook_secret", "");
+    }
+
+    public String getActiveStripePriceId() {
+        if (isStripeSandbox()) return get("stripe.sandbox.price_id", "");
+        return get("stripe.price_id", "");
+    }
+
+    public String getActiveStripeConnectClientId() {
+        if (isStripeSandbox()) return get("stripe.sandbox.connect_client_id", "");
+        return get("stripe.connect_client_id", "");
+    }
+
     public String getPaypalClientId() {
         return get("paypal.client_id", "");
     }
@@ -98,5 +160,38 @@ public class SystemConfigService {
 
     public boolean isPaypalSandbox() {
         return Boolean.parseBoolean(get("paypal.sandbox", "false"));
+    }
+
+    // ── Sandbox-aware active getters ─────────────────────────────────────────
+
+    /** Returns the sandbox or prod client ID based on the paypal.sandbox flag. */
+    public String getActivePaypalClientId() {
+        if (isPaypalSandbox()) return get("paypal.sandbox.client_id", "");
+        return get("paypal.client_id", "");
+    }
+
+    /** Returns the sandbox or prod client secret based on the paypal.sandbox flag. */
+    public String getActivePaypalClientSecret() {
+        if (isPaypalSandbox()) return get("paypal.sandbox.client_secret", "");
+        return get("paypal.client_secret", "");
+    }
+
+    /** Returns the sandbox or prod billing plan ID based on the paypal.sandbox flag. */
+    public String getActivePaypalPlanId() {
+        if (isPaypalSandbox()) return get("paypal.sandbox.plan_id", "");
+        return get("paypal.plan_id", "");
+    }
+
+    /** Returns the sandbox or prod webhook ID based on the paypal.sandbox flag. */
+    public String getActivePaypalWebhookId() {
+        if (isPaypalSandbox()) return get("paypal.sandbox.webhook_id", "");
+        return get("paypal.webhook_id", "");
+    }
+
+    /** Returns the sandbox or prod REST API base URL based on the paypal.sandbox flag. */
+    public String getActivePaypalBaseUrl() {
+        if (isPaypalSandbox())
+            return get("paypal.sandbox.base_url", "https://api-m.sandbox.paypal.com");
+        return get("paypal.base_url", "https://api-m.paypal.com");
     }
 }

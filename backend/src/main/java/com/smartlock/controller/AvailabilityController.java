@@ -6,6 +6,7 @@ import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.exception.AppException;
 import com.smartlock.repository.PropertyBlockedDateRepository;
 import com.smartlock.repository.PropertyPricingRuleRepository;
+import com.smartlock.service.OrganizationSecurityService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,11 +32,13 @@ public class AvailabilityController {
 
     private final PropertyBlockedDateRepository blockedRepo;
     private final PropertyPricingRuleRepository pricingRepo;
+    private final OrganizationSecurityService orgSecurity;
 
     // ── Blocked dates ─────────────────────────────────────────────────────────
 
     @GetMapping("/blocked-dates")
     public ResponseEntity<ApiResponse<List<PropertyBlockedDate>>> listBlocked(@PathVariable UUID propertyId) {
+        orgSecurity.requirePropertyAccess(propertyId);
         return ResponseEntity.ok(ApiResponse.success(blockedRepo.findByPropertyId(propertyId)));
     }
 
@@ -43,6 +46,7 @@ public class AvailabilityController {
     public ResponseEntity<ApiResponse<PropertyBlockedDate>> blockDates(
             @PathVariable UUID propertyId,
             @Valid @RequestBody BlockDatesRequest req) {
+        orgSecurity.requirePropertyAccess(propertyId);
         if (req.getEndDate().isBefore(req.getStartDate())) {
             throw new AppException("End date must be after start date", HttpStatus.BAD_REQUEST);
         }
@@ -60,6 +64,7 @@ public class AvailabilityController {
     public ResponseEntity<ApiResponse<Void>> unblock(
             @PathVariable UUID propertyId,
             @PathVariable UUID blockId) {
+        orgSecurity.requirePropertyAccess(propertyId);
         PropertyBlockedDate block = blockedRepo.findById(blockId)
                 .orElseThrow(() -> new AppException("Not found", HttpStatus.NOT_FOUND));
         if (!block.getPropertyId().equals(propertyId))
@@ -72,6 +77,7 @@ public class AvailabilityController {
 
     @GetMapping("/pricing-rules")
     public ResponseEntity<ApiResponse<List<PropertyPricingRule>>> listPricing(@PathVariable UUID propertyId) {
+        orgSecurity.requirePropertyAccess(propertyId);
         return ResponseEntity.ok(ApiResponse.success(
                 pricingRepo.findByPropertyIdOrderByStartDateAsc(propertyId)));
     }
@@ -80,6 +86,7 @@ public class AvailabilityController {
     public ResponseEntity<ApiResponse<PropertyPricingRule>> createPricing(
             @PathVariable UUID propertyId,
             @Valid @RequestBody PricingRuleRequest req) {
+        orgSecurity.requirePropertyAccess(propertyId);
         PropertyPricingRule rule = PropertyPricingRule.builder()
                 .propertyId(propertyId)
                 .name(req.getName())

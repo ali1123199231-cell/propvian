@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Building2, Loader2, Check } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Check } from 'lucide-react'
+import { PropvianLogo } from '@/components/PropvianLogo'
 import toast from 'react-hot-toast'
 import { Toaster } from 'react-hot-toast'
 import { authApi } from '@/api/auth'
@@ -115,6 +116,11 @@ function SignInForm({ businessModel }: { businessModel: BusinessModel }) {
         </div>
         {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
       </div>
+      <div className="flex justify-end -mt-1">
+        <Link to="/forgot-password" className="text-xs text-primary-600 hover:text-primary-700 font-medium">
+          Forgot password?
+        </Link>
+      </div>
       <button type="submit" disabled={isSubmitting} className="btn-primary w-full justify-center py-3 mt-2">
         {isSubmitting && <Loader2 size={16} className="animate-spin" />}
         {isSubmitting ? 'Signing in…' : 'Sign in'}
@@ -193,7 +199,7 @@ function SignUpFormDirect() {
       </div>
       <button type="submit" disabled={isSubmitting} className="btn-primary w-full justify-center py-3 mt-2">
         {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-        {isSubmitting ? 'Creating account…' : 'Start free — no credit card'}
+        {isSubmitting ? 'Creating account…' : 'Start free'}
       </button>
       <p className="text-xs text-gray-400 text-center">
         By signing up you agree to our{' '}
@@ -243,12 +249,15 @@ export function LandingPage() {
   const [tab, setTab]                       = useState<'signin' | 'signup'>('signin')
   const [businessModel, setBusinessModel]   = useState<BusinessModel>('ttlock')
   const { fetchConfig }                     = useSystemStore()
+  const { isAuthenticated }                 = useAuthStore()
 
   useEffect(() => {
     systemConfigApi.getBusinessModel()
       .then(bm => setBusinessModel(bm as BusinessModel))
       .catch(() => {})
   }, [])
+
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
   const copy = COPY[businessModel]
 
@@ -261,12 +270,7 @@ export function LandingPage() {
         <div className="lg:flex-1 bg-gradient-to-br from-primary-900 via-primary-700 to-indigo-600 flex flex-col justify-between p-8 lg:p-14">
 
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur">
-              <Building2 size={20} className="text-white" />
-            </div>
-            <span className="text-xl font-bold text-white tracking-tight">Propvian</span>
-          </div>
+          <PropvianLogo size={40} textClassName="text-xl font-bold text-white tracking-tight" />
 
           {/* Hero */}
           <div className="py-10 lg:py-0">

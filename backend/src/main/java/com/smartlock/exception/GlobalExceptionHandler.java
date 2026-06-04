@@ -16,6 +16,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -30,9 +32,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ErrorResponse> handleAppException(AppException ex, WebRequest request) {
-        log.warn("Application exception [{}]: {}", ex.getErrorCode(), ex.getMessage());
-        String path = path(request);
-        errorLogService.record(ex.getStatus(), ex.getErrorCode(), ex.getMessage(), path, null);
+        if (ex.getStatus().is5xxServerError()) {
+            log.warn("Application exception [{}]: {}", ex.getErrorCode(), ex.getMessage());
+            errorLogService.record(ex.getStatus(), ex.getErrorCode(), ex.getMessage(), path(request), null);
+        } else {
+            log.debug("Client error [{}]: {}", ex.getErrorCode(), ex.getMessage());
+        }
         return ResponseEntity.status(ex.getStatus())
                 .body(buildError(ex.getStatus(), ex.getMessage(), ex.getErrorCode(), request, null));
     }
@@ -67,6 +72,20 @@ public class GlobalExceptionHandler {
         errorLogService.record(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "Access denied", path, null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(buildError(HttpStatus.FORBIDDEN, "Access denied", "ACCESS_DENIED", request, null));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex, WebRequest request) {
+        log.debug("No handler found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(buildError(HttpStatus.NOT_FOUND, "Resource not found", "NOT_FOUND", request, null));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(MaxUploadSizeExceededException ex, WebRequest request) {
+        log.debug("Upload size exceeded: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(buildError(HttpStatus.PAYLOAD_TOO_LARGE, "File too large. Maximum upload size is 10 MB.", "FILE_TOO_LARGE", request, null));
     }
 
     @ExceptionHandler(Exception.class)

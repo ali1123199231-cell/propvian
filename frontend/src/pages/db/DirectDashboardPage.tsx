@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   TrendingUp, Calendar, DollarSign, Star, AlertTriangle,
-  CheckCircle, Clock, Users, ArrowRight, Plus,
+  CheckCircle, Clock, Users, ArrowRight, Plus, CalendarDays,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { verificationApi } from '@/api/verification'
@@ -140,7 +140,7 @@ function RecentBookings({ orgId }: { orgId: string }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function DirectDashboardPage() {
-  const { activeOrg } = useAuthStore()
+  const { activeOrg, user } = useAuthStore()
   const orgId         = activeOrg?.id ?? ''
   const navigate      = useNavigate()
 
@@ -167,7 +167,7 @@ export function DirectDashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-0.5">Welcome back, {activeOrg?.name}</p>
+          <p className="text-gray-500 mt-0.5">Welcome back, {user?.firstName ?? user?.name ?? activeOrg?.name}</p>
         </div>
         <button onClick={() => navigate('/properties')}
           className="btn-primary py-2 px-4 text-sm flex items-center gap-2">
@@ -219,11 +219,12 @@ export function DirectDashboardPage() {
           <h3 className="font-semibold text-gray-900 mb-4">Quick actions</h3>
           <div className="space-y-2">
             {[
-              { to: '/properties', icon: Star,       label: 'Manage properties' },
-              { to: '/calendar',   icon: Calendar,   label: 'View calendar' },
-              { to: '/payments',   icon: DollarSign, label: 'Payment setup' },
-              { to: '/website',    icon: TrendingUp, label: 'Customize website' },
-              { to: '/verification', icon: Clock,    label: 'Verification status' },
+              { to: '/properties',   icon: Star,          label: 'Manage properties' },
+              { to: '/calendar',     icon: Calendar,      label: 'View calendar' },
+              { to: '/integrations', icon: CalendarDays,  label: 'Calendar integrations' },
+              { to: '/payments',     icon: DollarSign,    label: 'Payment setup' },
+              { to: '/website',      icon: TrendingUp,    label: 'Customize website' },
+              { to: '/verification', icon: Clock,         label: 'Verification status' },
             ].map(({ to, icon: Icon, label }) => (
               <Link
                 key={to}

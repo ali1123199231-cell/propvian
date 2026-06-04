@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +46,48 @@ public class OrganizationController {
     @GetMapping("/{orgId}")
     public ResponseEntity<ApiResponse<OrganizationResponse>> get(@PathVariable UUID orgId) {
         return ResponseEntity.ok(ApiResponse.success(organizationService.getOrganization(orgId)));
+    }
+
+    @PutMapping("/{orgId}")
+    @Operation(summary = "Update organization")
+    public ResponseEntity<ApiResponse<OrganizationResponse>> update(
+            @PathVariable UUID orgId,
+            @Valid @RequestBody UpdateOrganizationRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.success(
+                organizationService.updateOrganization(orgId, request.getName(), request.getTimezone(),
+                        request.getCountry(), request.getWebsite(), userDetails.getUserId())));
+    }
+
+    @Data
+    public static class UpdateOrganizationRequest {
+        @Size(min = 2, max = 200)
+        private String name;
+        @Size(max = 100)
+        private String timezone;
+        @Size(max = 100)
+        private String country;
+        @Size(max = 500)
+        private String website;
+    }
+
+    /** Choose / update the public site address (slug) shown in the URL */
+    @PutMapping("/{orgId}/slug")
+    @Operation(summary = "Update organization site slug")
+    public ResponseEntity<ApiResponse<OrganizationResponse>> updateSlug(
+            @PathVariable UUID orgId,
+            @RequestBody java.util.Map<String, String> body,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.success(
+                organizationService.updateSlug(orgId, body.get("slug"), userDetails.getUserId())));
+    }
+
+    /** Public availability check — no auth required */
+    @GetMapping("/public/check-slug/{slug}")
+    @Operation(summary = "Check if a site slug is available")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> checkSlug(@PathVariable String slug) {
+        boolean available = organizationService.isSlugAvailable(slug);
+        return ResponseEntity.ok(ApiResponse.success(java.util.Map.of("available", available, "slug", slug)));
     }
 
     @GetMapping("/my")

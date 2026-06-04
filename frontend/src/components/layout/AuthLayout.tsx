@@ -1,7 +1,7 @@
 import { Outlet, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { Lock } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { PropvianLogo } from '@/components/PropvianLogo'
 
 export function AuthLayout() {
   const { isAuthenticated } = useAuthStore()
@@ -14,12 +14,7 @@ export function AuthLayout() {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Left panel - branding */}
       <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary-700 via-primary-600 to-indigo-500 flex-col justify-between p-12">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <Lock size={20} className="text-white" />
-          </div>
-          <span className="text-xl font-bold text-white">Propvian</span>
-        </div>
+        <PropvianLogo size={40} textClassName="text-xl font-bold text-white" />
 
         <div>
           <h1 className="text-4xl font-bold text-white mb-4 leading-tight">

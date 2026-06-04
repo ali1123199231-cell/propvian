@@ -28,6 +28,7 @@ export const verificationApi = {
     airbnbListingUrl?: string
     bookingListingUrl?: string
     vrboListingUrl?: string
+    otherListingUrls?: string[]
   }): Promise<VerificationProgress> {
     const res = await apiClient.post<Res<VerificationProgress>>(`/organizations/${orgId}/verification/ota`, payload)
     return res.data.data
@@ -36,6 +37,7 @@ export const verificationApi = {
   async connectCalendar(orgId: string, payload: {
     airbnbIcalUrl?: string
     bookingIcalUrl?: string
+    vrboIcalUrl?: string
     otherIcalUrls?: string[]
   }): Promise<VerificationProgress> {
     const res = await apiClient.post<Res<VerificationProgress>>(`/organizations/${orgId}/verification/calendar`, payload)

@@ -8,7 +8,7 @@ export const systemConfigApi = {
   },
 
   async getConfig(): Promise<Record<string, string>> {
-    const res = await apiClient.get<{ success: boolean; data: Record<string, string> }>('/system/config')
+    const res = await apiClient.get<{ success: boolean; data: Record<string, string> }>('/system/public-config')
     return res.data.data
   },
 

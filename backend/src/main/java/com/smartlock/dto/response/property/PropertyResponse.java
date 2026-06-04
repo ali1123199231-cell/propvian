@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -35,6 +36,7 @@ public class PropertyResponse {
     private long activeReservationCount;
 
     // Direct booking pricing
+    private String currency;
     private BigDecimal baseNightlyRate;
     private BigDecimal cleaningFee;
     private BigDecimal securityDeposit;
@@ -45,5 +47,29 @@ public class PropertyResponse {
     private boolean instantBooking;
     private String slug;
 
+    // Business rules
+    private String cancellationPolicy;
+    private int bufferDaysBefore;
+    private int bufferDaysAfter;
+    private boolean depositRequired;
+    private java.math.BigDecimal depositPercent;
+
+    // Location coordinates
+    private java.math.BigDecimal latitude;
+    private java.math.BigDecimal longitude;
+
     private Instant createdAt;
+
+    private List<PhotoInfo> photos;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PhotoInfo {
+        private UUID id;
+        private String url;
+        private String caption;
+        private int sortOrder;
+        private boolean primary;
+    }
 }

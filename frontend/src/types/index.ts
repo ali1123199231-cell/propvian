@@ -58,7 +58,7 @@ export interface Property {
   imageUrl?: string
   wifiDetails?: string
   accessInstructions?: string
-  status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED'
+  status: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'INACTIVE' | 'ARCHIVED'
   cleanerUserId?: string
   maxGuests?: number
   bedrooms?: number
@@ -66,6 +66,7 @@ export interface Property {
   lockCount: number
   activeReservationCount: number
   // Direct booking pricing
+  currency?: string
   baseNightlyRate?: number
   cleaningFee?: number
   securityDeposit?: number
@@ -75,7 +76,59 @@ export interface Property {
   checkOutTime?: string
   instantBooking?: boolean
   slug?: string
+  // Business rules
+  cancellationPolicy?: string
+  bufferDaysBefore?: number
+  bufferDaysAfter?: number
+  depositRequired?: boolean
+  depositPercent?: number
+  // Location coordinates
+  latitude?: number
+  longitude?: number
   createdAt: string
+  photos?: PropertyPhoto[]
+}
+
+// ── Calendar Engine ───────────────────────────────────────────────────────────
+
+export type CalendarIntervalState = 'BOOKED' | 'BLOCKED' | 'RESERVED' | 'MAINTENANCE' | 'BUFFER'
+
+export interface CalendarInterval {
+  id: string
+  propertyId: string
+  startDate: string
+  endDate: string
+  state: CalendarIntervalState
+  bookingId?: string
+  holdId?: string
+  note?: string
+  expiresAt?: string
+}
+
+export interface BookingHold {
+  holdId: string
+  intervalId: string
+  expiresAt: string
+}
+
+export interface PropertyHouseRule {
+  id: string
+  propertyId: string
+  ruleKey: string
+  allowed: boolean
+  notes?: string
+}
+
+export interface PropertySeasonalRule {
+  id: string
+  propertyId: string
+  name?: string
+  startDate: string
+  endDate: string
+  minStayDays?: number
+  maxStayDays?: number
+  bufferDaysBefore?: number
+  bufferDaysAfter?: number
 }
 
 export interface Lock {

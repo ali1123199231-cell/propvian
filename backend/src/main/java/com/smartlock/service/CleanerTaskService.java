@@ -1,12 +1,14 @@
 package com.smartlock.service;
 
 import com.smartlock.domain.CleanerTask;
+import com.smartlock.domain.DirectBooking;
 import com.smartlock.domain.Property;
 import com.smartlock.domain.Reservation;
 import com.smartlock.domain.User;
 import com.smartlock.domain.enums.CleanerTaskStatus;
 import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.repository.CleanerTaskRepository;
+import com.smartlock.repository.DirectBookingRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
 import com.smartlock.repository.UserRepository;
@@ -29,6 +31,7 @@ public class CleanerTaskService {
 
     private final CleanerTaskRepository cleanerTaskRepository;
     private final ReservationRepository reservationRepository;
+    private final DirectBookingRepository directBookingRepository;
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
@@ -68,6 +71,37 @@ public class CleanerTaskService {
         }
 
         return task;
+    }
+
+    @Transactional
+    public CleanerTask createCleanerTaskForDirectBooking(UUID directBookingId, UUID organizationId) {
+        if (cleanerTaskRepository.findByDirectBookingId(directBookingId).isPresent()) {
+            return cleanerTaskRepository.findByDirectBookingId(directBookingId).get();
+        }
+
+        DirectBooking booking = directBookingRepository.findById(directBookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("DirectBooking", directBookingId));
+
+        Property property = propertyRepository.findById(booking.getPropertyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Property", booking.getPropertyId()));
+
+        CleanerTask task = CleanerTask.builder()
+                .directBookingId(directBookingId)
+                .organizationId(organizationId)
+                .assignedUserId(property.getCleanerUserId())
+                .status(CleanerTaskStatus.PENDING)
+                .scheduledAt(booking.getCheckOutDate().atStartOfDay(java.time.ZoneOffset.UTC).toInstant())
+                .checklist(List.of(
+                        "Clean all rooms",
+                        "Change bed linens",
+                        "Clean bathrooms",
+                        "Restock consumables",
+                        "Check for damages",
+                        "Lock up property"
+                ))
+                .build();
+
+        return cleanerTaskRepository.save(task);
     }
 
     @Transactional(readOnly = true)
