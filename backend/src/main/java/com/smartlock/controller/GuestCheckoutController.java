@@ -6,9 +6,11 @@ import com.smartlock.dto.response.guest.GuestInitiateResponse;
 import com.smartlock.dto.response.guest.GuestPropertyResponse;
 import com.smartlock.dto.response.guest.PromoValidationResponse;
 import com.smartlock.dto.response.guest.PublicOrgSiteResponse;
+import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.service.GuestCheckoutService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +22,17 @@ import java.util.UUID;
 public class GuestCheckoutController {
 
     private final GuestCheckoutService guestCheckoutService;
+    private final OrganizationRepository organizationRepository;
+
+    /** Called by Caddy on-demand TLS to validate a subdomain before issuing a cert */
+    @GetMapping("/api/public/check-subdomain")
+    public ResponseEntity<Void> checkSubdomain(@RequestParam String domain) {
+        String slug = domain.replaceAll("\\.propvian\\.com$", "").toLowerCase();
+        if (slug.isEmpty() || slug.contains(".")) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        return organizationRepository.existsBySlug(slug)
+                ? ResponseEntity.ok().build()
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
 
     /** Org site data (branding + all active properties) — no auth required */
     @GetMapping("/api/public/sites/{orgSlug}")
