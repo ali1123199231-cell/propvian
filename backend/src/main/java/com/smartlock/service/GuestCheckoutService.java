@@ -18,6 +18,7 @@ import com.smartlock.exception.AppException;
 import com.smartlock.repository.DirectBookingRepository;
 import com.smartlock.repository.HostVerificationRepository;
 import com.smartlock.repository.OrganizationRepository;
+import com.smartlock.repository.CalendarIntervalRepository;
 import com.smartlock.repository.PropertyBlockedDateRepository;
 import com.smartlock.repository.PropertyPhotoRepository;
 import com.smartlock.repository.PropertyPricingRuleRepository;
@@ -34,8 +35,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,6 +54,7 @@ public class GuestCheckoutService {
     private final OrganizationRepository organizationRepository;
     private final HostVerificationRepository verificationRepository;
     private final DirectBookingRepository bookingRepository;
+    private final CalendarIntervalRepository calendarIntervalRepository;
     private final PropertyBlockedDateRepository blockedRepo;
     private final PropertyPricingRuleRepository pricingRepo;
     private final PromoCodeRepository promoCodeRepository;
@@ -188,11 +192,22 @@ public class GuestCheckoutService {
                 && v.isStripePayoutsEnabled();
         boolean paypalEnabled = v != null && v.getPaypalAccountId() != null;
 
-        List<GuestPropertyResponse.BlockedRange> blocked =
+        // Manually blocked dates (fully inclusive [start, end])
+        List<GuestPropertyResponse.BlockedRange> blocked = new ArrayList<>(
                 blockedRepo.findByPropertyId(property.getId()).stream()
                         .map(b -> new GuestPropertyResponse.BlockedRange(
                                 b.getStartDate().toString(), b.getEndDate().toString()))
-                        .toList();
+                        .toList());
+
+        // Booked / buffered intervals from CalendarEngine — half-open [start, end),
+        // convert to inclusive by sending end - 1 day so the frontend datesInRange works correctly.
+        LocalDate windowEnd = LocalDate.now().plusYears(1);
+        calendarIntervalRepository.findInWindow(property.getId(), LocalDate.now(), windowEnd).stream()
+                .filter(ci -> !ci.getState().equals("CANCELLED") && !ci.getState().equals("EXPIRED"))
+                .filter(ci -> ci.getEndDate().isAfter(ci.getStartDate()))
+                .forEach(ci -> blocked.add(new GuestPropertyResponse.BlockedRange(
+                        ci.getStartDate().toString(),
+                        ci.getEndDate().minusDays(1).toString())));
 
         List<GuestPropertyResponse.PricingRuleInfo> pricing =
                 pricingRepo.findByPropertyIdOrderByStartDateAsc(property.getId()).stream()

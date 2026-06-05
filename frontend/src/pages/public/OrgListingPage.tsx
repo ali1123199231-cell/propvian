@@ -138,6 +138,7 @@ export function OrgListingPage({ orgSlug, getPropertyUrl }: {
     queryKey: ['org-site', orgSlug],
     queryFn: () => fetchOrgSite(orgSlug),
     staleTime: 60_000,
+    retry: false,
   })
 
   // Auto-redirect when there's only one property

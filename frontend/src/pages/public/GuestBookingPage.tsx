@@ -31,7 +31,9 @@ const MONTH_NAMES = ['January','February','March','April','May','June',
   'July','August','September','October','November','December']
 const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa']
 
-function fmt(d: Date) { return d.toISOString().slice(0, 10) }
+function fmt(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 function parseDate(s: string) {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d)
@@ -86,7 +88,7 @@ async function capturePaypal(bookingId: string, orderId: string) {
 function DatePicker({ prop, checkIn, checkOut, onSelect }: {
   prop: PropertyInfo
   checkIn: string | null; checkOut: string | null
-  onSelect: (ci: string, co: string) => void
+  onSelect: (ci: string, co: string | null) => void
 }) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
@@ -106,12 +108,20 @@ function DatePicker({ prop, checkIn, checkOut, onSelect }: {
   function prevMo() { if (month === 0) { setYear(y => y - 1); setMonth(11) } else setMonth(m => m - 1) }
   function nextMo() { if (month === 11) { setYear(y => y + 1); setMonth(0) } else setMonth(m => m + 1) }
 
+  function rangeSpansBlocked(start: string, end: string) {
+    const dates = datesInRange(start, end)
+    return dates.some(d => d !== start && d !== end && blockedDays.has(d))
+  }
+
   function handleClick(ds: string) {
     if (ds < todayStr || blockedDays.has(ds)) return
     if (!selStart || selEnd) {
-      setSelStart(ds); setSelEnd(null)
+      setSelStart(ds); setSelEnd(null); onSelect(ds, null)
     } else if (ds <= selStart) {
-      setSelStart(ds); setSelEnd(null)
+      setSelStart(ds); setSelEnd(null); onSelect(ds, null)
+    } else if (rangeSpansBlocked(selStart, ds)) {
+      // Range crosses a blocked period — restart selection from this date
+      setSelStart(ds); setSelEnd(null); onSelect(ds, null)
     } else {
       setSelEnd(ds)
       onSelect(selStart, ds)
@@ -237,6 +247,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
   const { data: prop, isLoading, error: propError } = useQuery({
     queryKey: ['guest-property', slug],
     queryFn: () => fetchProperty(slug),
+    retry: false,
   })
 
   useEffect(() => {
