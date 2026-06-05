@@ -12,6 +12,8 @@ public interface PropertySeasonalRuleRepository extends JpaRepository<PropertySe
 
     List<PropertySeasonalRule> findByPropertyIdOrderByStartDateAsc(UUID propertyId);
 
+    void deleteByPropertyId(UUID propertyId);
+
     // Find seasonal rules that overlap the given date range
     @Query("""
         SELECT s FROM PropertySeasonalRule s

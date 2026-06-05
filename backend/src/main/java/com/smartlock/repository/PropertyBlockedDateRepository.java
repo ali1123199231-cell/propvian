@@ -12,6 +12,8 @@ public interface PropertyBlockedDateRepository extends JpaRepository<PropertyBlo
 
     List<PropertyBlockedDate> findByPropertyId(UUID propertyId);
 
+    void deleteByPropertyId(UUID propertyId);
+
     @Query("SELECT b FROM PropertyBlockedDate b WHERE b.propertyId = :propertyId " +
            "AND b.startDate <= :end AND b.endDate >= :start")
     List<PropertyBlockedDate> findOverlapping(UUID propertyId, LocalDate start, LocalDate end);

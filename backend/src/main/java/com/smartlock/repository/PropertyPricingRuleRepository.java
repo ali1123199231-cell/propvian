@@ -13,6 +13,8 @@ public interface PropertyPricingRuleRepository extends JpaRepository<PropertyPri
 
     List<PropertyPricingRule> findByPropertyIdOrderByStartDateAsc(UUID propertyId);
 
+    void deleteByPropertyId(UUID propertyId);
+
     @Query("SELECT r FROM PropertyPricingRule r WHERE r.propertyId = :propertyId " +
            "AND r.startDate <= :date AND r.endDate >= :date ORDER BY r.startDate DESC")
     List<PropertyPricingRule> findRulesForDate(UUID propertyId, LocalDate date);

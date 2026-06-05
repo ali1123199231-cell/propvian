@@ -7,9 +7,13 @@ import com.smartlock.dto.response.property.PropertyResponse;
 import com.smartlock.exception.AppException;
 import com.smartlock.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
+import com.smartlock.repository.CalendarIntegrationRepository;
 import com.smartlock.repository.LockRepository;
+import com.smartlock.repository.PropertyBlockedDateRepository;
 import com.smartlock.repository.PropertyPhotoRepository;
+import com.smartlock.repository.PropertyPricingRuleRepository;
 import com.smartlock.repository.PropertyRepository;
+import com.smartlock.repository.PropertySeasonalRuleRepository;
 import com.smartlock.repository.ReservationRepository;
 import com.smartlock.repository.WebsiteConfigRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +33,10 @@ public class PropertyService {
 
     private final PropertyRepository propertyRepository;
     private final PropertyPhotoRepository photoRepository;
+    private final PropertyBlockedDateRepository blockedDateRepository;
+    private final PropertyPricingRuleRepository pricingRuleRepository;
+    private final PropertySeasonalRuleRepository seasonalRuleRepository;
+    private final CalendarIntegrationRepository calendarIntegrationRepository;
     private final LockRepository lockRepository;
     private final ReservationRepository reservationRepository;
     private final OnboardingService onboardingService;
@@ -179,6 +187,12 @@ public class PropertyService {
 
         photoRepository.deleteByPropertyId(propertyId);
         log.info("[DELETE-PROPERTY] Deleted {} photo record(s) from DB for property {}", photos.size(), propertyId);
+
+        blockedDateRepository.deleteByPropertyId(propertyId);
+        pricingRuleRepository.deleteByPropertyId(propertyId);
+        seasonalRuleRepository.deleteByPropertyId(propertyId);
+        calendarIntegrationRepository.deleteByPropertyId(propertyId);
+        log.info("[DELETE-PROPERTY] Cleaned up availability/calendar data for property {}", propertyId);
 
         property.softDelete();
         propertyRepository.save(property);

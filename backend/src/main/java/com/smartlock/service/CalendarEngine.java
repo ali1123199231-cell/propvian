@@ -4,11 +4,13 @@ import com.smartlock.domain.BookingHold;
 import com.smartlock.domain.CalendarInterval;
 import com.smartlock.domain.HostVerification;
 import com.smartlock.domain.Property;
+import com.smartlock.domain.PropertyBlockedDate;
 import com.smartlock.domain.enums.PropertyStatus;
 import com.smartlock.exception.AppException;
 import com.smartlock.repository.BookingHoldRepository;
 import com.smartlock.repository.CalendarIntervalRepository;
 import com.smartlock.repository.HostVerificationRepository;
+import com.smartlock.repository.PropertyBlockedDateRepository;
 import com.smartlock.repository.PropertyRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,7 @@ public class CalendarEngine {
     private final PropertyRepository propertyRepo;
     private final PropertyRuleResolver ruleResolver;
     private final HostVerificationRepository hostVerificationRepo;
+    private final PropertyBlockedDateRepository blockedDateRepo;
     private final EntityManager em;
 
     // ── Public record types ───────────────────────────────────────────────────
@@ -71,6 +74,9 @@ public class CalendarEngine {
             String states = conflicts.stream().map(CalendarInterval::getState).distinct()
                     .reduce((a, b) -> a + "," + b).orElse("UNKNOWN");
             return AvailabilityResult.blocked("Dates conflict with existing " + states + " intervals");
+        }
+        if (!blockedDateRepo.findOverlapping(propertyId, checkIn, checkOut).isEmpty()) {
+            return AvailabilityResult.blocked("Dates are blocked by the host");
         }
         return AvailabilityResult.ok();
     }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.Instant;
@@ -72,6 +73,24 @@ public class GlobalExceptionHandler {
         errorLogService.record(HttpStatus.FORBIDDEN, "ACCESS_DENIED", "Access denied", path, null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(buildError(HttpStatus.FORBIDDEN, "Access denied", "ACCESS_DENIED", request, null));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException ex, WebRequest request) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        if (status == null) status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String message = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        if (status.is5xxServerError()) {
+            log.error("ResponseStatusException [{}]: {}", status, message);
+            errorLogService.record(status, "INTERNAL_ERROR", message, path(request), null);
+        } else {
+            log.debug("ResponseStatusException [{}]: {}", status, message);
+        }
+        String errorCode = status == HttpStatus.NOT_FOUND ? "NOT_FOUND"
+                         : status == HttpStatus.FORBIDDEN  ? "FORBIDDEN"
+                         : status.name();
+        return ResponseEntity.status(status)
+                .body(buildError(status, message, errorCode, request, null));
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

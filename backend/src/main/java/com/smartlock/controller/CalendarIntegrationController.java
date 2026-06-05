@@ -6,6 +6,7 @@ import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.CalendarIntegrationService;
 import com.smartlock.service.ICalExportService;
+import java.util.Map;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -63,19 +64,19 @@ public class CalendarIntegrationController {
 
     /** Get (or auto-create) the iCal export token for a property. */
     @GetMapping("/properties/{propertyId}/calendar-integrations/export-token")
-    public ResponseEntity<ApiResponse<String>> getExportToken(
+    public ResponseEntity<ApiResponse<Map<String, String>>> getExportToken(
             @PathVariable UUID propertyId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         String token = icalExportService.getOrCreateExportToken(propertyId, userDetails.getActiveOrgId());
-        return ResponseEntity.ok(ApiResponse.success(token));
+        return ResponseEntity.ok(ApiResponse.success(Map.of("token", token)));
     }
 
     /** Rotate (regenerate) the export token, invalidating the old feed URL. */
     @PostMapping("/properties/{propertyId}/calendar-integrations/rotate-token")
-    public ResponseEntity<ApiResponse<String>> rotateToken(
+    public ResponseEntity<ApiResponse<Map<String, String>>> rotateToken(
             @PathVariable UUID propertyId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         String token = icalExportService.rotateExportToken(propertyId, userDetails.getActiveOrgId());
-        return ResponseEntity.ok(ApiResponse.success(token));
+        return ResponseEntity.ok(ApiResponse.success(Map.of("token", token)));
     }
 }

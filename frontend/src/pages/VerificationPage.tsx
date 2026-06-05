@@ -976,6 +976,11 @@ function DomainCopyButton({ text }: { text: string }) {
 }
 
 function DnsHelpModal({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [onClose])
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
@@ -1051,6 +1056,11 @@ function DnsHelpModal({ onClose }: { onClose: () => void }) {
 
 function BuyDomainModal({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState('')
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [onClose])
   function handleSearch() {
     const domain = query.trim().replace(/^https?:\/\//i, '').split('/')[0]
     if (!domain) return
