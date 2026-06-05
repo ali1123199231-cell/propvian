@@ -7,7 +7,7 @@ import {
   CheckCircle, Clock, XCircle, Circle, ChevronRight, ChevronLeft,
   ShieldCheck, Home, Link, Calendar, CreditCard, Globe, BadgeCheck,
   Loader2, AlertTriangle, ExternalLink, Info, Upload, X, Copy,
-  RefreshCw, Check, Plug, WifiOff, Wifi, ArrowRight,
+  RefreshCw, Check, Plug, WifiOff, Wifi, ArrowRight, HelpCircle, Search,
 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -958,6 +958,137 @@ function CalendarStep({ orgId, onDone, status }: {
   )
 }
 
+// ── Domain shared helpers ─────────────────────────────────────────────────────
+
+const CNAME_TARGET = 'booking.propvian.com'
+
+function DomainCopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1800) }}
+      className="ml-1 p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+      title="Copy"
+    >
+      {copied ? <CheckCircle size={12} className="text-green-500" /> : <Copy size={12} />}
+    </button>
+  )
+}
+
+function DnsHelpModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">How to connect your domain</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Step-by-step guide — no tech skills needed</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-5">
+          <div className="flex gap-4">
+            <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Enter your domain below</p>
+              <p className="text-xs text-gray-500 mt-1">Type the domain name you own, like <code className="bg-gray-100 px-1 rounded">myvilla.com</code> or <code className="bg-gray-100 px-1 rounded">stay.myvilla.com</code>.</p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Log in to your domain registrar</p>
+              <p className="text-xs text-gray-500 mt-1">This is the website where you bought your domain — GoDaddy, Namecheap, Cloudflare, Google Domains, etc. Look for a <strong>DNS settings</strong> or <strong>DNS management</strong> section.</p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Add a CNAME record</p>
+              <p className="text-xs text-gray-500 mt-1 mb-3">Create a new DNS record with these exact values:</p>
+              <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden text-xs font-mono">
+                <div className="grid grid-cols-3 bg-gray-100 text-gray-500 font-sans font-semibold px-3 py-2">
+                  <span>Type</span><span>Name / Host</span><span>Value / Points to</span>
+                </div>
+                <div className="grid grid-cols-3 px-3 py-3 text-gray-800 gap-2">
+                  <span className="font-bold text-blue-600">CNAME</span>
+                  <span>@ <span className="text-gray-400 font-sans">(or www)</span></span>
+                  <span className="text-green-700 break-all">{CNAME_TARGET}</span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">💡 <strong>What is @?</strong> It means the root of your domain (e.g. <em>myvilla.com</em> itself, not a subdomain).</p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">4</div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Wait and verify</p>
+              <p className="text-xs text-gray-500 mt-1">DNS changes can take anywhere from a few minutes to 48 hours. Once done, click <strong>Check DNS</strong> — we'll confirm automatically and issue your SSL certificate.</p>
+            </div>
+          </div>
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Jump to DNS settings for popular providers</p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { name: 'GoDaddy',        url: 'https://dcc.godaddy.com/manage/dns' },
+                { name: 'Namecheap',      url: 'https://ap.www.namecheap.com/Domains/DomainControlPanel' },
+                { name: 'Cloudflare',     url: 'https://dash.cloudflare.com' },
+                { name: 'Google Domains', url: 'https://domains.google.com' },
+              ].map(p => (
+                <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-2 px-3 py-2.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-xl border border-gray-200 hover:bg-gray-100 transition-colors">
+                  {p.name}<ExternalLink size={11} className="text-gray-400" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BuyDomainModal({ onClose }: { onClose: () => void }) {
+  const [query, setQuery] = useState('')
+  function handleSearch() {
+    const domain = query.trim().replace(/^https?:\/\//i, '').split('/')[0]
+    if (!domain) return
+    window.open(`https://www.godaddy.com/domainsearch/find?checkAvail=1&domainToCheck=${encodeURIComponent(domain)}`, '_blank', 'noopener,noreferrer')
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">Find your domain</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Search and buy a domain from GoDaddy</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-gray-600">A custom domain like <strong>myvilla.com</strong> looks more professional and builds trust with guests.</p>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                placeholder="e.g. myvilla.com"
+                className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-primary-400"
+                autoFocus />
+            </div>
+            <button onClick={handleSearch} disabled={!query.trim()}
+              className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-white rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-40 transition-colors">
+              Search <ExternalLink size={13} />
+            </button>
+          </div>
+          <p className="text-xs text-gray-400">Powered by GoDaddy — domains from ~$10/year</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Step 5 (Domain) ───────────────────────────────────────────────────────────
 
 function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDomain }: {
@@ -965,24 +1096,18 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
 }) {
   const qc = useQueryClient()
   const data: string[] = stepData?.data ?? []
-  const savedDomain    = data[0] || ''
-  const cnameTarget    = data[1] || 'booking.propvian.com'
+  const savedDomain = data[0] || ''
 
   const schema = z.object({
     domain: z.string().min(4, 'Enter a valid domain')
-      .regex(/^[a-zA-Z0-9][a-zA-Z0-9\-\.]+[a-zA-Z0-9]$/, 'Invalid domain format'),
+      .regex(/^[a-zA-Z0-9][a-zA-Z0-9\-\.]+[a-zA-Z0-9]$/, 'Invalid domain format — no http:// or trailing slash'),
   })
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({ resolver: zodResolver(schema) })
 
   const [checking, setChecking] = useState(false)
   const [dnsResult, setDnsResult] = useState<{ verified: boolean; message: string } | null>(null)
-  const [copied, setCopied] = useState(false)
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true); setTimeout(() => setCopied(false), 2000)
-    })
-  }
+  const [showDnsHelp, setShowDnsHelp] = useState(false)
+  const [showBuyDomain, setShowBuyDomain] = useState(false)
 
   const checkDns = async () => {
     setChecking(true); setDnsResult(null)
@@ -998,11 +1123,11 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
     finally { setChecking(false) }
   }
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (formData: any) => {
     try {
-      await verificationApi.connectDomain(orgId, { domain: data.domain })
+      await verificationApi.connectDomain(orgId, { domain: formData.domain })
       qc.invalidateQueries({ queryKey: ['verification', orgId] })
-      toast.success(data.domain.endsWith('.propvian.com') ? `Using ${data.domain}` : 'Domain saved — add the CNAME below')
+      toast.success(formData.domain.endsWith('.propvian.com') ? `Using ${formData.domain}` : 'Domain saved — add the CNAME record to activate it')
       onDone()
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Connection failed')
@@ -1031,67 +1156,108 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
         Connect a custom domain so guests book on your brand. We'll provision SSL automatically.
       </p>
 
+      {/* ── Pending DNS verification ── */}
       {status === 'PENDING' && savedDomain && (
         <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-amber-800 mb-3">Pending DNS verification for <strong>{savedDomain}</strong></p>
-          <p className="text-xs text-gray-600 mb-2">Add this CNAME record at your DNS provider:</p>
-          <div className="bg-white border border-gray-200 rounded-lg p-3 font-mono text-xs flex items-center justify-between gap-2">
-            <span className="text-gray-700">CNAME &nbsp; @ &nbsp;→ &nbsp;{cnameTarget}</span>
-            <button onClick={() => copyToClipboard(cnameTarget)} className="flex-shrink-0 flex items-center gap-1 text-primary-600 hover:text-primary-800">
-              {copied ? <Check size={12} /> : <Copy size={12} />}
-              {copied ? 'Copied' : 'Copy'}
+          <p className="text-sm font-medium text-amber-800 mb-3">
+            Pending DNS verification for <strong>{savedDomain}</strong>
+          </p>
+          <div className="rounded-xl border border-gray-200 overflow-hidden text-sm bg-white mb-3">
+            <div className="grid grid-cols-3 bg-gray-50 px-4 py-2.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
+              <span>Type</span><span>Host / Name</span><span>Value / Points to</span>
+            </div>
+            <div className="grid grid-cols-3 px-4 py-3.5 items-center gap-2">
+              <span className="font-bold text-blue-600 text-xs">CNAME</span>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@ (or www)</code>
+              <div className="flex items-center gap-1">
+                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
+                <DomainCopyButton text={CNAME_TARGET} />
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400 mb-3">DNS changes take 5–30 minutes to propagate.</p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button onClick={checkDns} disabled={checking}
+              className="btn-primary text-sm py-2 flex items-center gap-2">
+              {checking ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+              {checking ? 'Checking…' : 'Check DNS now'}
+            </button>
+            <button onClick={() => setShowDnsHelp(true)}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+              <HelpCircle size={12} /> How do I do this?
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2">DNS changes take 5–30 minutes to propagate.</p>
-          <button onClick={checkDns} disabled={checking}
-            className="mt-3 btn-primary text-sm py-2 flex items-center gap-2">
-            {checking ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-            {checking ? 'Checking…' : 'Check DNS now'}
-          </button>
           {dnsResult && !dnsResult.verified && (
             <p className="mt-2 text-xs text-red-500">{dnsResult.message}</p>
           )}
         </div>
       )}
 
-      {requireCustomDomain ? (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 flex items-start gap-3">
-          <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-amber-800">Custom domain required</p>
-            <p className="text-xs text-amber-700 mt-0.5">The platform is configured to require a custom domain. Propvian subdomains are not accepted — please connect your own domain below.</p>
-          </div>
-        </div>
-      ) : (
+      {/* ── Free Propvian subdomain option ── */}
+      {!requireCustomDomain && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-5">
           <p className="text-sm font-semibold text-green-800 mb-1">Quick option: Use a Propvian subdomain</p>
-          <p className="text-xs text-green-600 mb-3">Skip DNS setup — use <strong>{subdomainUrl}</strong> instantly, no configuration needed.</p>
+          <p className="text-xs text-green-600 mb-3">
+            Skip DNS setup — use <strong>{subdomainUrl}</strong> instantly, no configuration needed.
+          </p>
           <button onClick={useSubdomain} className="btn-primary text-sm py-2 px-4">
             Use {subdomainUrl}
           </button>
         </div>
       )}
-
-      <p className="text-sm font-medium text-gray-700 mb-3">{requireCustomDomain ? 'Connect your domain:' : 'Or connect your own domain:'}</p>
-      <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5 space-y-2">
-        <p className="text-sm font-medium text-gray-700">DNS setup instructions</p>
-        <p className="text-xs text-gray-500">After submitting, add this CNAME at your DNS provider:</p>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 text-xs bg-gray-100 rounded px-3 py-2 text-gray-700 font-mono">
-            CNAME → booking.propvian.com
-          </code>
-          <button onClick={() => copyToClipboard('booking.propvian.com')}
-            className="flex-shrink-0 flex items-center gap-1 text-xs text-primary-600 hover:text-primary-800">
-            {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copied' : 'Copy'}
-          </button>
+      {requireCustomDomain && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 flex items-start gap-3">
+          <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Custom domain required</p>
+            <p className="text-xs text-amber-700 mt-0.5">The platform requires a custom domain — Propvian subdomains are not accepted. Connect your own domain below.</p>
+          </div>
         </div>
-        <p className="text-xs text-gray-400">DNS propagation: 5–30 minutes. We check automatically.</p>
-      </div>
+      )}
+
+      {/* ── Custom domain form ── */}
+      <p className="text-sm font-medium text-gray-700 mb-1">
+        {requireCustomDomain ? 'Connect your domain:' : 'Or connect your own domain:'}
+      </p>
+      <p className="text-xs text-gray-400 mb-4">
+        Use your own domain like <em>myvilla.com</em> for a more professional look.{' '}
+        <button onClick={() => setShowBuyDomain(true)} className="text-primary-600 underline underline-offset-2 hover:text-primary-700 transition-colors">
+          Don't have one? Find a domain →
+        </button>
+      </p>
+
+      {/* DNS record preview — only shown before a domain is saved */}
+      {status !== 'PENDING' && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-gray-700">After saving, add this DNS record</p>
+            <button onClick={() => setShowDnsHelp(true)}
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+              <HelpCircle size={12} /> How do I do this?
+            </button>
+          </div>
+          <div className="rounded-xl border border-gray-200 overflow-hidden text-sm">
+            <div className="grid grid-cols-3 bg-gray-50 px-4 py-2.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
+              <span>Type</span><span>Host / Name</span><span>Value / Points to</span>
+            </div>
+            <div className="grid grid-cols-3 px-4 py-3.5 items-center gap-2">
+              <span className="font-bold text-blue-600 text-xs">CNAME</span>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@ (or www)</code>
+              <div className="flex items-center gap-1">
+                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
+                <DomainCopyButton text={CNAME_TARGET} />
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-gray-400">DNS propagation: 5–30 minutes. SSL issued automatically once confirmed.</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Your domain</label>
           <input {...register('domain')} className="input-base" placeholder="myvilla.com" />
+          <p className="mt-1 text-xs text-gray-400">Don't include https:// or trailing slashes</p>
           {errors.domain && <p className="mt-1 text-xs text-red-500">{String(errors.domain.message)}</p>}
         </div>
         <button type="submit" disabled={isSubmitting} className="btn-primary justify-center py-2.5">
@@ -1099,6 +1265,9 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
           {isSubmitting ? 'Connecting…' : 'Connect domain'}
         </button>
       </form>
+
+      {showDnsHelp   && <DnsHelpModal   onClose={() => setShowDnsHelp(false)} />}
+      {showBuyDomain && <BuyDomainModal onClose={() => setShowBuyDomain(false)} />}
     </div>
   )
 }
