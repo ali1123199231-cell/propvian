@@ -164,6 +164,29 @@ public class FileUploadService {
         }
     }
 
+    /**
+     * Converts any stored photo URL/path to a permanent public URL.
+     * Handles three formats that may exist in the database:
+     *   1. "orgId/filename.jpg"          — raw relative path (new format)
+     *   2. "/api/v1/files/view?token=..."— expiring signed URL (old format)
+     *   3. "/api/public/files/..."       — already a public URL (idempotent)
+     */
+    public String toPublicUrl(String storedValue) {
+        if (storedValue == null || storedValue.isBlank()) return storedValue;
+        if (storedValue.startsWith("/api/public/files/")) return storedValue;
+        // Signed URL — extract path from JWT payload without verifying expiry
+        if (storedValue.contains("?token=")) {
+            String path = extractFilePath(storedValue);
+            if (path != null) return "/api/public/files/" + path;
+            return storedValue; // fallback — leave as-is if extraction fails
+        }
+        // Raw relative path: "orgId/filename.ext"
+        if (!storedValue.startsWith("/") && storedValue.contains("/")) {
+            return "/api/public/files/" + storedValue;
+        }
+        return storedValue;
+    }
+
     public Resource loadDirect(String orgId, String filename) {
         try {
             Path path = Paths.get(uploadDir, orgId, filename).normalize();

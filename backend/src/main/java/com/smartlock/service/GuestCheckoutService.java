@@ -19,11 +19,13 @@ import com.smartlock.repository.DirectBookingRepository;
 import com.smartlock.repository.HostVerificationRepository;
 import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.PropertyBlockedDateRepository;
+import com.smartlock.repository.PropertyPhotoRepository;
 import com.smartlock.repository.PropertyPricingRuleRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.PromoCodeRepository;
 import com.smartlock.repository.UserRepository;
 import com.smartlock.repository.WebsiteConfigRepository;
+import com.smartlock.repository.WebsiteSectionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +56,9 @@ public class GuestCheckoutService {
     private final PromoCodeRepository promoCodeRepository;
     private final UserRepository userRepository;
     private final WebsiteConfigRepository websiteConfigRepository;
+    private final WebsiteSectionRepository websiteSectionRepository;
+    private final PropertyPhotoRepository propertyPhotoRepository;
+    private final FileUploadService fileUploadService;
     private final EmailService emailService;
     private final CalendarEngine calendarEngine;
     private final SystemConfigService systemConfigService;
@@ -98,24 +103,50 @@ public class GuestCheckoutService {
                 .findByOrganizationIdAndStatus(org.getId(), PropertyStatus.ACTIVE);
 
         List<PublicOrgSiteResponse.PublicPropertyCard> cards = activeProperties.stream()
-                .map(p -> PublicOrgSiteResponse.PublicPropertyCard.builder()
-                        .id(p.getId().toString())
-                        .slug(p.getSlug() != null ? p.getSlug() : p.getId().toString())
-                        .name(p.getName())
-                        .imageUrl(p.getImageUrl())
-                        .city(p.getCity())
-                        .country(p.getCountry())
-                        .bedrooms(p.getBedrooms())
-                        .bathrooms(p.getBathrooms())
-                        .maxGuests(p.getMaxGuests())
-                        .baseNightlyRate(p.getBaseNightlyRate())
-                        .cleaningFee(p.getCleaningFee())
-                        .propertyType(p.getPropertyType())
-                        .minStayNights(p.getMinStayNights())
-                        .checkInTime(p.getCheckInTime())
-                        .checkOutTime(p.getCheckOutTime())
-                        .build())
+                .map(p -> {
+                    List<String> photos = propertyPhotoRepository
+                            .findByPropertyIdOrderBySortOrderAsc(p.getId()).stream()
+                            .map(ph -> fileUploadService.toPublicUrl(ph.getUrl()))
+                            .toList();
+                    String primaryImageUrl = photos.isEmpty()
+                            ? fileUploadService.toPublicUrl(p.getImageUrl())
+                            : photos.get(0);
+                    List<String> allPhotos = photos.isEmpty() && p.getImageUrl() != null
+                            ? List.of(fileUploadService.toPublicUrl(p.getImageUrl()))
+                            : photos;
+                    return PublicOrgSiteResponse.PublicPropertyCard.builder()
+                            .id(p.getId().toString())
+                            .slug(p.getSlug() != null ? p.getSlug() : p.getId().toString())
+                            .name(p.getName())
+                            .imageUrl(primaryImageUrl)
+                            .photoUrls(allPhotos)
+                            .city(p.getCity())
+                            .country(p.getCountry())
+                            .bedrooms(p.getBedrooms())
+                            .bathrooms(p.getBathrooms())
+                            .maxGuests(p.getMaxGuests())
+                            .baseNightlyRate(p.getBaseNightlyRate())
+                            .cleaningFee(p.getCleaningFee())
+                            .propertyType(p.getPropertyType())
+                            .minStayNights(p.getMinStayNights())
+                            .checkInTime(p.getCheckInTime())
+                            .checkOutTime(p.getCheckOutTime())
+                            .build();
+                })
                 .toList();
+
+        List<PublicOrgSiteResponse.PublicSectionDto> sections = config != null
+                ? websiteSectionRepository.findByWebsiteIdOrderByPosition(config.getId()).stream()
+                        .map(s -> PublicOrgSiteResponse.PublicSectionDto.builder()
+                                .id(s.getId().toString())
+                                .sectionType(s.getSectionType())
+                                .title(s.getTitle())
+                                .enabled(s.isEnabled())
+                                .position(s.getPosition())
+                                .config(s.getConfig())
+                                .build())
+                        .toList()
+                : List.of();
 
         String displayName = (config != null && config.getBrandName() != null)
                 ? config.getBrandName() : org.getName();
@@ -128,6 +159,7 @@ public class GuestCheckoutService {
                 .primaryColor(config != null ? config.getPrimaryColor() : "#6366F1")
                 .accentColor(config != null ? config.getAccentColor() : "#F59E0B")
                 .fontFamily(config != null ? config.getFontFamily() : "Inter")
+                .buttonStyle(config != null ? config.getButtonStyle() : "rounded")
                 .themeStyle(config != null ? config.getThemeStyle() : "modern")
                 .pageTitle(config != null ? config.getPageTitle() : null)
                 .metaDescription(config != null ? config.getMetaDescription() : null)
@@ -136,6 +168,7 @@ public class GuestCheckoutService {
                 .gtmContainerId(config != null ? config.getGtmContainerId() : null)
                 .metaPixelId(config != null ? config.getMetaPixelId() : null)
                 .tiktokPixelId(config != null ? config.getTiktokPixelId() : null)
+                .sections(sections)
                 .properties(cards)
                 .build();
     }
@@ -170,12 +203,24 @@ public class GuestCheckoutService {
         String orgSlug = organizationRepository.findById(property.getOrganizationId())
                 .map(Organization::getSlug).orElse(null);
 
+        List<String> photos = propertyPhotoRepository
+                .findByPropertyIdOrderBySortOrderAsc(property.getId()).stream()
+                .map(ph -> fileUploadService.toPublicUrl(ph.getUrl()))
+                .toList();
+        String primaryImageUrl = photos.isEmpty()
+                ? fileUploadService.toPublicUrl(property.getImageUrl())
+                : photos.get(0);
+        List<String> allPhotos = photos.isEmpty() && property.getImageUrl() != null
+                ? List.of(fileUploadService.toPublicUrl(property.getImageUrl()))
+                : photos;
+
         return GuestPropertyResponse.builder()
                 .id(property.getId().toString())
                 .orgSlug(orgSlug)
                 .name(property.getName())
                 .description(property.getDescription())
-                .imageUrl(property.getImageUrl())
+                .imageUrl(primaryImageUrl)
+                .photoUrls(allPhotos)
                 .city(property.getCity())
                 .country(property.getCountry())
                 .maxGuests(property.getMaxGuests())

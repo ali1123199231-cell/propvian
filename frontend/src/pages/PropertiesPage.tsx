@@ -40,6 +40,16 @@ const CURRENCIES = [
   { code: 'ZAR', symbol: 'R',  label: 'ZAR – South African Rand' },
 ]
 
+// Convert any stored photo value to a displayable URL.
+// New uploads store a raw path ("orgId/filename.jpg") → served via public endpoint.
+// Old uploads may have stored a signed URL → served as-is (still works until expiry).
+function toDisplayUrl(stored: string | undefined | null): string {
+  if (!stored) return ''
+  if (stored.startsWith('http') || stored.startsWith('/api/')) return stored
+  // Raw relative path: "orgId/filename.jpg"
+  return `/api/public/files/${stored}`
+}
+
 function currencySymbol(code?: string) {
   return CURRENCIES.find(c => c.code === code)?.symbol ?? code ?? '$'
 }
@@ -128,7 +138,7 @@ function PropertyCard({ property, isDirect, onEdit, onDelete }: {
       {/* Cover image */}
       <div className="relative w-full h-40 bg-gradient-to-br from-primary-50 to-gray-100 flex items-center justify-center overflow-hidden">
         {coverPhoto
-          ? <img src={coverPhoto} alt="" className="w-full h-full object-cover" />
+          ? <img src={toDisplayUrl(coverPhoto)} alt="" className="w-full h-full object-cover" />
           : <Building2 size={32} className="text-primary-200" />
         }
         {photos.length > 1 && (
@@ -276,8 +286,8 @@ function PropertyWizard({ isDirect, onClose, onSaved }: {
   const addPhotoFiles = async (files: File[]) => {
     for (const file of files) {
       try {
-        const { url } = await fileUploadApi.upload(file)
-        setPhotos(p => p.length < 12 ? [...p, url] : p)
+        const { path } = await fileUploadApi.upload(file)
+        setPhotos(p => p.length < 12 ? [...p, path] : p)
       } catch {
         toast.error('Failed to upload photo')
       }
@@ -520,7 +530,7 @@ function PropertyWizard({ isDirect, onClose, onSaved }: {
                       }}
                       className="relative group aspect-video rounded-lg overflow-hidden bg-gray-100 cursor-grab active:cursor-grabbing"
                     >
-                      <img src={url} alt="" className="w-full h-full object-cover pointer-events-none"
+                      <img src={toDisplayUrl(url)} alt="" className="w-full h-full object-cover pointer-events-none"
                         onError={e => { e.currentTarget.style.display = 'none' }} />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
                       <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -789,8 +799,8 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
   const addPhotoFiles = async (files: File[]) => {
     for (const file of files) {
       try {
-        const { url } = await fileUploadApi.upload(file)
-        setPhotos(p => p.length < 12 ? [...p, { url }] : p)
+        const { path } = await fileUploadApi.upload(file)
+        setPhotos(p => p.length < 12 ? [...p, { url: path }] : p)
       } catch {
         toast.error('Failed to upload photo')
       }
@@ -1119,7 +1129,7 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
                         }}
                         className="relative group aspect-video rounded-lg overflow-hidden bg-gray-100 cursor-grab active:cursor-grabbing"
                       >
-                        <img src={item.url} alt="" className="w-full h-full object-cover pointer-events-none" />
+                        <img src={toDisplayUrl(item.url)} alt="" className="w-full h-full object-cover pointer-events-none" />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors pointer-events-none" />
                         <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                           <GripVertical size={14} className="text-white drop-shadow" />

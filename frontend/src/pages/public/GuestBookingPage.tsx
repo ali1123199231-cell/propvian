@@ -7,7 +7,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import {
   MapPin, Star, Users, BedDouble, Bath, ChevronLeft, ChevronRight,
-  CheckCircle, Loader2, CreditCard, X,
+  CheckCircle, Loader2, CreditCard, X, AlertCircle,
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -16,6 +16,7 @@ interface BlockedRange { startDate: string; endDate: string }
 interface PricingRule { startDate: string; endDate: string; nightlyRate: number }
 interface PropertyInfo {
   id: string; orgSlug: string; name: string; description: string; imageUrl: string
+  photoUrls: string[]
   city: string; country: string; maxGuests: number; bedrooms: number; bathrooms: number
   baseNightlyRate: number; cleaningFee: number; checkInTime: string; checkOutTime: string
   cancellationPolicy: string; minStayNights: number
@@ -219,6 +220,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
   const [step, setStep] = useState<'dates' | 'info' | 'payment' | 'done'>('dates')
   const [checkIn, setCheckIn]   = useState<string | null>(null)
   const [checkOut, setCheckOut] = useState<string | null>(null)
+  const [activePhoto, setActivePhoto] = useState(0)
   const [guestName, setGuestName]   = useState('')
   const [guestEmail, setGuestEmail] = useState('')
   const [guestPhone, setGuestPhone] = useState('')
@@ -322,23 +324,72 @@ export function GuestBookingPage({ slug }: { slug: string }) {
     </div>
   )
 
+  const photos = prop.photoUrls?.length ? prop.photoUrls : (prop.imageUrl ? [prop.imageUrl] : [])
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero */}
-      <div className="relative h-64 md:h-80 bg-gray-200">
-        {prop.imageUrl && (
-          <img src={prop.imageUrl} alt={prop.name}
-            className="w-full h-full object-cover" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        <div className="absolute bottom-0 left-0 p-6 text-white">
-          <h1 className="text-3xl font-bold">{prop.name}</h1>
-          {(prop.city || prop.country) && (
-            <div className="flex items-center gap-1 mt-1 text-white/80 text-sm">
-              <MapPin size={13} />{[prop.city, prop.country].filter(Boolean).join(', ')}
+      {/* Hero / Photo Gallery */}
+      <div className="relative bg-gray-900">
+        {/* Main photo */}
+        <div className="relative h-72 md:h-96 overflow-hidden">
+          {photos.length > 0 ? (
+            <img
+              src={photos[activePhoto]}
+              alt={prop.name}
+              className="w-full h-full object-cover transition-opacity duration-300"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-800">
+              <MapPin size={48} className="text-gray-600" />
             </div>
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          {/* Prev/next */}
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={() => setActivePhoto(p => (p - 1 + photos.length) % photos.length)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={() => setActivePhoto(p => (p + 1) % photos.length)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </>
+          )}
+          {/* Photo count */}
+          {photos.length > 1 && (
+            <span className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full">
+              {activePhoto + 1} / {photos.length}
+            </span>
+          )}
+          <div className="absolute bottom-0 left-0 p-6 text-white">
+            <h1 className="text-3xl font-bold drop-shadow-md">{prop.name}</h1>
+            {(prop.city || prop.country) && (
+              <div className="flex items-center gap-1 mt-1.5 text-white/85 text-sm">
+                <MapPin size={13} />{[prop.city, prop.country].filter(Boolean).join(', ')}
+              </div>
+            )}
+          </div>
         </div>
+        {/* Thumbnail strip */}
+        {photos.length > 1 && (
+          <div className="flex gap-2 px-4 py-3 bg-gray-900 overflow-x-auto scrollbar-none">
+            {photos.map((url, i) => (
+              <button
+                key={i}
+                onClick={() => setActivePhoto(i)}
+                className={`flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${i === activePhoto ? 'border-white opacity-100' : 'border-transparent opacity-60 hover:opacity-80'}`}
+              >
+                <img src={url} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -520,7 +571,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
               </div>
 
               {/* Payment method selector */}
-              {(prop.stripeEnabled || prop.paypalEnabled) && (
+              {(prop.stripeEnabled || prop.paypalEnabled) ? (
                 <div>
                   <p className="text-xs font-medium text-gray-600 mb-2">Payment method</p>
                   <div className="flex gap-2">
@@ -538,15 +589,24 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                     )}
                   </div>
                 </div>
+              ) : (
+                <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3.5">
+                  <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-800 leading-snug">
+                    Online booking is not available yet for this property. The host's account is pending verification. Please contact the host directly to arrange your stay.
+                  </p>
+                </div>
               )}
 
-              <button
-                onClick={() => initMut.mutate()}
-                disabled={!guestName.trim() || !guestEmail.trim() || initMut.isPending}
-                className="w-full btn-primary py-3 justify-center text-base font-bold">
-                {initMut.isPending ? <Loader2 size={18} className="animate-spin" /> : null}
-                {initMut.isPending ? 'Starting checkout…' : 'Continue to payment'}
-              </button>
+              {(prop.stripeEnabled || prop.paypalEnabled) && (
+                <button
+                  onClick={() => initMut.mutate()}
+                  disabled={!guestName.trim() || !guestEmail.trim() || initMut.isPending}
+                  className="w-full btn-primary py-3 justify-center text-base font-bold">
+                  {initMut.isPending ? <Loader2 size={18} className="animate-spin" /> : null}
+                  {initMut.isPending ? 'Starting checkout…' : 'Continue to payment'}
+                </button>
+              )}
             </div>
           )}
 

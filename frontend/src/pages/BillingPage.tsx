@@ -257,7 +257,8 @@ function ManageBillingCard({ orgId, billing }: { orgId: string; billing: Billing
     try {
       const url = await billingApi.createStripePortal(orgId)
       window.location.href = url
-    } catch {
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Could not open billing portal.')
       setLoading(false)
     }
   }
@@ -422,17 +423,30 @@ function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: ()
       {/* Manage subscription */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h3 className="font-semibold text-gray-900 mb-3">Manage subscription</h3>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button onClick={onPortal} className="btn-primary py-2.5 px-5 text-sm flex items-center gap-2 justify-center">
-            <CreditCard size={14} /> Update payment method
-          </button>
-          <button className="btn-secondary py-2.5 px-5 text-sm text-gray-600 justify-center">
-            Download invoice
-          </button>
-        </div>
-        <p className="text-xs text-gray-400 mt-3">
-          Payment handled securely via Stripe. Contact support to cancel your subscription.
-        </p>
+        {billing?.paymentProvider === 'STRIPE' ? (
+          <>
+            <button onClick={onPortal} className="btn-primary py-2.5 px-5 text-sm flex items-center gap-2 justify-center">
+              <CreditCard size={14} /> Update payment method
+            </button>
+            <p className="text-xs text-gray-400 mt-3">
+              Opens the Stripe billing portal where you can update your card or cancel.
+            </p>
+          </>
+        ) : billing?.paymentProvider === 'PAYPAL' ? (
+          <p className="text-sm text-gray-600">
+            Your subscription is managed via PayPal.{' '}
+            <a
+              href="https://www.paypal.com/myaccount/autopay/"
+              target="_blank" rel="noopener noreferrer"
+              className="text-primary-600 underline"
+            >
+              Manage it in your PayPal account
+            </a>
+            .
+          </p>
+        ) : (
+          <p className="text-sm text-gray-500">No active subscription yet. Subscribe above to manage billing.</p>
+        )}
       </div>
     </div>
   )
@@ -517,8 +531,8 @@ export function BillingPage() {
       try {
         const url = await billingApi.createStripePortal(orgId ?? '')
         window.location.href = url
-      } catch {
-        toast.error('Could not open billing portal. Make sure Stripe is configured.')
+      } catch (e: any) {
+        toast.error(e.response?.data?.message || 'Could not open billing portal.')
       }
     }
     return (

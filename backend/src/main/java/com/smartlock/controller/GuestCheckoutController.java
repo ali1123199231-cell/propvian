@@ -7,13 +7,19 @@ import com.smartlock.dto.response.guest.GuestPropertyResponse;
 import com.smartlock.dto.response.guest.PromoValidationResponse;
 import com.smartlock.dto.response.guest.PublicOrgSiteResponse;
 import com.smartlock.repository.OrganizationRepository;
+import com.smartlock.service.FileUploadService;
 import com.smartlock.service.GuestCheckoutService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,6 +29,7 @@ public class GuestCheckoutController {
 
     private final GuestCheckoutService guestCheckoutService;
     private final OrganizationRepository organizationRepository;
+    private final FileUploadService fileUploadService;
 
     /** Called by Caddy on-demand TLS to validate a subdomain before issuing a cert */
     @GetMapping("/api/public/check-subdomain")
@@ -80,5 +87,28 @@ public class GuestCheckoutController {
         String orderId = body.get("orderId");
         guestCheckoutService.captureAndConfirmPaypal(bookingId, orderId);
         return ResponseEntity.ok(ApiResponse.success("Booking confirmed"));
+    }
+
+    /**
+     * Public static file serving — no auth required.
+     * Used to serve property photos permanently without expiring signed URLs.
+     * Path format: /api/public/files/{orgId}/{filename}
+     */
+    @GetMapping("/api/public/files/{orgId}/{filename:.+}")
+    public ResponseEntity<Resource> publicFile(
+            @PathVariable String orgId,
+            @PathVariable String filename,
+            HttpServletRequest request) {
+        Resource resource = fileUploadService.loadDirect(orgId, filename);
+        String contentType = "application/octet-stream";
+        try {
+            contentType = request.getServletContext().getMimeType(resource.getFile().getAbsolutePath());
+        } catch (IOException ignored) {}
+        if (contentType == null) contentType = "application/octet-stream";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable")
+                .body(resource);
     }
 }

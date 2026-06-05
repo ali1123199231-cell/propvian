@@ -76,6 +76,10 @@ services:
       RESEND_API_KEY: "${RESEND_API_KEY}"
       MAIL_FROM: "${MAIL_FROM:-noreply@propvian.com}"
       MAIL_FROM_NAME: "${MAIL_FROM_NAME:-Propvian}"
+      # Persistent upload directory — survives container rebuilds
+      APP_UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads_data:/app/uploads
     expose:
       - "8080"
     depends_on:
@@ -110,6 +114,7 @@ volumes:
   redis_data:
   caddy_data:
   caddy_config:
+  uploads_data:
 
 networks:
   smartlock-net:

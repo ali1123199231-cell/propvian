@@ -1,5 +1,6 @@
 package com.smartlock.dto.response.guest;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +24,7 @@ public class PublicOrgSiteResponse {
     private String primaryColor;
     private String accentColor;
     private String fontFamily;
+    private String buttonStyle;
     private String themeStyle;
     private String pageTitle;
     private String metaDescription;
@@ -32,7 +34,23 @@ public class PublicOrgSiteResponse {
     private String metaPixelId;
     private String tiktokPixelId;
 
+    private List<PublicSectionDto> sections;
     private List<PublicPropertyCard> properties;
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PublicSectionDto {
+        private String id;
+        private String sectionType;
+        private String title;
+        private boolean enabled;
+        private int position;
+
+        @JsonRawValue
+        private String config;
+    }
 
     @Data
     @Builder
@@ -43,6 +61,7 @@ public class PublicOrgSiteResponse {
         private String slug;
         private String name;
         private String imageUrl;
+        private List<String> photoUrls;
         private String city;
         private String country;
         private Integer bedrooms;
