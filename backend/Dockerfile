@@ -10,7 +10,7 @@ WORKDIR /app
 RUN apk add --no-cache curl
 RUN addgroup -S smartlock && adduser -S smartlock -G smartlock
 COPY --from=build /app/target/*.jar app.jar
-RUN chown smartlock:smartlock app.jar
+RUN chown smartlock:smartlock app.jar && mkdir -p /app/uploads && chown smartlock:smartlock /app/uploads
 USER smartlock
 EXPOSE 8080
 ENTRYPOINT ["java", \
