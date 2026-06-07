@@ -4,7 +4,7 @@
 
 CREATE TABLE legal_acceptances (
     id              BIGSERIAL PRIMARY KEY,
-    user_id         BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     document_type   VARCHAR(64) NOT NULL,   -- 'terms', 'privacy', 'cookie', 'refund', 'acceptable_use', 'dpa', 'subscription'
     document_version VARCHAR(16) NOT NULL,  -- e.g. '2.0', '2026-06'
     accepted_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -25,7 +25,7 @@ COMMENT ON COLUMN legal_acceptances.context IS 'Where in the product the accepta
 -- Cookie consent is tracked separately since it applies to anonymous visitors too
 CREATE TABLE cookie_consents (
     id              BIGSERIAL PRIMARY KEY,
-    user_id         BIGINT REFERENCES users(id) ON DELETE SET NULL,  -- NULL for anonymous visitors
+    user_id         UUID REFERENCES users(id) ON DELETE SET NULL,  -- NULL for anonymous visitors
     session_id      VARCHAR(128),                                     -- anonymous session identifier
     essential       BOOLEAN NOT NULL DEFAULT TRUE,
     analytics       BOOLEAN NOT NULL DEFAULT FALSE,
@@ -45,7 +45,7 @@ COMMENT ON TABLE cookie_consents IS 'Cookie consent records for GDPR/ePrivacy co
 -- Data subject requests (GDPR rights requests)
 CREATE TABLE data_subject_requests (
     id              BIGSERIAL PRIMARY KEY,
-    user_id         BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    user_id         UUID REFERENCES users(id) ON DELETE SET NULL,
     requester_email VARCHAR(255) NOT NULL,
     request_type    VARCHAR(32) NOT NULL,  -- 'access', 'erasure', 'portability', 'rectification', 'restriction', 'objection'
     status          VARCHAR(32) NOT NULL DEFAULT 'pending',  -- 'pending', 'in_progress', 'completed', 'rejected'
