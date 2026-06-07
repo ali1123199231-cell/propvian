@@ -1,6 +1,7 @@
 package com.smartlock.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartlock.domain.PromoCode;
 import com.smartlock.domain.WebsiteConfig;
 import com.smartlock.domain.WebsiteSection;
@@ -41,6 +42,20 @@ public class WebsiteService {
     private final PromoCodeRepository promoRepo;
     private final PropertyRepository propertyRepo;
     private final OrganizationSecurityService orgSecurity;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /** Parse a section config string to a Map, unwrapping any legacy double/triple-encoding. */
+    private static Object parseConfig(String raw) {
+        if (raw == null || raw.isBlank()) return Map.of();
+        Object result = raw;
+        for (int i = 0; i < 5; i++) {
+            if (!(result instanceof String s)) break;
+            try { result = MAPPER.readValue(s, Object.class); }
+            catch (Exception e) { break; }
+        }
+        return (result instanceof Map) ? result : Map.of();
+    }
 
     // ── Config ────────────────────────────────────────────────────────────────
 
@@ -375,7 +390,7 @@ public class WebsiteService {
                 .title(s.getTitle())
                 .enabled(s.isEnabled())
                 .position(s.getPosition())
-                .config(s.getConfig())
+                .config(parseConfig(s.getConfig()))
                 .createdAt(s.getCreatedAt())
                 .updatedAt(s.getUpdatedAt())
                 .build();

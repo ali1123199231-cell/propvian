@@ -169,7 +169,7 @@ export function WebsiteBuilder({ orgId, orgSlug, property, initialConfig }: Prop
           websiteBuilderApi
             .updateSection(orgId, s.id, {
               enabled: s.enabled,
-              config: JSON.stringify(s.config),
+              config: s.config,
               position: s.position,
             })
             .catch(() => {})

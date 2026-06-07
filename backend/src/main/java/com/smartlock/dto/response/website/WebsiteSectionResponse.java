@@ -1,6 +1,5 @@
 package com.smartlock.dto.response.website;
 
-import com.fasterxml.jackson.annotation.JsonRawValue;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,8 +16,7 @@ public class WebsiteSectionResponse {
     private boolean enabled;
     private int position;
 
-    @JsonRawValue
-    private String config;
+    private Object config;
 
     private Instant createdAt;
     private Instant updatedAt;

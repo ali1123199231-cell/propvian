@@ -28,6 +28,7 @@ export interface PublicPropertyCard {
   id: string
   slug: string
   name: string
+  description?: string
   imageUrl: string
   photoUrls: string[]
   city: string
@@ -200,7 +201,7 @@ function GallerySection({ cfg, primary, accent, font, properties }: SectionBaseP
   const photos = allPhotos.slice(0, cfg.maxPhotos || 9)
   const cols = cfg.columns || 3
   if (photos.length === 0) return null
-  const featured = cfg.featuredFirst && photos.length >= 3
+  const featured = photos.length >= 3
   return (
     <section className="py-16 px-4 bg-white" style={{ fontFamily: font }}>
       <div className="max-w-6xl mx-auto">
@@ -246,7 +247,7 @@ function AboutSection({ cfg, primary, accent, font, properties }: SectionBasePro
             <div className="w-10 h-1 rounded-full mb-5" style={{ backgroundColor: accent }} />
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-5 leading-tight">{cfg.title || 'About This Property'}</h2>
             <p className="text-gray-600 leading-relaxed text-base whitespace-pre-line text-lg">
-              {cfg.description || 'A beautiful and thoughtfully designed space for your perfect getaway.'}
+              {cfg.description || properties[0]?.description || 'A beautiful and thoughtfully designed space for your perfect getaway.'}
             </p>
           </div>
           {aboutImg && (

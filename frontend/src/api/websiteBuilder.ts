@@ -90,14 +90,14 @@ export const websiteBuilderApi = {
   },
 
   async addSection(orgId: string, data: {
-    sectionType: string; title?: string; position?: number; config?: string
+    sectionType: string; title?: string; position?: number; config?: Record<string, any>
   }): Promise<WebsiteSection> {
     const res = await apiClient.post<Res<WebsiteSection>>(`/organizations/${orgId}/website/sections`, data)
     return res.data.data
   },
 
   async updateSection(orgId: string, sectionId: string, data: {
-    title?: string; enabled?: boolean; config?: string; position?: number
+    title?: string; enabled?: boolean; config?: Record<string, any>; position?: number
   }): Promise<WebsiteSection> {
     const res = await apiClient.put<Res<WebsiteSection>>(
       `/organizations/${orgId}/website/sections/${sectionId}`, data)

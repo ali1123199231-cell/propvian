@@ -1,6 +1,5 @@
 package com.smartlock.dto.response.guest;
 
-import com.fasterxml.jackson.annotation.JsonRawValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -48,8 +47,7 @@ public class PublicOrgSiteResponse {
         private boolean enabled;
         private int position;
 
-        @JsonRawValue
-        private String config;
+        private Object config;
     }
 
     @Data

@@ -34,12 +34,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,6 +51,19 @@ import java.util.UUID;
 public class GuestCheckoutService {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("d MMM yyyy");
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /** Parse a section config string to a Map, unwrapping any legacy double/triple-encoding. */
+    private static Object parseConfig(String raw) {
+        if (raw == null || raw.isBlank()) return Map.of();
+        Object result = raw;
+        for (int i = 0; i < 5; i++) {
+            if (!(result instanceof String s)) break;
+            try { result = MAPPER.readValue(s, Object.class); }
+            catch (Exception e) { break; }
+        }
+        return (result instanceof Map) ? result : Map.of();
+    }
 
     private final PropertyRepository propertyRepository;
     private final OrganizationRepository organizationRepository;
@@ -147,7 +162,7 @@ public class GuestCheckoutService {
                                 .title(s.getTitle())
                                 .enabled(s.isEnabled())
                                 .position(s.getPosition())
-                                .config(s.getConfig())
+                                .config(parseConfig(s.getConfig()))
                                 .build())
                         .toList()
                 : List.of();
