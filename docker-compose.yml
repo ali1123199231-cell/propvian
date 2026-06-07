@@ -70,6 +70,7 @@ services:
       JWT_SECRET: "${JWT_SECRET}"
       JWT_ACCESS_EXPIRATION_MS: 900000
       JWT_REFRESH_EXPIRATION_MS: 2592000000
+      APP_UPLOAD_DIR: /var/propvian/uploads
     ports:
       - "8080:8080"
     depends_on:
@@ -77,6 +78,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - uploads_data:/var/propvian/uploads
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
@@ -103,6 +106,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:
 
 networks:
   smartlock-net:
