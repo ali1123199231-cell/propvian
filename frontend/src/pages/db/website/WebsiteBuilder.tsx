@@ -36,19 +36,22 @@ const FONTS = [
 ]
 
 const ALL_SECTION_TYPES = [
-  { type: 'hero',           icon: '🏠', desc: 'Main intro with photo' },
-  { type: 'gallery',        icon: '🖼️',  desc: 'Property photo grid' },
-  { type: 'about',          icon: '✨', desc: 'Property description' },
-  { type: 'amenities',      icon: '🛋️', desc: "What's included" },
-  { type: 'booking-widget', icon: '📅', desc: 'Availability calendar' },
-  { type: 'reviews',        icon: '⭐', desc: 'Guest testimonials' },
-  { type: 'faq',            icon: '❓', desc: 'Common questions' },
-  { type: 'host-info',      icon: '👤', desc: 'About the host' },
-  { type: 'house-rules',    icon: '📋', desc: 'Property rules' },
-  { type: 'location',       icon: '📍', desc: 'Map & directions' },
-  { type: 'cta',            icon: '🎯', desc: 'Book now banner' },
-  { type: 'contact',        icon: '✉️', desc: 'Contact form' },
-  { type: 'footer',         icon: '📄', desc: 'Links & copyright' },
+  { type: 'hero',            icon: '🏠', desc: 'Main intro with photo' },
+  { type: 'gallery',         icon: '🖼️',  desc: 'Property photo grid' },
+  { type: 'about',           icon: '✨', desc: 'Property description' },
+  { type: 'amenities',       icon: '🛋️', desc: "What's included" },
+  { type: 'booking-widget',  icon: '📅', desc: 'Availability calendar' },
+  { type: 'reviews',         icon: '⭐', desc: 'Guest testimonials' },
+  { type: 'faq',             icon: '❓', desc: 'Common questions' },
+  { type: 'host-info',       icon: '👤', desc: 'About the host' },
+  { type: 'house-rules',     icon: '📋', desc: 'Property rules' },
+  { type: 'location',        icon: '📍', desc: 'Map & directions' },
+  { type: 'nearby',          icon: '🗺️', desc: 'Points of interest' },
+  { type: 'special-offers',  icon: '🏷️', desc: 'Discounts & deals' },
+  { type: 'cta',             icon: '🎯', desc: 'Book now banner' },
+  { type: 'contact',         icon: '✉️', desc: 'Contact form' },
+  { type: 'video',           icon: '🎬', desc: 'Property video' },
+  { type: 'footer',          icon: '📄', desc: 'Links & copyright' },
 ]
 
 type Tab = 'appearance' | 'sections' | 'preview' | 'settings'
@@ -915,6 +918,15 @@ export function WebsiteBuilder({ orgId, orgSlug, property, initialConfig }: Prop
 
 // ── Section inline editor ─────────────────────────────────────────────────────
 
+const AMENITY_OPTIONS = [
+  { key: 'wifi', label: 'WiFi' }, { key: 'kitchen', label: 'Kitchen' },
+  { key: 'parking', label: 'Parking' }, { key: 'pool', label: 'Pool' },
+  { key: 'ac', label: 'A/C' }, { key: 'workspace', label: 'Workspace' },
+  { key: 'tv', label: 'TV' }, { key: 'balcony', label: 'Balcony' },
+  { key: 'hot_tub', label: 'Hot Tub' }, { key: 'garden', label: 'Garden' },
+  { key: 'bbq', label: 'BBQ' }, { key: 'washer', label: 'Washer/Dryer' },
+]
+
 function SectionEditor({
   section,
   property,
@@ -969,6 +981,17 @@ function SectionEditor({
               placeholder="Check Availability"
             />
           </Field>
+          <Field label="Hero Height">
+            <select
+              value={cfg.height || 'large'}
+              onChange={(e) => setCfg({ height: e.target.value })}
+              className="input-base text-sm"
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large (full screen)</option>
+            </select>
+          </Field>
           {property && !cfg.headline && (
             <AutoFill
               onClick={() =>
@@ -982,6 +1005,51 @@ function SectionEditor({
               label="Auto-fill from property"
             />
           )}
+        </div>
+      )
+
+    case 'gallery':
+      return (
+        <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Our Photos"
+            />
+          </Field>
+          <Field label="Subtitle">
+            <input
+              value={cfg.subtitle || ''}
+              onChange={(e) => setCfg({ subtitle: e.target.value })}
+              className="input-base text-sm"
+              placeholder="A glimpse of your stay"
+            />
+          </Field>
+          <div className="flex gap-3">
+            <Field label="Columns">
+              <select
+                value={cfg.columns || 3}
+                onChange={(e) => setCfg({ columns: Number(e.target.value) })}
+                className="input-base text-sm"
+              >
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+              </select>
+            </Field>
+            <Field label="Max Photos">
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={cfg.maxPhotos || 9}
+                onChange={(e) => setCfg({ maxPhotos: Number(e.target.value) })}
+                className="input-base text-sm"
+              />
+            </Field>
+          </div>
         </div>
       )
 
@@ -1005,6 +1073,16 @@ function SectionEditor({
               placeholder={property?.description || 'Describe your property…'}
             />
           </Field>
+          <Field label="Image Position">
+            <select
+              value={cfg.imagePosition || 'right'}
+              onChange={(e) => setCfg({ imagePosition: e.target.value })}
+              className="input-base text-sm"
+            >
+              <option value="right">Image on right</option>
+              <option value="left">Image on left</option>
+            </select>
+          </Field>
           {property?.description && !cfg.description && (
             <AutoFill
               onClick={() =>
@@ -1016,6 +1094,61 @@ function SectionEditor({
         </div>
       )
 
+    case 'amenities': {
+      const items: { key?: string; label: string }[] = cfg.items || []
+      return (
+        <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Amenities"
+            />
+          </Field>
+          <Field label="Subtitle">
+            <input
+              value={cfg.subtitle || ''}
+              onChange={(e) => setCfg({ subtitle: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Everything you need for a comfortable stay"
+            />
+          </Field>
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Select Amenities</p>
+            <div className="grid grid-cols-2 gap-2">
+              {AMENITY_OPTIONS.map((opt) => {
+                const active = items.some((i) => i.key === opt.key)
+                return (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => {
+                      const next = active
+                        ? items.filter((i) => i.key !== opt.key)
+                        : [...items, { key: opt.key, label: opt.label }]
+                      setCfg({ items: next })
+                    }}
+                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium text-left transition-all ${
+                      active
+                        ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="flex-shrink-0">{active ? '✓' : '+'}</span>
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+            {items.length > 0 && (
+              <p className="text-xs text-gray-400 mt-2">{items.length} amenities selected</p>
+            )}
+          </div>
+        </div>
+      )
+    }
+
     case 'booking-widget':
       return (
         <div className="space-y-3">
@@ -1023,6 +1156,22 @@ function SectionEditor({
             <input
               value={cfg.title || ''}
               onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Book Your Stay"
+            />
+          </Field>
+          <Field label="Subtitle">
+            <input
+              value={cfg.subtitle || ''}
+              onChange={(e) => setCfg({ subtitle: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Secure your dates directly"
+            />
+          </Field>
+          <Field label="Button Text">
+            <input
+              value={cfg.ctaText || ''}
+              onChange={(e) => setCfg({ ctaText: e.target.value })}
               className="input-base text-sm"
               placeholder="Check Availability"
             />
@@ -1069,6 +1218,93 @@ function SectionEditor({
         </div>
       )
 
+    case 'reviews': {
+      const reviews: { name: string; text: string; rating: number }[] = cfg.reviews || []
+      return (
+        <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Guest Reviews"
+            />
+          </Field>
+          <div className="flex gap-3">
+            <Field label="Overall Rating">
+              <input
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                value={cfg.rating || ''}
+                onChange={(e) => setCfg({ rating: e.target.value })}
+                className="input-base text-sm"
+                placeholder="4.9"
+              />
+            </Field>
+            <Field label="Total Count">
+              <input
+                type="number"
+                min="0"
+                value={cfg.reviewCount || ''}
+                onChange={(e) => setCfg({ reviewCount: Number(e.target.value) })}
+                className="input-base text-sm"
+                placeholder="24"
+              />
+            </Field>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-gray-600">Reviews</p>
+            {reviews.map((r, idx) => (
+              <div key={idx} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                <div className="flex gap-2 items-center">
+                  <input
+                    value={r.name}
+                    onChange={(e) => {
+                      const n = [...reviews]; n[idx] = { ...r, name: e.target.value }; setCfg({ reviews: n })
+                    }}
+                    className="input-base text-xs flex-1"
+                    placeholder="Guest name"
+                  />
+                  <select
+                    value={r.rating}
+                    onChange={(e) => {
+                      const n = [...reviews]; n[idx] = { ...r, rating: Number(e.target.value) }; setCfg({ reviews: n })
+                    }}
+                    className="input-base text-xs w-20"
+                  >
+                    {[5,4,3,2,1].map((v) => <option key={v} value={v}>{v} ★</option>)}
+                  </select>
+                  <button
+                    onClick={() => setCfg({ reviews: reviews.filter((_, j) => j !== idx) })}
+                    className="p-1 text-red-400 hover:text-red-600 flex-shrink-0"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+                <textarea
+                  value={r.text}
+                  onChange={(e) => {
+                    const n = [...reviews]; n[idx] = { ...r, text: e.target.value }; setCfg({ reviews: n })
+                  }}
+                  rows={2}
+                  className="input-base text-xs resize-none w-full"
+                  placeholder="Review text…"
+                />
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setCfg({ reviews: [...reviews, { name: '', text: '', rating: 5 }] })}
+            className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-800"
+          >
+            <Plus size={12} /> Add review
+          </button>
+        </div>
+      )
+    }
+
     case 'host-info':
       return (
         <div className="space-y-3">
@@ -1089,6 +1325,28 @@ function SectionEditor({
               placeholder="A short bio about you as a host…"
             />
           </Field>
+          <Field label="Host Since (year)">
+            <input
+              value={cfg.hostSince || ''}
+              onChange={(e) => setCfg({ hostSince: e.target.value })}
+              className="input-base text-sm"
+              placeholder="2020"
+            />
+          </Field>
+          <Field label="Host Photo URL">
+            <input
+              value={cfg.hostPhotoUrl || ''}
+              onChange={(e) => setCfg({ hostPhotoUrl: e.target.value })}
+              className="input-base text-sm"
+              placeholder="https://…"
+            />
+          </Field>
+          <ToggleRow
+            label="Show Contact Button"
+            checked={cfg.showContactButton || false}
+            color="#6366F1"
+            onChange={(v) => setCfg({ showContactButton: v })}
+          />
         </div>
       )
 
@@ -1096,6 +1354,14 @@ function SectionEditor({
       const items: { q: string; a: string }[] = cfg.items || []
       return (
         <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Frequently Asked Questions"
+            />
+          </Field>
           <div className="space-y-2">
             {items.map((item, idx) => (
               <div key={idx} className="bg-gray-50 rounded-xl p-3 space-y-2">
@@ -1103,9 +1369,7 @@ function SectionEditor({
                   <input
                     value={item.q}
                     onChange={(e) => {
-                      const next = [...items]
-                      next[idx] = { ...item, q: e.target.value }
-                      setCfg({ items: next })
+                      const next = [...items]; next[idx] = { ...item, q: e.target.value }; setCfg({ items: next })
                     }}
                     className="input-base text-xs flex-1"
                     placeholder="Question"
@@ -1120,9 +1384,7 @@ function SectionEditor({
                 <textarea
                   value={item.a}
                   onChange={(e) => {
-                    const next = [...items]
-                    next[idx] = { ...item, a: e.target.value }
-                    setCfg({ items: next })
+                    const next = [...items]; next[idx] = { ...item, a: e.target.value }; setCfg({ items: next })
                   }}
                   rows={2}
                   className="input-base text-xs resize-none w-full"
@@ -1145,15 +1407,21 @@ function SectionEditor({
       const rules: { icon: string; text: string }[] = cfg.rules || []
       return (
         <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="House Rules"
+            />
+          </Field>
           <div className="space-y-2">
             {rules.map((rule, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <input
                   value={rule.icon}
                   onChange={(e) => {
-                    const next = [...rules]
-                    next[idx] = { ...rule, icon: e.target.value }
-                    setCfg({ rules: next })
+                    const next = [...rules]; next[idx] = { ...rule, icon: e.target.value }; setCfg({ rules: next })
                   }}
                   className="input-base text-xs w-12 text-center"
                   placeholder="🚫"
@@ -1161,9 +1429,7 @@ function SectionEditor({
                 <input
                   value={rule.text}
                   onChange={(e) => {
-                    const next = [...rules]
-                    next[idx] = { ...rule, text: e.target.value }
-                    setCfg({ rules: next })
+                    const next = [...rules]; next[idx] = { ...rule, text: e.target.value }; setCfg({ rules: next })
                   }}
                   className="input-base text-xs flex-1"
                   placeholder="Rule description"
@@ -1187,7 +1453,7 @@ function SectionEditor({
       )
     }
 
-    case 'reviews':
+    case 'location':
       return (
         <div className="space-y-3">
           <Field label="Section Title">
@@ -1195,26 +1461,9 @@ function SectionEditor({
               value={cfg.title || ''}
               onChange={(e) => setCfg({ title: e.target.value })}
               className="input-base text-sm"
-              placeholder="What Our Guests Say"
+              placeholder="Location"
             />
           </Field>
-          <Field label="Layout">
-            <select
-              value={cfg.layout || 'grid'}
-              onChange={(e) => setCfg({ layout: e.target.value })}
-              className="input-base text-sm"
-            >
-              <option value="grid">Grid</option>
-              <option value="carousel">Carousel</option>
-              <option value="list">List</option>
-            </select>
-          </Field>
-        </div>
-      )
-
-    case 'location':
-      return (
-        <div className="space-y-3">
           <Field label="Description">
             <textarea
               value={cfg.description || ''}
@@ -1227,6 +1476,15 @@ function SectionEditor({
                   : 'Describe the location and surroundings…'
               }
             />
+          </Field>
+          <Field label="Google Maps Embed URL">
+            <input
+              value={cfg.mapEmbedUrl || ''}
+              onChange={(e) => setCfg({ mapEmbedUrl: e.target.value })}
+              className="input-base text-sm"
+              placeholder="https://maps.google.com/maps?…&output=embed"
+            />
+            <p className="text-xs text-gray-400 mt-1">Google Maps → Share → Embed a map → copy the src URL</p>
           </Field>
           {property?.city && !cfg.description && (
             <AutoFill
@@ -1241,17 +1499,308 @@ function SectionEditor({
         </div>
       )
 
-    case 'footer':
+    case 'nearby': {
+      const items: { name: string; category: string; distance: string }[] = cfg.items || []
       return (
-        <Field label="Copyright text">
-          <input
-            value={cfg.copyright || ''}
-            onChange={(e) => setCfg({ copyright: e.target.value })}
-            className="input-base text-sm"
-            placeholder={`© ${new Date().getFullYear()} ${property?.name || 'My Property'}. All rights reserved.`}
-          />
-        </Field>
+        <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Nearby Attractions"
+            />
+          </Field>
+          <div className="space-y-2">
+            {items.map((item, idx) => (
+              <div key={idx} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    value={item.name}
+                    onChange={(e) => {
+                      const n = [...items]; n[idx] = { ...item, name: e.target.value }; setCfg({ items: n })
+                    }}
+                    className="input-base text-xs flex-1"
+                    placeholder="Name (e.g. Main Beach)"
+                  />
+                  <input
+                    value={item.distance}
+                    onChange={(e) => {
+                      const n = [...items]; n[idx] = { ...item, distance: e.target.value }; setCfg({ items: n })
+                    }}
+                    className="input-base text-xs w-20"
+                    placeholder="500 m"
+                  />
+                  <button
+                    onClick={() => setCfg({ items: items.filter((_, j) => j !== idx) })}
+                    className="p-1 text-red-400 hover:text-red-600 flex-shrink-0"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+                <input
+                  value={item.category}
+                  onChange={(e) => {
+                    const n = [...items]; n[idx] = { ...item, category: e.target.value }; setCfg({ items: n })
+                  }}
+                  className="input-base text-xs w-full"
+                  placeholder="Category (e.g. Beach, Shopping, Culture)"
+                />
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setCfg({ items: [...items, { name: '', category: '', distance: '' }] })}
+            className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-800"
+          >
+            <Plus size={12} /> Add attraction
+          </button>
+        </div>
       )
+    }
+
+    case 'special-offers': {
+      const offers: { title: string; description: string; discount: string; validUntil?: string }[] = cfg.offers || []
+      return (
+        <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Special Offers"
+            />
+          </Field>
+          <div className="space-y-2">
+            {offers.map((offer, idx) => (
+              <div key={idx} className="bg-gray-50 rounded-xl p-3 space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    value={offer.title}
+                    onChange={(e) => {
+                      const n = [...offers]; n[idx] = { ...offer, title: e.target.value }; setCfg({ offers: n })
+                    }}
+                    className="input-base text-xs flex-1"
+                    placeholder="Offer title"
+                  />
+                  <input
+                    value={offer.discount}
+                    onChange={(e) => {
+                      const n = [...offers]; n[idx] = { ...offer, discount: e.target.value }; setCfg({ offers: n })
+                    }}
+                    className="input-base text-xs w-16"
+                    placeholder="15%"
+                  />
+                  <button
+                    onClick={() => setCfg({ offers: offers.filter((_, j) => j !== idx) })}
+                    className="p-1 text-red-400 hover:text-red-600 flex-shrink-0"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+                <input
+                  value={offer.description}
+                  onChange={(e) => {
+                    const n = [...offers]; n[idx] = { ...offer, description: e.target.value }; setCfg({ offers: n })
+                  }}
+                  className="input-base text-xs w-full"
+                  placeholder="Offer description"
+                />
+                <input
+                  value={offer.validUntil || ''}
+                  onChange={(e) => {
+                    const n = [...offers]; n[idx] = { ...offer, validUntil: e.target.value }; setCfg({ offers: n })
+                  }}
+                  className="input-base text-xs w-full"
+                  placeholder="Valid until (e.g. Dec 31)"
+                />
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setCfg({ offers: [...offers, { title: '', description: '', discount: '', validUntil: '' }] })}
+            className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-800"
+          >
+            <Plus size={12} /> Add offer
+          </button>
+        </div>
+      )
+    }
+
+    case 'cta':
+      return (
+        <div className="space-y-3">
+          <Field label="Headline">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Ready to Book?"
+            />
+          </Field>
+          <Field label="Subtext">
+            <input
+              value={cfg.subtitle || ''}
+              onChange={(e) => setCfg({ subtitle: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Secure your dates now for the best rates"
+            />
+          </Field>
+          <Field label="Button Text">
+            <input
+              value={cfg.buttonText || ''}
+              onChange={(e) => setCfg({ buttonText: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Book Direct & Save"
+            />
+          </Field>
+        </div>
+      )
+
+    case 'contact':
+      return (
+        <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Get in Touch"
+            />
+          </Field>
+          <Field label="Subtitle">
+            <input
+              value={cfg.subtitle || ''}
+              onChange={(e) => setCfg({ subtitle: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Have questions? We'd love to hear from you."
+            />
+          </Field>
+          <Field label="Phone (optional)">
+            <input
+              value={cfg.phone || ''}
+              onChange={(e) => setCfg({ phone: e.target.value })}
+              className="input-base text-sm"
+              placeholder="+1 (555) 000-0000"
+            />
+          </Field>
+          <Field label="Email (optional)">
+            <input
+              value={cfg.email || ''}
+              onChange={(e) => setCfg({ email: e.target.value })}
+              className="input-base text-sm"
+              placeholder="hello@myproperty.com"
+            />
+          </Field>
+        </div>
+      )
+
+    case 'video':
+      return (
+        <div className="space-y-3">
+          <Field label="Section Title">
+            <input
+              value={cfg.title || ''}
+              onChange={(e) => setCfg({ title: e.target.value })}
+              className="input-base text-sm"
+              placeholder="Experience Our Property"
+            />
+          </Field>
+          <Field label="YouTube / Vimeo Embed URL">
+            <input
+              value={cfg.embedUrl || ''}
+              onChange={(e) => setCfg({ embedUrl: e.target.value })}
+              className="input-base text-sm"
+              placeholder="https://www.youtube.com/embed/…"
+            />
+          </Field>
+          <Field label="Caption (optional)">
+            <input
+              value={cfg.caption || ''}
+              onChange={(e) => setCfg({ caption: e.target.value })}
+              className="input-base text-sm"
+              placeholder="A walkthrough of the property"
+            />
+          </Field>
+        </div>
+      )
+
+    case 'footer': {
+      const links: { label: string; url: string }[] = cfg.links || []
+      return (
+        <div className="space-y-3">
+          <Field label="Copyright text">
+            <input
+              value={cfg.copyright || ''}
+              onChange={(e) => setCfg({ copyright: e.target.value })}
+              className="input-base text-sm"
+              placeholder={`© ${new Date().getFullYear()} All rights reserved.`}
+            />
+          </Field>
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Footer Links</p>
+            <div className="space-y-2">
+              {links.map((link, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <input
+                    value={link.label}
+                    onChange={(e) => {
+                      const n = [...links]; n[idx] = { ...link, label: e.target.value }; setCfg({ links: n })
+                    }}
+                    className="input-base text-xs flex-1"
+                    placeholder="Label"
+                  />
+                  <input
+                    value={link.url}
+                    onChange={(e) => {
+                      const n = [...links]; n[idx] = { ...link, url: e.target.value }; setCfg({ links: n })
+                    }}
+                    className="input-base text-xs flex-1"
+                    placeholder="URL"
+                  />
+                  <button
+                    onClick={() => setCfg({ links: links.filter((_, j) => j !== idx) })}
+                    className="p-1 text-red-400 hover:text-red-600 flex-shrink-0"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setCfg({ links: [...links, { label: '', url: '' }] })}
+              className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-800 mt-2"
+            >
+              <Plus size={12} /> Add link
+            </button>
+          </div>
+          <Field label="Instagram URL">
+            <input
+              value={cfg.instagram || ''}
+              onChange={(e) => setCfg({ instagram: e.target.value })}
+              className="input-base text-sm"
+              placeholder="https://instagram.com/…"
+            />
+          </Field>
+          <Field label="Facebook URL">
+            <input
+              value={cfg.facebook || ''}
+              onChange={(e) => setCfg({ facebook: e.target.value })}
+              className="input-base text-sm"
+              placeholder="https://facebook.com/…"
+            />
+          </Field>
+          <Field label="Twitter / X URL">
+            <input
+              value={cfg.twitter || ''}
+              onChange={(e) => setCfg({ twitter: e.target.value })}
+              className="input-base text-sm"
+              placeholder="https://twitter.com/…"
+            />
+          </Field>
+        </div>
+      )
+    }
 
     default:
       return (

@@ -58,6 +58,7 @@ public class PublicOrgSiteResponse {
         private String id;
         private String slug;
         private String name;
+        private String description;
         private String imageUrl;
         private List<String> photoUrls;
         private String city;

@@ -137,6 +137,7 @@ public class GuestCheckoutService {
                             .id(p.getId().toString())
                             .slug(p.getSlug() != null ? p.getSlug() : p.getId().toString())
                             .name(p.getName())
+                            .description(p.getDescription())
                             .imageUrl(primaryImageUrl)
                             .photoUrls(allPhotos)
                             .city(p.getCity())

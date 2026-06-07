@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import {
   Star, MapPin, Wifi, Wind, Waves, Car, Coffee, Laptop, Tv, Flame,
   TreePine, Flower, Utensils, ChevronDown, ChevronUp, Phone, Mail,
   Instagram, Facebook, Twitter, Home, ArrowRight, BedDouble, Bath, Users,
+  X, ChevronLeft, ChevronRight, CheckCircle, Loader2,
 } from 'lucide-react'
 
 export interface PublicSection {
@@ -22,6 +24,10 @@ export interface PublicSiteConfig {
   accentColor: string
   fontFamily: string
   buttonStyle: string
+  stickyBookButton?: boolean
+  exitIntentEnabled?: boolean
+  exitIntentMessage?: string
+  exitIntentDiscount?: number
 }
 
 export interface PublicPropertyCard {
@@ -76,6 +82,60 @@ function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// ── Photo lightbox ─────────────────────────────────────────────────────────────
+
+function Lightbox({ photos, index, onClose }: { photos: string[]; index: number; onClose: () => void }) {
+  const [current, setCurrent] = useState(index)
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowRight') setCurrent(c => (c + 1) % photos.length)
+      if (e.key === 'ArrowLeft') setCurrent(c => (c - 1 + photos.length) % photos.length)
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [photos.length, onClose])
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center" onClick={onClose}>
+      <button
+        className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+        onClick={onClose}
+      >
+        <X size={20} />
+      </button>
+      <button
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all z-10"
+        onClick={e => { e.stopPropagation(); setCurrent(c => (c - 1 + photos.length) % photos.length) }}
+      >
+        <ChevronLeft size={22} />
+      </button>
+      <img
+        src={photos[current]}
+        alt=""
+        className="max-h-[90vh] max-w-[92vw] object-contain rounded-lg shadow-2xl"
+        onClick={e => e.stopPropagation()}
+      />
+      <button
+        className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all z-10"
+        onClick={e => { e.stopPropagation(); setCurrent(c => (c + 1) % photos.length) }}
+      >
+        <ChevronRight size={22} />
+      </button>
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+        {photos.map((_, i) => (
+          <button
+            key={i}
+            onClick={e => { e.stopPropagation(); setCurrent(i) }}
+            className={`w-2 h-2 rounded-full transition-all ${i === current ? 'bg-white' : 'bg-white/40'}`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
@@ -192,7 +252,8 @@ function HeroSection({ cfg, primary, accent, font, btnStyle, buttonStyle, proper
   )
 }
 
-function GallerySection({ cfg, primary, accent, font, properties }: SectionBaseProps) {
+function GallerySection({ cfg, primary, font, properties }: SectionBaseProps) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const allPhotos: string[] = []
   properties.forEach(p => {
     if (p.photoUrls?.length) allPhotos.push(...p.photoUrls)
@@ -204,6 +265,9 @@ function GallerySection({ cfg, primary, accent, font, properties }: SectionBaseP
   const featured = photos.length >= 3
   return (
     <section className="py-16 px-4 bg-white" style={{ fontFamily: font }}>
+      {lightboxIndex !== null && (
+        <Lightbox photos={photos} index={lightboxIndex} onClose={() => setLightboxIndex(null)} />
+      )}
       <div className="max-w-6xl mx-auto">
         {cfg.title && (
           <div className="text-center mb-10">
@@ -214,11 +278,20 @@ function GallerySection({ cfg, primary, accent, font, properties }: SectionBaseP
         )}
         {featured ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden" style={{ height: 420 }}>
+            <div
+              className="col-span-2 row-span-2 rounded-2xl overflow-hidden cursor-pointer"
+              style={{ height: 420 }}
+              onClick={() => setLightboxIndex(0)}
+            >
               <img src={photos[0]} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </div>
             {photos.slice(1, 5).map((url, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden" style={{ height: 200 }}>
+              <div
+                key={i}
+                className="rounded-2xl overflow-hidden cursor-pointer"
+                style={{ height: 200 }}
+                onClick={() => setLightboxIndex(i + 1)}
+              >
                 <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
               </div>
             ))}
@@ -226,11 +299,14 @@ function GallerySection({ cfg, primary, accent, font, properties }: SectionBaseP
         ) : (
           <div className={`grid gap-3 ${cols === 2 ? 'grid-cols-2' : cols === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
             {photos.map((url, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden">
+              <div key={i} className="rounded-2xl overflow-hidden cursor-pointer" onClick={() => setLightboxIndex(i)}>
                 <img src={url} alt="" className="w-full h-60 object-cover hover:scale-105 transition-transform duration-500" />
               </div>
             ))}
           </div>
+        )}
+        {photos.length > 1 && (
+          <p className="text-center text-xs text-gray-400 mt-4">Click any photo to view full size</p>
         )}
       </div>
     </section>
@@ -554,18 +630,83 @@ function CtaSection({ cfg, primary, accent, font, buttonStyle, properties, navig
   )
 }
 
-function ContactSection({ cfg, primary, font, btnStyle }: SectionBaseProps) {
+function ContactSection({ cfg, primary, font, btnStyle, properties }: SectionBaseProps) {
+  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+
+  const handleSubmit = async () => {
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) return
+    const slug = properties[0]?.slug
+    if (!slug) return
+    setStatus('submitting')
+    try {
+      await axios.post(`/api/public/messaging/properties/${slug}`, {
+        guestName: form.name.trim(),
+        guestEmail: form.email.trim(),
+        body: form.message.trim(),
+      })
+      setStatus('success')
+      setForm({ name: '', email: '', message: '' })
+    } catch {
+      setStatus('error')
+    }
+  }
+
   return (
     <section className="py-16 px-4 bg-white" style={{ fontFamily: font }}>
       <div className="max-w-xl mx-auto">
         <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">{cfg.title || 'Get in Touch'}</h2>
         <p className="text-gray-500 text-center mb-8">{cfg.subtitle || "Have questions? We'd love to hear from you."}</p>
-        <div className="space-y-4">
-          <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-400" placeholder="Your name" />
-          <input className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-400" placeholder="Your email" type="email" />
-          <textarea className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-gray-400" rows={4} placeholder="Your message" />
-          <button className="w-full py-3.5 text-white text-sm font-semibold hover:opacity-90 transition-opacity" style={btnStyle}>Send Message</button>
-        </div>
+
+        {status === 'success' ? (
+          <div className="text-center py-10">
+            <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
+            <p className="text-xl font-bold text-gray-900 mb-2">Message Sent!</p>
+            <p className="text-gray-500 mb-6">We'll get back to you as soon as possible.</p>
+            <button
+              onClick={() => setStatus('idle')}
+              className="text-sm font-medium underline"
+              style={{ color: primary }}
+            >
+              Send another message
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <input
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-400"
+              placeholder="Your name"
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+            />
+            <input
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-400"
+              placeholder="Your email"
+              type="email"
+              value={form.email}
+              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+            />
+            <textarea
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-gray-400"
+              rows={4}
+              placeholder="Your message"
+              value={form.message}
+              onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+            />
+            {status === 'error' && (
+              <p className="text-sm text-red-500 text-center">Something went wrong. Please try again.</p>
+            )}
+            <button
+              onClick={handleSubmit}
+              disabled={status === 'submitting' || !form.name || !form.email || !form.message}
+              className="w-full py-3.5 text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+              style={btnStyle}
+            >
+              {status === 'submitting' ? <><Loader2 size={16} className="animate-spin" />Sending…</> : 'Send Message'}
+            </button>
+          </div>
+        )}
+
         {(cfg.phone || cfg.email) && (
           <div className="flex flex-wrap justify-center gap-6 mt-7 text-sm text-gray-500">
             {cfg.phone && <div className="flex items-center gap-1.5"><Phone size={14} style={{ color: primary }} />{cfg.phone}</div>}
@@ -613,9 +754,9 @@ function FooterSection({ cfg, accent, font, config }: SectionBaseProps & { confi
             </div>
           )}
           <div className="flex gap-3">
-            {cfg.instagram && <a href={cfg.instagram} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"><Instagram size={15} /></a>}
-            {cfg.facebook && <a href={cfg.facebook} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"><Facebook size={15} /></a>}
-            {cfg.twitter && <a href={cfg.twitter} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"><Twitter size={15} /></a>}
+            {cfg.instagram && <a href={cfg.instagram} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"><Instagram size={15} /></a>}
+            {cfg.facebook && <a href={cfg.facebook} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"><Facebook size={15} /></a>}
+            {cfg.twitter && <a href={cfg.twitter} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"><Twitter size={15} /></a>}
           </div>
         </div>
       </div>
@@ -699,6 +840,57 @@ function DefaultPropertyListing({ properties, config, getPropertyUrl, navigate }
   )
 }
 
+// ── Exit intent popup ──────────────────────────────────────────────────────────
+
+function ExitIntentPopup({ config, properties, getPropertyUrl, onDismiss }: {
+  config: PublicSiteConfig
+  properties: PublicPropertyCard[]
+  getPropertyUrl: (slug: string) => string
+  onDismiss: () => void
+}) {
+  const navigate = useNavigate()
+  const primary = config.primaryColor || '#6366F1'
+  const accent = config.accentColor || '#F59E0B'
+  return (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onDismiss}>
+      <div
+        className="bg-white rounded-3xl max-w-sm w-full p-8 text-center shadow-2xl relative"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          onClick={onDismiss}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 hover:bg-gray-200 transition-all"
+        >
+          <X size={16} />
+        </button>
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl" style={{ backgroundColor: `${accent}20` }}>
+          🎁
+        </div>
+        <h3 className="text-2xl font-extrabold text-gray-900 mb-2">
+          {config.exitIntentMessage || 'Wait! Before you go…'}
+        </h3>
+        {config.exitIntentDiscount && (
+          <p className="text-gray-500 mb-6">
+            Book now and save <span className="font-bold text-2xl" style={{ color: accent }}>{config.exitIntentDiscount}%</span> on your stay
+          </p>
+        )}
+        {properties[0] && (
+          <button
+            onClick={() => { onDismiss(); navigate(getPropertyUrl(properties[0].slug)) }}
+            className="w-full py-4 text-white font-bold rounded-2xl hover:opacity-90 transition-all hover:shadow-lg mb-3"
+            style={{ backgroundColor: primary }}
+          >
+            Claim My Discount
+          </button>
+        )}
+        <button onClick={onDismiss} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+          No thanks, I'll pay full price
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Main renderer ──────────────────────────────────────────────────────────────
 
 export function PublicSiteRenderer({ sections, config, properties, getPropertyUrl }: {
@@ -708,7 +900,21 @@ export function PublicSiteRenderer({ sections, config, properties, getPropertyUr
   getPropertyUrl: (slug: string) => string
 }) {
   const navigate = useNavigate()
+  const [showExitIntent, setShowExitIntent] = useState(false)
+  const exitShown = useRef(false)
   const enabledSections = sections.filter(s => s.enabled).sort((a, b) => a.position - b.position)
+
+  useEffect(() => {
+    if (!config.exitIntentEnabled) return
+    const handle = (e: MouseEvent) => {
+      if (e.clientY < 10 && !exitShown.current) {
+        exitShown.current = true
+        setShowExitIntent(true)
+      }
+    }
+    document.addEventListener('mouseleave', handle)
+    return () => document.removeEventListener('mouseleave', handle)
+  }, [config.exitIntentEnabled])
 
   if (enabledSections.length === 0) {
     return (
@@ -731,6 +937,8 @@ export function PublicSiteRenderer({ sections, config, properties, getPropertyUr
   }
   sectionsToRender.sort((a, b) => a.position - b.position)
 
+  const primary = config.primaryColor || '#6366F1'
+
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: config.fontFamily || 'Inter' }}>
       {sectionsToRender.map(section => (
@@ -743,6 +951,30 @@ export function PublicSiteRenderer({ sections, config, properties, getPropertyUr
           getPropertyUrl={getPropertyUrl}
         />
       ))}
+
+      {/* Sticky book button */}
+      {config.stickyBookButton && properties[0] && (
+        <div className="fixed bottom-5 right-5 z-40">
+          <button
+            onClick={() => navigate(getPropertyUrl(properties[0].slug))}
+            className="flex items-center gap-2 px-5 py-3.5 text-white font-bold text-sm shadow-2xl hover:opacity-90 hover:scale-105 transition-all rounded-2xl"
+            style={{ backgroundColor: primary }}
+          >
+            <ArrowRight size={16} />
+            Book Now
+          </button>
+        </div>
+      )}
+
+      {/* Exit intent popup */}
+      {showExitIntent && (
+        <ExitIntentPopup
+          config={config}
+          properties={properties}
+          getPropertyUrl={getPropertyUrl}
+          onDismiss={() => setShowExitIntent(false)}
+        />
+      )}
     </div>
   )
 }

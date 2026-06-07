@@ -72,6 +72,10 @@ interface OrgSite {
   gtmContainerId?: string
   metaPixelId?: string
   tiktokPixelId?: string
+  stickyBookButton?: boolean
+  exitIntentEnabled?: boolean
+  exitIntentMessage?: string
+  exitIntentDiscount?: number
   sections: PublicSection[]
   properties: PublicPropertyCard[]
 }
@@ -192,6 +196,10 @@ export function OrgListingPage({ orgSlug, getPropertyUrl }: {
     accentColor: site.accentColor || '#F59E0B',
     fontFamily: site.fontFamily || 'Inter',
     buttonStyle: site.buttonStyle || 'rounded',
+    stickyBookButton: site.stickyBookButton,
+    exitIntentEnabled: site.exitIntentEnabled,
+    exitIntentMessage: site.exitIntentMessage,
+    exitIntentDiscount: site.exitIntentDiscount,
   }
 
   return (
