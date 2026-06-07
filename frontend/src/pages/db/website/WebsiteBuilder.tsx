@@ -14,6 +14,8 @@ import {
 } from '@/api/websiteBuilder'
 import { organizationsApi } from '@/api/organizations'
 import { SectionPreview, SECTION_LABELS } from './SectionPreview'
+import { PublicSiteRenderer } from '@/pages/public/PublicSiteRenderer'
+import type { PublicSiteConfig, PublicPropertyCard } from '@/pages/public/PublicSiteRenderer'
 import type { Property } from '@/types'
 
 // ── Palette & font options ────────────────────────────────────────────────────
@@ -745,7 +747,7 @@ export function WebsiteBuilder({ orgId, orgSlug, property, initialConfig }: Prop
 
             <div
               className={`bg-white shadow-2xl rounded-xl overflow-hidden transition-all ${
-                previewMode === 'mobile' ? 'w-[390px]' : 'w-full max-w-4xl'
+                previewMode === 'mobile' ? 'w-[390px]' : 'w-full max-w-5xl'
               }`}
             >
               {/* Browser chrome */}
@@ -759,6 +761,12 @@ export function WebsiteBuilder({ orgId, orgSlug, property, initialConfig }: Prop
                   <Globe size={9} className="text-green-400" />
                   {siteUrl || (siteSlug ? `${siteSlug}.propvian.com` : 'your-site.propvian.com')}
                 </div>
+                {siteUrl && (
+                  <a href={siteUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-white transition-colors">
+                    <ExternalLink size={11} />
+                  </a>
+                )}
               </div>
 
               <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
@@ -768,22 +776,46 @@ export function WebsiteBuilder({ orgId, orgSlug, property, initialConfig }: Prop
                       Enable sections in the Content tab to see them here
                     </p>
                   </div>
-                ) : (
-                  sections
-                    .filter((s) => s.enabled)
-                    .map((s) => (
-                      <SectionPreview
-                        key={s.id}
-                        section={s}
-                        config={config}
-                        isSelected={false}
-                        onClick={() => {
-                          setActiveTab('sections')
-                          setExpandedSection(s.id)
-                        }}
-                      />
-                    ))
-                )}
+                ) : (() => {
+                  // Build preview config identical to what OrgListingPage passes
+                  const previewConfig: PublicSiteConfig = {
+                    brandName: config.brandName || 'My Property',
+                    brandLogoUrl: config.brandLogoUrl,
+                    primaryColor: config.primaryColor || '#6366F1',
+                    accentColor: config.accentColor || '#F59E0B',
+                    fontFamily: config.fontFamily || 'Inter',
+                    buttonStyle: config.buttonStyle || 'rounded',
+                  }
+                  // Build a property card from the real property data so photos/description are accurate
+                  const photos: string[] = property?.photos?.map((p: any) => p.url || p.imageUrl || p).filter(Boolean) || []
+                  const previewProperty: PublicPropertyCard = {
+                    id: property?.id || 'preview',
+                    slug: property?.slug || 'preview',
+                    name: property?.name || config.brandName || 'Your Property',
+                    description: property?.description,
+                    imageUrl: property?.imageUrl || '',
+                    photoUrls: photos.length ? photos : (property?.imageUrl ? [property.imageUrl] : []),
+                    city: property?.city || '',
+                    country: property?.country || '',
+                    bedrooms: property?.bedrooms || 0,
+                    bathrooms: property?.bathrooms || 0,
+                    maxGuests: property?.maxGuests || 0,
+                    baseNightlyRate: property?.baseNightlyRate || 0,
+                    cleaningFee: property?.cleaningFee || 0,
+                    propertyType: property?.propertyType || '',
+                    minStayNights: property?.minStayNights || 1,
+                    checkInTime: property?.checkInTime || '',
+                    checkOutTime: property?.checkOutTime || '',
+                  }
+                  return (
+                    <PublicSiteRenderer
+                      sections={sections}
+                      config={previewConfig}
+                      properties={[previewProperty]}
+                      getPropertyUrl={() => '#'}
+                    />
+                  )
+                })()}
               </div>
             </div>
           </div>
