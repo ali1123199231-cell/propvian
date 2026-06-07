@@ -83,6 +83,19 @@ import { TermsPage } from '@/pages/legal/TermsPage'
 import { PrivacyPage } from '@/pages/legal/PrivacyPage'
 import { CookiePolicyPage } from '@/pages/legal/CookiePolicyPage'
 import { RefundPage } from '@/pages/legal/RefundPage'
+import { AcceptableUsePage } from '@/pages/legal/AcceptableUsePage'
+import { GdprRightsPage } from '@/pages/legal/GdprRightsPage'
+import { DpaPage } from '@/pages/legal/DpaPage'
+import { SecurityPage } from '@/pages/legal/SecurityPage'
+import { DisclaimerPage } from '@/pages/legal/DisclaimerPage'
+import { DmcaPage } from '@/pages/legal/DmcaPage'
+
+// SEO landing pages
+import { DirectBookingWebsitePage } from '@/pages/marketing/seo/DirectBookingWebsitePage'
+import { VacationRentalBuilderPage } from '@/pages/marketing/seo/VacationRentalBuilderPage'
+import { AirbnbAlternativePage } from '@/pages/marketing/seo/AirbnbAlternativePage'
+import { DirectBookingSoftwarePage } from '@/pages/marketing/seo/DirectBookingSoftwarePage'
+import { BookingEnginePage } from '@/pages/marketing/seo/BookingEnginePage'
 
 // Smart routers — wait for config fetch before committing to a business model
 import { useSystemStore } from '@/store/systemStore'
@@ -165,10 +178,23 @@ export default function App() {
         <Route path="/features/self-checkin"        element={<SelfCheckinPage />} />
 
         {/* Legal */}
-        <Route path="/legal/terms"        element={<TermsPage />} />
-        <Route path="/legal/privacy"      element={<PrivacyPage />} />
-        <Route path="/legal/cookie-policy"element={<CookiePolicyPage />} />
-        <Route path="/legal/refund-policy"element={<RefundPage />} />
+        <Route path="/legal/terms"           element={<TermsPage />} />
+        <Route path="/legal/privacy"         element={<PrivacyPage />} />
+        <Route path="/legal/cookie-policy"   element={<CookiePolicyPage />} />
+        <Route path="/legal/refund-policy"   element={<RefundPage />} />
+        <Route path="/legal/acceptable-use"  element={<AcceptableUsePage />} />
+        <Route path="/legal/gdpr"            element={<GdprRightsPage />} />
+        <Route path="/legal/dpa"             element={<DpaPage />} />
+        <Route path="/legal/security"        element={<SecurityPage />} />
+        <Route path="/legal/disclaimer"      element={<DisclaimerPage />} />
+        <Route path="/legal/dmca"            element={<DmcaPage />} />
+
+        {/* SEO landing pages */}
+        <Route path="/direct-booking-website"          element={<DirectBookingWebsitePage />} />
+        <Route path="/vacation-rental-website-builder" element={<VacationRentalBuilderPage />} />
+        <Route path="/airbnb-alternative"              element={<AirbnbAlternativePage />} />
+        <Route path="/direct-booking-software"         element={<DirectBookingSoftwarePage />} />
+        <Route path="/booking-engine"                  element={<BookingEnginePage />} />
 
         {/* App (authenticated) — shared + model-aware routes */}
         <Route element={<AppLayout />}>

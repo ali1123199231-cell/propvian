@@ -21,31 +21,38 @@ export function MarketingFooter() {
           <div>
             <p className="text-sm font-semibold text-white mb-4">Product</p>
             <ul className="space-y-2.5 text-sm">
-              <li><Link to="/features/guest-code-automation" className="hover:text-white transition-colors">Guest Code Automation</Link></li>
-              <li><Link to="/features/self-checkin" className="hover:text-white transition-colors">Self Check-In</Link></li>
+              <li><Link to="/direct-booking-website" className="hover:text-white transition-colors">Direct Booking Website</Link></li>
+              <li><Link to="/vacation-rental-website-builder" className="hover:text-white transition-colors">Website Builder</Link></li>
+              <li><Link to="/booking-engine" className="hover:text-white transition-colors">Booking Engine</Link></li>
+              <li><Link to="/airbnb-alternative" className="hover:text-white transition-colors">Airbnb Alternative</Link></li>
               <li><Link to="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
             </ul>
           </div>
 
-          {/* Integrations */}
+          {/* Resources */}
           <div>
-            <p className="text-sm font-semibold text-white mb-4">Integrations</p>
+            <p className="text-sm font-semibold text-white mb-4">Resources</p>
             <ul className="space-y-2.5 text-sm">
-              <li><Link to="/integrations/airbnb" className="hover:text-white transition-colors">Airbnb</Link></li>
-              <li><Link to="/integrations/booking-com" className="hover:text-white transition-colors">Booking.com</Link></li>
-              <li><Link to="/integrations/airbnb-sync" className="hover:text-white transition-colors">Calendar Sync</Link></li>
+              <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
+              <li><Link to="/integrations/airbnb" className="hover:text-white transition-colors">Airbnb Integration</Link></li>
+              <li><Link to="/integrations/booking-com" className="hover:text-white transition-colors">Booking.com Integration</Link></li>
+              <li><Link to="/legal/security" className="hover:text-white transition-colors">Security</Link></li>
             </ul>
           </div>
 
-          {/* Resources & Legal */}
+          {/* Legal */}
           <div>
-            <p className="text-sm font-semibold text-white mb-4">Company</p>
+            <p className="text-sm font-semibold text-white mb-4">Legal</p>
             <ul className="space-y-2.5 text-sm">
-              <li><Link to="/blog" className="hover:text-white transition-colors">Blog</Link></li>
               <li><Link to="/legal/terms" className="hover:text-white transition-colors">Terms of Service</Link></li>
               <li><Link to="/legal/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
               <li><Link to="/legal/cookie-policy" className="hover:text-white transition-colors">Cookie Policy</Link></li>
               <li><Link to="/legal/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link></li>
+              <li><Link to="/legal/acceptable-use" className="hover:text-white transition-colors">Acceptable Use</Link></li>
+              <li><Link to="/legal/dpa" className="hover:text-white transition-colors">Data Processing Agreement</Link></li>
+              <li><Link to="/legal/gdpr" className="hover:text-white transition-colors">GDPR Rights</Link></li>
+              <li><Link to="/legal/disclaimer" className="hover:text-white transition-colors">Disclaimer</Link></li>
+              <li><Link to="/legal/dmca" className="hover:text-white transition-colors">DMCA / Copyright</Link></li>
             </ul>
           </div>
         </div>

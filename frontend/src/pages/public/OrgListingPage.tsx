@@ -99,11 +99,14 @@ function LogoImg({ src, alt, className, fallbackChar, primary }: {
   return <img src={src} alt={alt} className={className} onError={() => setBroken(true)} />
 }
 
-function SiteNavbar({ site }: { site: OrgSite }) {
+function SiteNavbar({ site, getPropertyUrl }: { site: OrgSite; getPropertyUrl: (slug: string) => string }) {
   const primary = site.primaryColor || '#6366F1'
+  const accent = site.accentColor || '#F59E0B'
   const displayName = site.brandName || site.orgName
+  const navigate = useNavigate()
+  const firstProp = site.properties[0]
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {site.brandLogoUrl ? (
@@ -111,15 +114,26 @@ function SiteNavbar({ site }: { site: OrgSite }) {
               className="h-9 w-auto object-contain max-w-[160px]"
               fallbackChar={displayName.charAt(0).toUpperCase()} primary={primary} />
           ) : (
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm" style={{ backgroundColor: primary }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm" style={{ background: `linear-gradient(135deg, ${primary}, ${accent}99)` }}>
               {displayName.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="font-bold text-gray-900 text-lg">{displayName}</span>
+          <span className="font-bold text-gray-900 text-base sm:text-lg">{displayName}</span>
         </div>
-        <div className="flex items-center gap-1.5 text-sm text-gray-500">
-          <Star size={14} className="text-amber-400 fill-amber-400" />
-          <span className="hidden sm:inline">Verified properties</span>
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-1.5 text-sm text-gray-400">
+            <Star size={13} className="text-amber-400 fill-amber-400" />
+            <span>Verified</span>
+          </div>
+          {firstProp && (
+            <button
+              onClick={() => navigate(getPropertyUrl(firstProp.slug))}
+              className="px-5 py-2 rounded-xl text-sm font-bold text-white shadow-sm hover:opacity-90 transition-all hover:shadow-md"
+              style={{ backgroundColor: primary }}
+            >
+              Book Now
+            </button>
+          )}
         </div>
       </div>
     </nav>
@@ -195,7 +209,7 @@ export function OrgListingPage({ orgSlug, getPropertyUrl }: {
 
   return (
     <div style={{ fontFamily: siteConfig.fontFamily }}>
-      <SiteNavbar site={site} />
+      <SiteNavbar site={site} getPropertyUrl={getPropertyUrl} />
       <PublicSiteRenderer
         sections={site.sections || []}
         config={siteConfig}

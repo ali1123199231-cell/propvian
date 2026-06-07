@@ -1,23 +1,40 @@
 User-agent: *
 Allow: /
 
-# Marketing pages
+# Marketing and SEO pages
 Allow: /blog
 Allow: /blog/
 Allow: /pricing
 Allow: /integrations/
 Allow: /features/
 Allow: /legal/
+Allow: /direct-booking-website
+Allow: /vacation-rental-website-builder
+Allow: /airbnb-alternative
+Allow: /direct-booking-software
+Allow: /booking-engine
 
 # Disallow authenticated app routes
 Disallow: /dashboard
 Disallow: /dashboard/
 Disallow: /properties
 Disallow: /reservations
-Disallow: /locks
 Disallow: /notifications
 Disallow: /settings
 Disallow: /billing
 Disallow: /onboarding
+Disallow: /onboarding-direct
+Disallow: /analytics
+Disallow: /audit-logs
+Disallow: /locks
+Disallow: /calendar
+Disallow: /payments
+Disallow: /website
+Disallow: /domains
+Disallow: /reviews
+Disallow: /messaging
+Disallow: /verification
+Disallow: /admin
+Disallow: /admin/
 
 Sitemap: https://propvian.com/sitemap.xml

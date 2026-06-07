@@ -152,30 +152,37 @@ interface SectionBaseProps {
   getPropertyUrl: (slug: string) => string
 }
 
-function HeroSection({ cfg, primary, accent, font, btnStyle, properties, navigate, getPropertyUrl }: SectionBaseProps) {
+function HeroSection({ cfg, primary, accent, font, btnStyle, buttonStyle, properties, navigate, getPropertyUrl }: SectionBaseProps) {
   const heroImg = cfg.backgroundImageUrl || properties[0]?.photoUrls?.[0] || properties[0]?.imageUrl
+  const minH = cfg.height === 'small' ? 360 : cfg.height === 'medium' ? 520 : 680
   return (
     <section style={{ fontFamily: font }}>
       <div
         className="relative flex flex-col items-center justify-center text-center px-6"
-        style={{ minHeight: cfg.height === 'small' ? 320 : cfg.height === 'medium' ? 480 : 600 }}
+        style={{ minHeight: minH }}
       >
-        {heroImg && <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${primary}cc 0%, ${primary}88 100%)` }} />
+        {heroImg ? (
+          <>
+            <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, ${primary}bb 0%, ${primary}77 45%, ${accent}55 100%)` }} />
+          </>
+        ) : (
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${primary}ff 0%, ${primary}cc 45%, ${accent}99 100%)` }} />
+        )}
         <div className="relative z-10 max-w-3xl">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-5 leading-tight drop-shadow-sm">
             {cfg.headline || 'Welcome'}
           </h1>
-          <p className="text-white/85 text-lg sm:text-xl mb-8 leading-relaxed max-w-2xl mx-auto">
+          <p className="text-white/90 text-lg sm:text-xl mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-sm">
             {cfg.subheadline || 'Book direct for the best rates and a personal experience'}
           </p>
-          {cfg.ctaText && properties[0] && (
+          {(cfg.ctaText || 'Check Availability') && properties[0] && (
             <button
               onClick={() => navigate(getPropertyUrl(properties[0].slug))}
-              className="px-10 py-4 font-bold text-base text-white shadow-xl hover:opacity-90 transition-opacity"
-              style={btnStyle}
+              className="px-10 py-4 font-bold text-base shadow-2xl hover:opacity-90 transition-all hover:scale-105"
+              style={{ backgroundColor: accent, color: '#fff', borderRadius: btnRadius(buttonStyle) }}
             >
-              {cfg.ctaText}
+              {cfg.ctaText || 'Check Availability'}
             </button>
           )}
         </div>
@@ -193,38 +200,58 @@ function GallerySection({ cfg, primary, accent, font, properties }: SectionBaseP
   const photos = allPhotos.slice(0, cfg.maxPhotos || 9)
   const cols = cfg.columns || 3
   if (photos.length === 0) return null
+  const featured = cfg.featuredFirst && photos.length >= 3
   return (
     <section className="py-16 px-4 bg-white" style={{ fontFamily: font }}>
       <div className="max-w-6xl mx-auto">
-        {cfg.title && <h2 className="text-3xl font-bold text-gray-900 mb-3 text-center">{cfg.title}</h2>}
-        {cfg.subtitle && <p className="text-gray-500 text-center mb-8">{cfg.subtitle}</p>}
-        <div className={`grid gap-3 ${cols === 2 ? 'grid-cols-2' : cols === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
-          {photos.map((url, i) => (
-            <div key={i} className={`rounded-xl overflow-hidden ${i === 0 && cfg.featuredFirst ? 'col-span-2 row-span-2' : ''}`}>
-              <img src={url} alt="" className="w-full h-52 object-cover hover:scale-105 transition-transform duration-300" />
+        {cfg.title && (
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">{cfg.title}</h2>
+            {cfg.subtitle && <p className="text-gray-500 mt-1">{cfg.subtitle}</p>}
+            <div className="w-12 h-1 rounded-full mx-auto mt-4" style={{ backgroundColor: primary }} />
+          </div>
+        )}
+        {featured ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden" style={{ height: 420 }}>
+              <img src={photos[0]} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </div>
-          ))}
-        </div>
+            {photos.slice(1, 5).map((url, i) => (
+              <div key={i} className="rounded-2xl overflow-hidden" style={{ height: 200 }}>
+                <img src={url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={`grid gap-3 ${cols === 2 ? 'grid-cols-2' : cols === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
+            {photos.map((url, i) => (
+              <div key={i} className="rounded-2xl overflow-hidden">
+                <img src={url} alt="" className="w-full h-60 object-cover hover:scale-105 transition-transform duration-500" />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )
 }
 
 function AboutSection({ cfg, primary, accent, font, properties }: SectionBaseProps) {
-  const aboutImg = cfg.imageUrl || properties[0]?.photoUrls?.[0] || properties[0]?.imageUrl
+  const aboutImg = cfg.imageUrl || properties[0]?.photoUrls?.[1] || properties[0]?.photoUrls?.[0] || properties[0]?.imageUrl
   return (
-    <section className="py-16 px-4 bg-white" style={{ fontFamily: font }}>
+    <section className="py-20 px-4 bg-white" style={{ fontFamily: font }}>
       <div className="max-w-5xl mx-auto">
-        <div className={`flex flex-col md:flex-row gap-10 items-center ${cfg.imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
+        <div className={`flex flex-col md:flex-row gap-12 items-center ${cfg.imagePosition === 'left' ? 'md:flex-row-reverse' : ''}`}>
           <div className="flex-1">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">{cfg.title || 'About This Property'}</h2>
-            <p className="text-gray-600 leading-relaxed text-base whitespace-pre-line">
+            <div className="w-10 h-1 rounded-full mb-5" style={{ backgroundColor: accent }} />
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-5 leading-tight">{cfg.title || 'About This Property'}</h2>
+            <p className="text-gray-600 leading-relaxed text-base whitespace-pre-line text-lg">
               {cfg.description || 'A beautiful and thoughtfully designed space for your perfect getaway.'}
             </p>
           </div>
           {aboutImg && (
-            <div className="w-full md:w-96 h-64 rounded-2xl overflow-hidden flex-shrink-0">
-              <img src={aboutImg} alt="" className="w-full h-full object-cover" />
+            <div className="w-full md:w-[420px] rounded-3xl overflow-hidden flex-shrink-0 shadow-xl" style={{ height: 320 }}>
+              <img src={aboutImg} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </div>
           )}
         </div>
@@ -233,7 +260,7 @@ function AboutSection({ cfg, primary, accent, font, properties }: SectionBasePro
   )
 }
 
-function AmenitiesSection({ cfg, primary, font }: SectionBaseProps) {
+function AmenitiesSection({ cfg, primary, accent, font }: SectionBaseProps) {
   const items: { key?: string; label: string }[] = cfg.items || [
     { key: 'wifi', label: 'WiFi' }, { key: 'kitchen', label: 'Kitchen' },
     { key: 'parking', label: 'Parking' }, { key: 'pool', label: 'Pool' },
@@ -242,19 +269,22 @@ function AmenitiesSection({ cfg, primary, font }: SectionBaseProps) {
   ]
   const cols = cfg.columns || 4
   return (
-    <section className="py-16 px-4 bg-gray-50" style={{ fontFamily: font }}>
+    <section className="py-20 px-4 bg-gray-50" style={{ fontFamily: font }}>
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 mb-3 text-center">{cfg.title || 'Amenities'}</h2>
-        {cfg.subtitle && <p className="text-gray-500 text-center mb-2">{cfg.subtitle}</p>}
-        <div className={`grid gap-4 mt-8 ${cols === 2 ? 'grid-cols-2' : cols === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{cfg.title || 'Amenities'}</h2>
+          {cfg.subtitle && <p className="text-gray-500 text-base mt-2">{cfg.subtitle}</p>}
+          <div className="w-12 h-1 rounded-full mx-auto mt-4" style={{ backgroundColor: accent }} />
+        </div>
+        <div className={`grid gap-4 ${cols === 2 ? 'grid-cols-2' : cols === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
           {items.map((item, i) => {
             const Icon = (item.key && AMENITY_ICONS[item.key]) || Wifi
             return (
-              <div key={i} className="flex items-center gap-3 bg-white rounded-xl p-4 shadow-sm">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${primary}18` }}>
-                  <Icon size={18} style={{ color: primary }} />
+              <div key={i} className="flex items-center gap-3 bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `linear-gradient(135deg, ${primary}22, ${primary}11)` }}>
+                  <Icon size={20} style={{ color: primary }} />
                 </div>
-                <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                <span className="text-sm font-semibold text-gray-700">{item.label}</span>
               </div>
             )
           })}
@@ -264,13 +294,16 @@ function AmenitiesSection({ cfg, primary, font }: SectionBaseProps) {
   )
 }
 
-function PropertiesListSection({ cfg, primary, buttonStyle, font, properties, navigate, getPropertyUrl }: SectionBaseProps) {
+function PropertiesListSection({ cfg, primary, accent, buttonStyle, font, properties, navigate, getPropertyUrl }: SectionBaseProps) {
   if (properties.length <= 1) return null
   return (
-    <section className="py-16 px-4 bg-gray-50" style={{ fontFamily: font }}>
+    <section className="py-20 px-4 bg-gray-50" style={{ fontFamily: font }}>
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">{cfg.title || 'Our Properties'}</h2>
-        <p className="text-gray-500 mb-8">{properties.length} propert{properties.length === 1 ? 'y' : 'ies'} available</p>
+        <div className="mb-10">
+          <div className="w-10 h-1 rounded-full mb-4" style={{ backgroundColor: accent }} />
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">{cfg.title || 'Our Properties'}</h2>
+          <p className="text-gray-500">{properties.length} propert{properties.length === 1 ? 'y' : 'ies'} available</p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {properties.map(prop => (
             <PropertyCard key={prop.id} prop={prop} primary={primary} buttonStyle={buttonStyle} onBook={() => navigate(getPropertyUrl(prop.slug))} />
@@ -281,35 +314,37 @@ function PropertiesListSection({ cfg, primary, buttonStyle, font, properties, na
   )
 }
 
-function BookingWidgetSection({ cfg, primary, font, btnStyle, properties, navigate, getPropertyUrl }: SectionBaseProps) {
+function BookingWidgetSection({ cfg, primary, accent, font, btnStyle, properties, navigate, getPropertyUrl }: SectionBaseProps) {
   const prop = properties[0]
   if (!prop) return null
   return (
-    <section className="py-16 px-4 bg-white" style={{ fontFamily: font }}>
+    <section className="py-20 px-4 bg-white" style={{ fontFamily: font }}>
       <div className="max-w-3xl mx-auto text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-3">{cfg.title || 'Book Your Stay'}</h2>
-        {cfg.subtitle && <p className="text-gray-500 mb-8">{cfg.subtitle}</p>}
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden max-w-lg mx-auto">
+        <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ backgroundColor: accent }} />
+        <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{cfg.title || 'Book Your Stay'}</h2>
+        {cfg.subtitle && <p className="text-gray-500 text-base mb-8">{cfg.subtitle}</p>}
+        <div className="bg-white border border-gray-100 rounded-3xl shadow-xl overflow-hidden max-w-md mx-auto mt-8">
           <div className="grid grid-cols-2 divide-x divide-gray-100 border-b border-gray-100">
             {[
               { label: 'Check-in', val: cfg.checkInNote || (prop.checkInTime ? `From ${prop.checkInTime}` : 'Flexible') },
               { label: 'Check-out', val: cfg.checkOutNote || (prop.checkOutTime ? `By ${prop.checkOutTime}` : 'Flexible') },
             ].map(({ label, val }) => (
               <div key={label} className="p-5">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-                <p className="text-sm font-semibold text-gray-800">{val}</p>
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{label}</p>
+                <p className="text-sm font-bold text-gray-900">{val}</p>
               </div>
             ))}
           </div>
           <div className="p-6">
             {prop.baseNightlyRate && (
-              <p className="text-center text-2xl font-bold text-gray-900 mb-5">
-                ${Number(prop.baseNightlyRate).toFixed(0)}<span className="text-base font-normal text-gray-500"> / night</span>
-              </p>
+              <div className="text-center mb-5">
+                <span className="text-3xl font-extrabold text-gray-900">${Number(prop.baseNightlyRate).toFixed(0)}</span>
+                <span className="text-sm font-medium text-gray-400"> / night</span>
+              </div>
             )}
             <button
               onClick={() => navigate(getPropertyUrl(prop.slug))}
-              className="w-full py-4 text-white text-base font-bold shadow-sm hover:opacity-90 transition-opacity"
+              className="w-full py-4 text-white text-base font-bold shadow-sm hover:opacity-90 transition-all hover:shadow-md"
               style={btnStyle}
             >
               {cfg.ctaText || (cfg.instantBooking ? 'Reserve Now' : 'Check Availability')}
@@ -327,26 +362,27 @@ function ReviewsSection({ cfg, primary, accent, font }: SectionBaseProps) {
     { name: 'James R.', text: 'Perfect for our family trip. Spotlessly clean, well-equipped, and exactly as described.', rating: 5 },
   ]
   return (
-    <section className="py-16 px-4 bg-gray-50" style={{ fontFamily: font }}>
+    <section className="py-20 px-4 bg-gray-50" style={{ fontFamily: font }}>
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">{cfg.title || 'Guest Reviews'}</h2>
-        <div className="flex items-center justify-center gap-1 mb-10">
-          {[1,2,3,4,5].map(i => <Star key={i} size={20} fill={accent} stroke="none" />)}
-          <span className="text-base font-semibold text-gray-700 ml-2">{cfg.rating || '4.9'} · {cfg.reviewCount || reviews.length} reviews</span>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{cfg.title || 'Guest Reviews'}</h2>
+          <div className="flex items-center justify-center gap-1.5 mt-3">
+            {[1,2,3,4,5].map(i => <Star key={i} size={22} fill={accent} stroke="none" />)}
+            <span className="text-base font-bold text-gray-700 ml-2">{cfg.rating || '4.9'}</span>
+            <span className="text-gray-400 text-sm">· {cfg.reviewCount || reviews.length} reviews</span>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {reviews.map((r, i) => (
-            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0" style={{ backgroundColor: primary }}>
+            <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <div className="flex gap-0.5 mb-4">{[1,2,3,4,5].map(j => <Star key={j} size={14} fill={r.rating >= j ? accent : '#e5e7eb'} stroke="none" />)}</div>
+              <p className="text-gray-700 text-sm leading-relaxed mb-5 italic">"{r.text}"</p>
+              <div className="flex items-center gap-3 border-t border-gray-100 pt-4">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0" style={{ background: `linear-gradient(135deg, ${primary}, ${accent})` }}>
                   {r.name[0]}
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-800 text-sm">{r.name}</p>
-                  <div className="flex gap-0.5 mt-0.5">{[1,2,3,4,5].map(i => <Star key={i} size={11} fill={r.rating >= i ? accent : '#d1d5db'} stroke="none" />)}</div>
-                </div>
+                <p className="font-semibold text-gray-800 text-sm">{r.name}</p>
               </div>
-              <p className="text-gray-600 text-sm leading-relaxed">"{r.text}"</p>
             </div>
           ))}
         </div>
@@ -498,14 +534,15 @@ function SpecialOffersSection({ cfg, accent, font }: SectionBaseProps) {
 
 function CtaSection({ cfg, primary, accent, font, buttonStyle, properties, navigate, getPropertyUrl }: SectionBaseProps) {
   return (
-    <section className="py-20 px-4 text-center" style={{ background: `linear-gradient(135deg, ${primary} 0%, ${primary}cc 100%)`, fontFamily: font }}>
-      <div className="max-w-2xl mx-auto">
-        <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">{cfg.title || 'Ready to Book?'}</h2>
-        <p className="text-white/80 text-lg mb-8">{cfg.subtitle || 'Secure your dates now for the best rates'}</p>
+    <section className="py-24 px-4 text-center relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${primary} 0%, ${primary}dd 50%, ${accent}99 100%)`, fontFamily: font }}>
+      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)`, backgroundSize: '48px 48px' }} />
+      <div className="relative z-10 max-w-2xl mx-auto">
+        <h2 className="text-3xl sm:text-5xl font-extrabold text-white mb-4 leading-tight">{cfg.title || 'Ready to Book?'}</h2>
+        <p className="text-white/85 text-lg sm:text-xl mb-10">{cfg.subtitle || 'Secure your dates now for the best rates'}</p>
         {properties[0] && (
           <button
             onClick={() => navigate(getPropertyUrl(properties[0].slug))}
-            className="px-10 py-4 font-bold text-base shadow-xl hover:opacity-90 transition-opacity text-white"
+            className="px-12 py-4 font-bold text-base shadow-2xl hover:opacity-90 transition-all hover:scale-105 text-white"
             style={{ backgroundColor: accent, borderRadius: btnRadius(buttonStyle) }}
           >
             {cfg.buttonText || 'Book Direct & Save'}
@@ -634,21 +671,22 @@ function DefaultPropertyListing({ properties, config, getPropertyUrl, navigate }
   navigate: (to: string) => void
 }) {
   const primary = config.primaryColor || '#6366F1'
+  const accent = config.accentColor || '#F59E0B'
   const font = config.fontFamily || 'Inter'
   return (
     <>
       <div
-        className="relative py-24 px-4 text-white overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${primary} 0%, ${primary}cc 100%)`, fontFamily: font }}
+        className="relative py-28 px-4 text-white overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${primary} 0%, ${primary}dd 50%, ${accent}99 100%)`, fontFamily: font }}
       >
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 50%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
         <div className="relative max-w-6xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">{config.brandName}</h1>
-          <p className="text-white/80 text-lg max-w-2xl mx-auto">Browse our properties and book your perfect stay.</p>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-5 leading-tight drop-shadow-sm">{config.brandName}</h1>
+          <p className="text-white/85 text-lg sm:text-xl max-w-2xl mx-auto">Browse our properties and book your perfect stay.</p>
         </div>
       </div>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Our Properties</h2>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">Our Properties</h2>
         <p className="text-gray-500 text-sm mb-8">{properties.length} propert{properties.length === 1 ? 'y' : 'ies'} available</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {properties.map(prop => (

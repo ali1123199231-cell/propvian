@@ -15,8 +15,8 @@ export function RefundPage() {
   return (
     <>
       <SEOHead
-        title="Refund Policy | Propvian"
-        description="Propvian Refund Policy — subscription billing, cancellation handling, and refund eligibility for the Propvian smart lock automation platform."
+        title="Refund Policy"
+        description="Propvian Refund Policy — subscription billing, cancellation terms, and refund eligibility for the Propvian direct booking platform."
         canonical="/legal/refund-policy"
       />
       <div className="min-h-screen flex flex-col bg-white">
@@ -25,53 +25,64 @@ export function RefundPage() {
           <div className="mb-10">
             <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-2">Legal</p>
             <h1 className="text-3xl font-extrabold text-gray-900 mb-3">Refund Policy</h1>
-            <p className="text-sm text-gray-400">Last updated: May 2025</p>
+            <p className="text-sm text-gray-400">Last updated: June 2026 · Version 2.0</p>
           </div>
 
-          <Section title="1. Free Trial Period">
-            <p>Propvian offers a 30-day free trial to all new accounts. No payment information is required during the trial. There is nothing to refund during the trial period — you simply stop using the Service if you decide not to subscribe.</p>
+          <Section title="1. Important Scope Clarification">
+            <p>This Refund Policy applies exclusively to <strong>Propvian subscription fees</strong> paid by hosts to use the Propvian platform. It does not govern refunds for guest bookings made through Propvian-powered property websites.</p>
+            <p>Refunds for guest bookings are solely at the discretion of the individual host. Each host sets their own cancellation and refund policy for their guests. If you are a guest seeking a refund for a property booking, please contact the host directly or review the cancellation policy displayed at the time of your booking.</p>
           </Section>
 
-          <Section title="2. Subscription Billing">
-            <p>Propvian subscriptions are billed monthly in advance. Payment is charged on the same day of each month as your initial subscription date. For example, if you subscribe on the 10th of a month, you will be billed on the 10th of each subsequent month.</p>
-            <p>Subscription charges cover the upcoming billing period. Access to the Service is granted immediately upon successful payment.</p>
+          <Section title="2. Free Trial Period">
+            <p>Propvian offers a free trial to all new accounts. No payment information is required during the trial. There is nothing to refund during the trial period — you simply stop using the Service if you choose not to subscribe.</p>
           </Section>
 
-          <Section title="3. Cancellation">
-            <p>You may cancel your subscription at any time from the billing settings in your account. Cancellation takes effect at the end of your current billing period. You will continue to have full access to the Service until the end of the period you have paid for.</p>
-            <p>We do not prorate refunds when you cancel mid-period. Your subscription will not automatically renew after cancellation.</p>
+          <Section title="3. Subscription Billing">
+            <p>Propvian subscriptions are billed monthly (or annually, if selected) in advance on a recurring basis. Payment is charged on the same date of each billing period as your initial subscription date. Subscription charges cover the upcoming billing period. Access to subscription features is granted immediately upon successful payment.</p>
+            <p><strong>Recurring billing notice:</strong> Your subscription will automatically renew until cancelled. You may cancel at any time from your billing settings before the next renewal date to avoid being charged for the next period.</p>
           </Section>
 
-          <Section title="4. Refund Eligibility">
-            <p>We generally do not offer refunds for subscription payments, as the Service provides immediate value from the start of each billing period. However, we will consider refund requests in the following exceptional circumstances:</p>
+          <Section title="4. Cancellation">
+            <p>You may cancel your subscription at any time from your billing settings in the account dashboard. Cancellation takes effect at the end of your current billing period. You retain full access to subscription features until the period you have paid for ends.</p>
+            <p>We do not provide prorated refunds for partial billing periods upon voluntary cancellation. Your subscription will not renew after cancellation is confirmed.</p>
+          </Section>
+
+          <Section title="5. Refund Eligibility for Subscription Fees">
+            <p>Propvian subscription fees are generally non-refundable, as the Service provides immediate access to platform functionality from the start of each billing period. However, we will consider refund requests in the following exceptional circumstances:</p>
             <ul className="list-disc pl-5 space-y-1.5">
-              <li><strong>Service unavailability:</strong> If Propvian experienced significant, documented downtime (more than 48 consecutive hours) during a billing period due to our infrastructure failures, we may offer a prorated credit or partial refund for the affected period.</li>
-              <li><strong>Billing errors:</strong> If you were charged an incorrect amount due to a billing error on our part, we will correct the error and issue a refund for the overcharged amount.</li>
+              <li><strong>Significant documented service unavailability:</strong> If Propvian experienced verified, continuous downtime of 48 hours or more during a billing period caused by our infrastructure (not by third-party services beyond our control), we may offer a prorated credit or partial refund for that period.</li>
+              <li><strong>Billing errors:</strong> If you were charged an incorrect amount due to a system or billing error on our part, we will correct the charge and refund any overpayment promptly.</li>
               <li><strong>Duplicate charges:</strong> If you were charged more than once for the same billing period, we will refund the duplicate charge.</li>
+              <li><strong>Unauthorized charges:</strong> If a charge was processed without your authorization (and you notify us promptly), we will investigate and issue a refund if the claim is substantiated.</li>
             </ul>
-            <p>Refund requests must be submitted within 30 days of the charge in question. Requests submitted after this period may not be honored.</p>
+            <p>Refund requests must be submitted within 30 days of the charge in question. Requests submitted after this window may not be honored except where required by applicable consumer protection laws.</p>
           </Section>
 
-          <Section title="5. How to Request a Refund">
-            <p>To request a refund, contact us through your account dashboard with the following information:</p>
+          <Section title="6. How to Request a Refund">
+            <p>To request a refund, contact us at <a href="mailto:support@propvian.com" className="text-primary-600 hover:underline">support@propvian.com</a> with the following information:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Your account email address</li>
               <li>The date and amount of the charge</li>
-              <li>The reason for your refund request</li>
+              <li>A clear description of the reason for your refund request</li>
             </ul>
-            <p>We will review your request and respond within 5 business days. Approved refunds are processed back to your original payment method and typically appear within 5–10 business days depending on your bank or payment provider.</p>
+            <p>We will review your request and respond within 5 business days. Approved refunds are returned to your original payment method. Processing times depend on your bank or payment provider — typically 5–10 business days for card refunds.</p>
           </Section>
 
-          <Section title="6. Chargebacks">
-            <p>If you initiate a chargeback with your bank or card issuer without first contacting us to resolve the issue, we reserve the right to suspend your account pending resolution. We encourage you to contact us first — most billing concerns can be resolved quickly without a chargeback.</p>
+          <Section title="7. Chargebacks">
+            <p>If you initiate a chargeback or payment dispute with your bank or card issuer before contacting us, we reserve the right to suspend your account pending resolution and to contest the chargeback with evidence of valid service delivery. We encourage you to contact us first — most billing issues can be resolved quickly and directly without a formal dispute.</p>
           </Section>
 
-          <Section title="7. Changes to This Policy">
-            <p>We may update this Refund Policy from time to time. Changes will be communicated with reasonable notice. Continued use of the Service after changes constitutes acceptance of the revised policy.</p>
+          <Section title="8. EU and UK Consumer Rights">
+            <p>If you are a consumer located in the European Union or United Kingdom, you may have additional statutory rights under applicable consumer protection laws, including cooling-off rights for certain digital services. Where applicable, these statutory rights are not limited or excluded by this policy.</p>
+            <p>However, please note that by using the Service, you may expressly consent to immediate service provision, which may affect your right of withdrawal under EU/UK consumer law. We will provide clear disclosure of this at the point of subscription.</p>
           </Section>
 
-          <Section title="8. Contact">
-            <p>For refund requests or billing questions, contact us through your account dashboard or at the contact information on the website.</p>
+          <Section title="9. Changes to This Policy">
+            <p>We may update this Refund Policy from time to time. Changes will be communicated with reasonable notice via email or account notification. Continued use of the Service after the effective date of changes constitutes acceptance.</p>
+          </Section>
+
+          <Section title="10. Contact">
+            <p>For refund requests or billing questions, contact us at <a href="mailto:support@propvian.com" className="text-primary-600 hover:underline">support@propvian.com</a> or through your account dashboard.</p>
           </Section>
         </main>
         <MarketingFooter />
