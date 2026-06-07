@@ -309,6 +309,62 @@ function ManageBillingCard({ orgId, billing }: { orgId: string; billing: Billing
   )
 }
 
+// ── Direct Booking Subscribe Buttons ─────────────────────────────────────────
+
+function DirectBookingSubscribeButtons({ orgId, activeCount }: { orgId: string; activeCount: number }) {
+  const [loading, setLoading] = useState<'stripe' | 'paypal' | null>(null)
+  const qty = Math.max(1, activeCount)
+
+  const handleStripe = async () => {
+    setLoading('stripe')
+    billingApi.trackEvent(orgId, 'BILLING_STRIPE_CLICK', { quantity: qty, amount: qty * 10 })
+    try {
+      const url = await billingApi.createStripeCheckout(orgId, qty)
+      window.location.href = url
+    } catch {
+      setLoading(null)
+    }
+  }
+
+  const handlePaypal = async () => {
+    setLoading('paypal')
+    billingApi.trackEvent(orgId, 'BILLING_PAYPAL_CLICK', { quantity: qty, amount: qty * 10 })
+    try {
+      const url = await billingApi.createPaypalCheckout(orgId, qty)
+      window.location.href = url
+    } catch {
+      setLoading(null)
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-gray-500">
+        Subscribe to activate your plan: <span className="font-semibold text-gray-800">${qty * 10}/month</span> for {qty} active propert{qty !== 1 ? 'ies' : 'y'}.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <button
+          onClick={handleStripe}
+          disabled={loading !== null}
+          className="flex-1 btn-primary flex items-center justify-center gap-2"
+        >
+          <CreditCard size={16} />
+          {loading === 'stripe' ? 'Redirecting…' : 'Pay with Card (Stripe)'}
+        </button>
+        <button
+          onClick={handlePaypal}
+          disabled={loading !== null}
+          className="flex-1 py-2.5 px-4 border-2 border-[#0070ba] text-[#0070ba] font-semibold rounded-xl hover:bg-[#f0f7ff] transition-colors flex items-center justify-center gap-2"
+        >
+          <span className="font-bold text-[#003087]">Pay</span>
+          <span className="font-bold text-[#009cde]">Pal</span>
+          {loading === 'paypal' ? '…' : ''}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Direct Booking Billing ────────────────────────────────────────────────────
 
 function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: () => void }) {
@@ -420,9 +476,11 @@ function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: ()
         )}
       </div>
 
-      {/* Manage subscription */}
+      {/* Manage / Subscribe */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="font-semibold text-gray-900 mb-3">Manage subscription</h3>
+        <h3 className="font-semibold text-gray-900 mb-3">
+          {billing?.paymentProvider ? 'Manage subscription' : 'Subscribe'}
+        </h3>
         {billing?.paymentProvider === 'STRIPE' ? (
           <>
             <button onClick={onPortal} className="btn-primary py-2.5 px-5 text-sm flex items-center gap-2 justify-center">
@@ -445,7 +503,7 @@ function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: ()
             .
           </p>
         ) : (
-          <p className="text-sm text-gray-500">No active subscription yet. Subscribe above to manage billing.</p>
+          <DirectBookingSubscribeButtons orgId={orgId} activeCount={activeCount} />
         )}
       </div>
     </div>

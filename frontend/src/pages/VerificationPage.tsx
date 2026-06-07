@@ -296,19 +296,6 @@ function PaymentStep({ orgId, onDone, stepData }: {
     setLoadingPaypal(false)
   }
 
-  if (status === 'APPROVED') {
-    return (
-      <ApprovedState
-        label="Payment Setup"
-        note={
-          stripeAccountId
-            ? `Stripe ${stripeAccountId} · ${chargesEnabled && payoutsEnabled ? '🟢 Payments Active' : '🟡 Setup In Progress'}`
-            : paypalAccountId ? `PayPal: ${paypalAccountId}` : 'Payment account connected'
-        }
-      />
-    )
-  }
-
   const stripeStatusLabel = chargesEnabled && payoutsEnabled
     ? '🟢 Payments Active'
     : stripeAccountId
@@ -371,17 +358,33 @@ function PaymentStep({ orgId, onDone, stepData }: {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">Stripe Account Connection</h3>
-      <p className="text-sm text-gray-500 mb-4">
-        Connect your Stripe or PayPal account to receive direct payments. Stripe Connect also handles identity verification (KYC) so no separate ID upload is needed.
-      </p>
+      {status !== 'APPROVED' && (
+        <>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Stripe Account Connection</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Connect your Stripe or PayPal account to receive direct payments. Stripe Connect also handles identity verification (KYC) so no separate ID upload is needed.
+          </p>
+          <InfoBox>
+            <strong>How it works:</strong> Click a button below — a secure popup opens where you authorize the connection. We receive your account details automatically once you approve. Propvian never sees your passwords or banking details.
+          </InfoBox>
+        </>
+      )}
 
-      <InfoBox>
-        <strong>How it works:</strong> Click a button below — a secure popup opens where you authorize the connection. We receive your account details automatically once you approve. Propvian never sees your passwords or banking details.
-      </InfoBox>
-
-      <div className="mt-5 space-y-4">
+      <div className={status !== 'APPROVED' ? 'mt-5 space-y-4' : 'space-y-4'}>
         {/* Stripe */}
+        {status === 'APPROVED' ? (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-5 flex items-center gap-3">
+            <CheckCircle size={20} className="text-green-500 flex-shrink-0" />
+            <div>
+              <p className="font-medium text-green-800">Stripe verified</p>
+              <p className="text-sm text-green-600">
+                {stripeAccountId
+                  ? `${stripeAccountId} · ${chargesEnabled && payoutsEnabled ? 'Payments Active' : 'Setup In Progress'}`
+                  : 'Payment account connected'}
+              </p>
+            </div>
+          </div>
+        ) : (
         <div className="border-2 border-gray-200 hover:border-primary-300 rounded-xl p-5 transition-colors">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#635bff] rounded-xl flex items-center justify-center">
@@ -423,8 +426,9 @@ function PaymentStep({ orgId, onDone, stepData }: {
             {loadingStripe ? 'Opening Stripe…' : stripeAccountId ? 'Re-connect Stripe' : 'Connect with Stripe'}
           </button>
         </div>
+        )}
 
-        {/* PayPal */}
+        {/* PayPal — always available regardless of Stripe status */}
         <div className="border border-gray-200 hover:border-primary-300 rounded-xl p-5 transition-colors">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#003087] rounded-xl flex items-center justify-center">

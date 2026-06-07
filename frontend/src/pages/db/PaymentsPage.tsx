@@ -23,6 +23,8 @@ export function PaymentsPage() {
 
   const pStep          = verification?.paymentStep
   const hasStripe      = pStep?.status === 'APPROVED'
+  const paypalAccountId = (pStep?.data as string[] | undefined)?.[3] || ''
+  const hasPaypal      = !!paypalAccountId
   const totalRevenue   = bookings?.content
     .filter((b) => b.status === 'CONFIRMED' || b.status === 'CHECKED_OUT')
     .reduce((s, b) => s + (b.totalAmount ?? 0), 0) ?? 0
@@ -114,12 +116,29 @@ export function PaymentsPage() {
                 <p className="text-xs text-gray-400">Alternative payment method</p>
               </div>
             </div>
-            <span className="text-xs text-gray-400">Optional</span>
+            {hasPaypal ? (
+              <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+                <CheckCircle size={14} /> Connected
+              </div>
+            ) : (
+              <span className="text-xs text-gray-400">Optional</span>
+            )}
           </div>
-          <p className="text-sm text-gray-500">Connect PayPal Business as an additional payment option for guests.</p>
-          <Link to="/verification" className="btn-secondary py-2 px-4 text-sm mt-3 inline-flex items-center gap-2">
-            Connect PayPal <ExternalLink size={12} />
-          </Link>
+          {hasPaypal ? (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500">Account: <span className="font-medium text-gray-700">{paypalAccountId}</span></p>
+              <Link to="/verification" className="btn-secondary py-2 px-4 text-sm inline-flex items-center gap-2">
+                Manage PayPal <ExternalLink size={12} />
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500">Connect PayPal Business as an additional payment option for guests.</p>
+              <Link to="/verification" className="btn-secondary py-2 px-4 text-sm mt-3 inline-flex items-center gap-2">
+                Connect PayPal <ExternalLink size={12} />
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

@@ -53,6 +53,15 @@ function nightsBetween(a: string, b: string) {
 function fmtDate(s: string) {
   return parseDate(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
+function fmtCancellationPolicy(raw: string): string {
+  const map: Record<string, string> = {
+    NON_REFUNDABLE: 'Non-Refundable — no refund for cancellations',
+    FLEXIBLE: 'Flexible — full refund if cancelled 24h before check-in',
+    MODERATE: 'Moderate — full refund if cancelled 5 days before check-in',
+    STRICT: 'Strict — 50% refund if cancelled 7 days before check-in',
+  }
+  return map[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
 function getNightlyRate(pricingRules: PricingRule[], base: number, checkIn: string, checkOut: string): number {
   for (const r of pricingRules) {
     if (r.startDate <= checkIn && r.endDate >= checkOut) return r.nightlyRate
@@ -494,7 +503,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
           {/* Cancellation */}
           {prop.cancellationPolicy && (
             <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-900">
-              <strong className="font-semibold">Cancellation policy:</strong> {prop.cancellationPolicy}
+              <strong className="font-semibold">Cancellation policy:</strong> {fmtCancellationPolicy(prop.cancellationPolicy)}
             </div>
           )}
         </div>
