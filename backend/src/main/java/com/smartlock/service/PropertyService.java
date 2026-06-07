@@ -213,7 +213,7 @@ public class PropertyService {
         List<PropertyResponse.PhotoInfo> photos = photoRepository
                 .findByPropertyIdOrderBySortOrderAsc(p.getId()).stream()
                 .map(ph -> new PropertyResponse.PhotoInfo(
-                        ph.getId(), ph.getUrl(), ph.getCaption(), ph.getSortOrder(), ph.isPrimary()))
+                        ph.getId(), fileUploadService.toPublicUrl(ph.getUrl()), ph.getCaption(), ph.getSortOrder(), ph.isPrimary()))
                 .toList();
         return PropertyResponse.builder()
                 .id(p.getId())
