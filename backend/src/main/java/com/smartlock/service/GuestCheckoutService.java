@@ -215,8 +215,9 @@ public class GuestCheckoutService {
                                 r.getStartDate().toString(), r.getEndDate().toString(), r.getNightlyRate()))
                         .toList();
 
-        String orgSlug = organizationRepository.findById(property.getOrganizationId())
-                .map(Organization::getSlug).orElse(null);
+        Organization org = organizationRepository.findById(property.getOrganizationId()).orElse(null);
+        String orgSlug = org != null ? org.getSlug() : null;
+        WebsiteConfig wc = websiteConfigRepository.findByOrganizationId(property.getOrganizationId()).orElse(null);
 
         List<String> photos = propertyPhotoRepository
                 .findByPropertyIdOrderBySortOrderAsc(property.getId()).stream()
@@ -254,6 +255,12 @@ public class GuestCheckoutService {
                 .paypalClientId(paypalEnabled ? systemConfigService.getPaypalClientId() : null)
                 .blockedDates(blocked)
                 .pricingRules(pricing)
+                .brandName(wc != null && wc.getBrandName() != null ? wc.getBrandName() : (org != null ? org.getName() : null))
+                .brandLogoUrl(wc != null ? wc.getBrandLogoUrl() : null)
+                .primaryColor(wc != null && wc.getPrimaryColor() != null ? wc.getPrimaryColor() : "#6366F1")
+                .accentColor(wc != null && wc.getAccentColor() != null ? wc.getAccentColor() : "#F59E0B")
+                .fontFamily(wc != null && wc.getFontFamily() != null ? wc.getFontFamily() : "Inter")
+                .buttonStyle(wc != null && wc.getButtonStyle() != null ? wc.getButtonStyle() : "rounded")
                 .build();
     }
 

@@ -38,6 +38,14 @@ public class GuestPropertyResponse {
     private String stripePublishableKey;
     private String paypalClientId;
 
+    // Org branding (from website builder config)
+    private String brandName;
+    private String brandLogoUrl;
+    private String primaryColor;
+    private String accentColor;
+    private String fontFamily;
+    private String buttonStyle;
+
     // Unavailability data for the date picker
     private List<BlockedRange> blockedDates;
     private List<PricingRuleInfo> pricingRules;

@@ -19,9 +19,12 @@ interface PropertyInfo {
   photoUrls: string[]
   city: string; country: string; maxGuests: number; bedrooms: number; bathrooms: number
   baseNightlyRate: number; cleaningFee: number; checkInTime: string; checkOutTime: string
-  cancellationPolicy: string; minStayNights: number
+  cancellationPolicy: string; minStayNights: number; instantBooking: boolean
   stripeEnabled: boolean; paypalEnabled: boolean
   stripePublishableKey: string; paypalClientId: string
+  // Org branding
+  brandName?: string; brandLogoUrl?: string
+  primaryColor?: string; accentColor?: string; fontFamily?: string; buttonStyle?: string
   blockedDates: BlockedRange[]; pricingRules: PricingRule[]
 }
 
@@ -312,25 +315,39 @@ export function GuestBookingPage({ slug }: { slug: string }) {
   )
 
   const pricing = checkIn && checkOut ? calcTotal(prop, checkIn, checkOut) : null
+  const primary = prop.primaryColor || '#6366F1'
+  const accent  = prop.accentColor  || '#F59E0B'
+  const font    = prop.fontFamily   || 'Inter'
+  const btnRadius = prop.buttonStyle === 'pill' ? '999px' : prop.buttonStyle === 'square' ? '3px' : '10px'
+  const btnStyle = { backgroundColor: primary, borderRadius: btnRadius }
+  const brandName = prop.brandName || prop.name
 
   // ── Confirmation screen ──────────────────────────────────────────────────
   if (step === 'done') return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ background: `linear-gradient(135deg, ${primary}15, white)`, fontFamily: font }}>
+      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center">
+        <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-5">
           <CheckCircle size={32} className="text-emerald-600" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Booking confirmed!</h1>
-        <p className="text-gray-500 mb-6">
-          A confirmation has been sent to <strong>{guestEmail}</strong>.
-        </p>
-        <div className="bg-gray-50 rounded-xl p-4 text-left space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-gray-500">Property</span><span className="font-medium">{prop.name}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Check-in</span><span className="font-medium">{fmtDate(checkIn!)}</span></div>
-          <div className="flex justify-between"><span className="text-gray-500">Check-out</span><span className="font-medium">{fmtDate(checkOut!)}</span></div>
-          {pricing && <div className="flex justify-between border-t border-gray-100 pt-2 mt-2"><span className="text-gray-700 font-semibold">Total paid</span><span className="font-bold text-primary-700">${pricing.total.toFixed(2)}</span></div>}
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Booking confirmed!</h1>
+        <p className="text-gray-500 mb-6">A confirmation has been sent to <strong>{guestEmail}</strong>.</p>
+        <div className="rounded-2xl p-5 text-left space-y-2.5 text-sm" style={{ backgroundColor: `${primary}0d` }}>
+          <div className="flex justify-between"><span className="text-gray-500">Property</span><span className="font-semibold text-gray-800">{prop.name}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Check-in</span><span className="font-semibold text-gray-800">{fmtDate(checkIn!)}</span></div>
+          <div className="flex justify-between"><span className="text-gray-500">Check-out</span><span className="font-semibold text-gray-800">{fmtDate(checkOut!)}</span></div>
+          {pricing && (
+            <div className="flex justify-between border-t border-gray-200 pt-2.5 mt-1">
+              <span className="font-bold text-gray-700">Total paid</span>
+              <span className="font-extrabold text-lg" style={{ color: primary }}>${pricing.total.toFixed(2)}</span>
+            </div>
+          )}
         </div>
-        <p className="text-xs text-gray-400 mt-6">{prop.checkInTime ? `Check-in from ${prop.checkInTime}` : ''} {prop.checkOutTime ? `· Check-out by ${prop.checkOutTime}` : ''}</p>
+        <p className="text-xs text-gray-400 mt-5">
+          {prop.checkInTime ? `Check-in from ${prop.checkInTime}` : ''}
+          {prop.checkInTime && prop.checkOutTime ? ' · ' : ''}
+          {prop.checkOutTime ? `Check-out by ${prop.checkOutTime}` : ''}
+        </p>
+        <p className="text-xs font-semibold mt-4" style={{ color: primary }}>{brandName}</p>
       </div>
     </div>
   )
@@ -338,64 +355,81 @@ export function GuestBookingPage({ slug }: { slug: string }) {
   const photos = prop.photoUrls?.length ? prop.photoUrls : (prop.imageUrl ? [prop.imageUrl] : [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero / Photo Gallery */}
-      <div className="relative bg-gray-900">
-        {/* Main photo */}
-        <div className="relative h-72 md:h-96 overflow-hidden">
-          {photos.length > 0 ? (
-            <img
-              src={photos[activePhoto]}
-              alt={prop.name}
-              className="w-full h-full object-cover transition-opacity duration-300"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-800">
-              <MapPin size={48} className="text-gray-600" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-          {/* Prev/next */}
-          {photos.length > 1 && (
-            <>
-              <button
-                onClick={() => setActivePhoto(p => (p - 1 + photos.length) % photos.length)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60 transition-colors"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <button
-                onClick={() => setActivePhoto(p => (p + 1) % photos.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 flex items-center justify-center text-white hover:bg-black/60 transition-colors"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </>
-          )}
-          {/* Photo count */}
-          {photos.length > 1 && (
-            <span className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2.5 py-1 rounded-full">
-              {activePhoto + 1} / {photos.length}
-            </span>
-          )}
-          <div className="absolute bottom-0 left-0 p-6 text-white">
-            <h1 className="text-3xl font-bold drop-shadow-md">{prop.name}</h1>
-            {(prop.city || prop.country) && (
-              <div className="flex items-center gap-1 mt-1.5 text-white/85 text-sm">
-                <MapPin size={13} />{[prop.city, prop.country].filter(Boolean).join(', ')}
+    <div className="min-h-screen bg-gray-50" style={{ fontFamily: font }}>
+
+      {/* ── Branded navbar ──────────────────────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {prop.brandLogoUrl ? (
+              <img src={prop.brandLogoUrl} alt={brandName} className="h-9 w-auto object-contain max-w-[160px]" />
+            ) : (
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm"
+                style={{ background: `linear-gradient(135deg, ${primary}, ${accent}99)` }}>
+                {brandName.charAt(0).toUpperCase()}
               </div>
+            )}
+            <span className="font-bold text-gray-900 text-base sm:text-lg truncate max-w-[200px]">{brandName}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {prop.orgSlug && (
+              <a href={`/`} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 transition-colors">
+                <ChevronLeft size={15} /> All properties
+              </a>
             )}
           </div>
         </div>
+      </nav>
+
+      {/* ── Hero photo gallery ───────────────────────────────────────────────── */}
+      <div className="relative" style={{ backgroundColor: primary }}>
+        <div className="relative overflow-hidden" style={{ height: photos.length > 0 ? '480px' : '240px' }}>
+          {photos.length > 0 ? (
+            <img src={photos[activePhoto]} alt={prop.name}
+              className="w-full h-full object-cover transition-opacity duration-300" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center"
+              style={{ background: `linear-gradient(135deg, ${primary}, ${accent}99)` }}>
+              <MapPin size={48} className="text-white/50" />
+            </div>
+          )}
+          <div className="absolute inset-0" style={{ background: `linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 50%, transparent 100%)` }} />
+
+          {photos.length > 1 && (
+            <>
+              <button onClick={() => setActivePhoto(p => (p - 1 + photos.length) % photos.length)}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/50 transition-all">
+                <ChevronLeft size={20} />
+              </button>
+              <button onClick={() => setActivePhoto(p => (p + 1) % photos.length)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/50 transition-all">
+                <ChevronRight size={20} />
+              </button>
+              <span className="absolute top-4 right-4 bg-black/40 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full font-medium">
+                {activePhoto + 1} / {photos.length}
+              </span>
+            </>
+          )}
+
+          <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+            <div className="max-w-6xl mx-auto">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-white drop-shadow-sm mb-2">{prop.name}</h1>
+              {(prop.city || prop.country) && (
+                <div className="flex items-center gap-1.5 text-white/85 text-sm font-medium">
+                  <MapPin size={14} />{[prop.city, prop.country].filter(Boolean).join(', ')}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Thumbnail strip */}
         {photos.length > 1 && (
-          <div className="flex gap-2 px-4 py-3 bg-gray-900 overflow-x-auto scrollbar-none">
+          <div className="flex gap-2 px-4 sm:px-8 py-3 bg-white border-b border-gray-100 overflow-x-auto scrollbar-none max-w-none">
             {photos.map((url, i) => (
-              <button
-                key={i}
-                onClick={() => setActivePhoto(i)}
-                className={`flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all ${i === activePhoto ? 'border-white opacity-100' : 'border-transparent opacity-60 hover:opacity-80'}`}
-              >
+              <button key={i} onClick={() => setActivePhoto(i)}
+                className={`flex-shrink-0 w-16 h-12 rounded-xl overflow-hidden border-2 transition-all ${i === activePhoto ? 'opacity-100 scale-105' : 'border-transparent opacity-50 hover:opacity-75'}`}
+                style={i === activePhoto ? { borderColor: primary } : {}}>
                 <img src={url} alt="" className="w-full h-full object-cover" />
               </button>
             ))}
@@ -403,49 +437,81 @@ export function GuestBookingPage({ slug }: { slug: string }) {
         )}
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-5 gap-8">
+      {/* ── Main content ─────────────────────────────────────────────────────── */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
 
-        {/* ── Left: property details ────────────────────────────────── */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Specs */}
-          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-            {prop.maxGuests  && <span className="flex items-center gap-1.5"><Users size={15} />{prop.maxGuests} guests</span>}
-            {prop.bedrooms   && <span className="flex items-center gap-1.5"><BedDouble size={15} />{prop.bedrooms} bed{prop.bedrooms !== 1 ? 's' : ''}</span>}
-            {prop.bathrooms  && <span className="flex items-center gap-1.5"><Bath size={15} />{prop.bathrooms} bath{prop.bathrooms !== 1 ? 's' : ''}</span>}
+        {/* ── Left: property details ──────────────────────────────────────── */}
+        <div className="lg:col-span-3 space-y-8">
+
+          {/* Specs pills */}
+          <div className="flex flex-wrap gap-3">
+            {prop.maxGuests  && (
+              <span className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl"
+                style={{ backgroundColor: `${primary}12`, color: primary }}>
+                <Users size={15} />{prop.maxGuests} guest{prop.maxGuests !== 1 ? 's' : ''}
+              </span>
+            )}
+            {prop.bedrooms   && (
+              <span className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl"
+                style={{ backgroundColor: `${primary}12`, color: primary }}>
+                <BedDouble size={15} />{prop.bedrooms} bed{prop.bedrooms !== 1 ? 's' : ''}
+              </span>
+            )}
+            {prop.bathrooms  && (
+              <span className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl"
+                style={{ backgroundColor: `${primary}12`, color: primary }}>
+                <Bath size={15} />{prop.bathrooms} bath{prop.bathrooms !== 1 ? 's' : ''}
+              </span>
+            )}
           </div>
 
+          {/* Description */}
           {prop.description && (
-            <p className="text-gray-600 leading-relaxed text-sm">{prop.description}</p>
+            <div>
+              <div className="w-10 h-1 rounded-full mb-4" style={{ backgroundColor: accent }} />
+              <p className="text-gray-600 leading-relaxed text-base">{prop.description}</p>
+            </div>
+          )}
+
+          {/* Check-in / Check-out */}
+          {(prop.checkInTime || prop.checkOutTime) && (
+            <div className="grid grid-cols-2 gap-4">
+              {prop.checkInTime && (
+                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Check-in</p>
+                  <p className="font-bold text-gray-900">From {prop.checkInTime}</p>
+                </div>
+              )}
+              {prop.checkOutTime && (
+                <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Check-out</p>
+                  <p className="font-bold text-gray-900">By {prop.checkOutTime}</p>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Cancellation */}
           {prop.cancellationPolicy && (
-            <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-sm text-amber-800">
-              <strong>Cancellation:</strong> {prop.cancellationPolicy}
-            </div>
-          )}
-
-          {/* Check-in / out times */}
-          {(prop.checkInTime || prop.checkOutTime) && (
-            <div className="flex gap-6 text-sm text-gray-500">
-              {prop.checkInTime  && <span>Check-in from <strong>{prop.checkInTime}</strong></span>}
-              {prop.checkOutTime && <span>Check-out by <strong>{prop.checkOutTime}</strong></span>}
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 text-sm text-amber-900">
+              <strong className="font-semibold">Cancellation policy:</strong> {prop.cancellationPolicy}
             </div>
           )}
         </div>
 
-        {/* ── Right: booking flow ───────────────────────────────────── */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* ── Right: booking flow ─────────────────────────────────────────── */}
+        <div className="lg:col-span-2 space-y-4 lg:sticky lg:top-24">
 
           {/* Step 1: dates */}
           {step === 'dates' && (
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <h2 className="font-bold text-gray-900 mb-1">
-                {prop.baseNightlyRate ? `$${prop.baseNightlyRate} / night` : 'Select dates'}
-              </h2>
-              <p className="text-xs text-gray-400 mb-4">
-                {prop.minStayNights > 1 ? `${prop.minStayNights} night minimum · ` : ''}Click to select your dates
-              </p>
+            <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-xl">
+              <div className="flex items-baseline justify-between mb-1">
+                <h2 className="font-extrabold text-gray-900 text-xl">
+                  {prop.baseNightlyRate ? <>${prop.baseNightlyRate}<span className="text-sm font-normal text-gray-400"> / night</span></> : 'Select dates'}
+                </h2>
+                {prop.minStayNights > 1 && <span className="text-xs text-gray-400">{prop.minStayNights} night min</span>}
+              </div>
+              <p className="text-xs text-gray-400 mb-5">Click a date to start your selection</p>
               <DatePicker prop={prop} checkIn={checkIn} checkOut={checkOut}
                 onSelect={(ci, co) => { setCheckIn(ci); setCheckOut(co) }} />
 
@@ -454,7 +520,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 const noRate = !prop.baseNightlyRate
                 return (
                   <>
-                    <div className="mt-4 pt-4 border-t border-gray-100 space-y-1.5 text-sm">
+                    <div className="mt-5 pt-4 border-t border-gray-100 space-y-2 text-sm">
                       {noRate ? (
                         <p className="text-amber-600 text-xs font-medium">No nightly rate set — this property cannot be booked yet.</p>
                       ) : (
@@ -468,7 +534,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                               <span>Cleaning fee</span><span>${pricing.cleaning.toFixed(2)}</span>
                             </div>
                           )}
-                          <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100">
+                          <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100 text-base">
                             <span>Total</span><span>${pricing.total.toFixed(2)}</span>
                           </div>
                         </>
@@ -482,7 +548,8 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                     <button
                       onClick={() => setStep('info')}
                       disabled={belowMin || noRate}
-                      className="mt-4 w-full btn-primary py-3 justify-center text-base font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+                      className="mt-4 w-full py-3.5 text-white text-base font-bold shadow-sm hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={btnStyle}>
                       Continue
                     </button>
                   </>
@@ -493,17 +560,17 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
           {/* Step 2: guest info */}
           {step === 'info' && (
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
+            <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-gray-900">Your details</h2>
-                <button onClick={() => setStep('dates')} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
+                <h2 className="font-bold text-gray-900 text-lg">Your details</h2>
+                <button onClick={() => setStep('dates')} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors">
                   <ChevronLeft size={13} /> Change dates
                 </button>
               </div>
 
               {/* Booking summary */}
-              <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 space-y-1">
-                <div className="flex justify-between"><span>{fmtDate(checkIn!)} → {fmtDate(checkOut!)}</span><span>{pricing?.nights} nights</span></div>
+              <div className="rounded-2xl p-4 text-sm space-y-1.5" style={{ backgroundColor: `${primary}0d` }}>
+                <div className="flex justify-between text-gray-600"><span>{fmtDate(checkIn!)} → {fmtDate(checkOut!)}</span><span>{pricing?.nights} nights</span></div>
                 {promoApplied && pricing && (() => {
                   const discountAmt = promoApplied.discountType === 'PERCENT'
                     ? pricing.total * promoApplied.discountValue / 100
@@ -511,37 +578,34 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                   const discountedTotal = Math.max(0, pricing.total - discountAmt)
                   return (
                     <>
-                      <div className="flex justify-between text-emerald-600">
+                      <div className="flex justify-between text-emerald-600 font-medium">
                         <span>Promo ({promoApplied.code})</span>
                         <span>-${discountAmt.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between font-semibold text-gray-900"><span>Total</span><span>${discountedTotal.toFixed(2)}</span></div>
+                      <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span>${discountedTotal.toFixed(2)}</span></div>
                     </>
                   )
                 })()}
-                {!promoApplied && <div className="flex justify-between font-semibold text-gray-900"><span>Total</span><span>${pricing?.total.toFixed(2)}</span></div>}
+                {!promoApplied && <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span>${pricing?.total.toFixed(2)}</span></div>}
               </div>
 
               <div className="space-y-3">
+                {[
+                  { label: 'Full name *', value: guestName, setter: setGuestName, type: 'text', placeholder: 'Jane Smith' },
+                  { label: 'Email *',     value: guestEmail, setter: setGuestEmail, type: 'email', placeholder: 'jane@example.com' },
+                  { label: 'Phone',       value: guestPhone, setter: setGuestPhone, type: 'tel', placeholder: '+1 555 000 0000' },
+                ].map(({ label, value, setter, type, placeholder }) => (
+                  <div key={label}>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">{label}</label>
+                    <input value={value} onChange={e => setter(e.target.value)} type={type}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-400 transition-colors"
+                      placeholder={placeholder} />
+                  </div>
+                ))}
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Full name *</label>
-                  <input value={guestName} onChange={e => setGuestName(e.target.value)}
-                    className="input-base text-sm w-full" placeholder="Jane Smith" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Email *</label>
-                  <input value={guestEmail} onChange={e => setGuestEmail(e.target.value)}
-                    type="email" className="input-base text-sm w-full" placeholder="jane@example.com" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
-                  <input value={guestPhone} onChange={e => setGuestPhone(e.target.value)}
-                    type="tel" className="input-base text-sm w-full" placeholder="+1 555 000 0000" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Guests</label>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">Guests</label>
                   <select value={guests} onChange={e => setGuests(Number(e.target.value))}
-                    className="input-base text-sm w-full">
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-400 transition-colors">
                     {[...Array(prop.maxGuests || 10)].map((_, i) => (
                       <option key={i + 1} value={i + 1}>{i + 1} guest{i > 0 ? 's' : ''}</option>
                     ))}
@@ -551,7 +615,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
               {/* Promo code */}
               <div>
-                <p className="text-xs font-medium text-gray-600 mb-1.5">Promo code</p>
+                <p className="text-xs font-semibold text-gray-500 mb-1.5">Promo code</p>
                 <div className="flex gap-2">
                   <input
                     value={promoInput}
@@ -559,36 +623,32 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                     onKeyDown={e => e.key === 'Enter' && applyPromo()}
                     placeholder="Enter code"
                     disabled={!!promoApplied}
-                    className="input-base text-sm flex-1 uppercase tracking-widest disabled:bg-gray-50 disabled:text-gray-400"
+                    className="border border-gray-200 rounded-xl px-4 py-3 text-sm flex-1 uppercase tracking-widest focus:outline-none focus:border-gray-400 disabled:bg-gray-50 disabled:text-gray-400"
                   />
                   {promoApplied ? (
                     <button onClick={() => { setPromoApplied(null); setPromoInput(''); setPromoError(null) }}
-                      className="px-3 rounded-xl border-2 border-gray-200 text-sm text-gray-500 hover:border-red-300 hover:text-red-500 transition-all">
-                      ✕
-                    </button>
+                      className="px-3 rounded-xl border-2 border-gray-200 text-sm text-gray-500 hover:border-red-300 hover:text-red-500 transition-all">✕</button>
                   ) : (
                     <button onClick={applyPromo} disabled={!promoInput.trim() || promoLoading}
-                      className="px-4 rounded-xl border-2 border-primary-300 text-sm font-semibold text-primary-600 hover:bg-primary-50 transition-all disabled:opacity-40">
+                      className="px-4 rounded-xl border-2 text-sm font-semibold transition-all disabled:opacity-40"
+                      style={{ borderColor: primary, color: primary }}>
                       {promoLoading ? <Loader2 size={14} className="animate-spin" /> : 'Apply'}
                     </button>
                   )}
                 </div>
-                {promoApplied && (
-                  <p className="text-xs text-emerald-600 font-medium mt-1.5">✓ {promoApplied.message}</p>
-                )}
-                {promoError && (
-                  <p className="text-xs text-red-500 mt-1.5">{promoError}</p>
-                )}
+                {promoApplied && <p className="text-xs text-emerald-600 font-medium mt-1.5">✓ {promoApplied.message}</p>}
+                {promoError  && <p className="text-xs text-red-500 mt-1.5">{promoError}</p>}
               </div>
 
               {/* Payment method selector */}
               {(prop.stripeEnabled || prop.paypalEnabled) ? (
                 <div>
-                  <p className="text-xs font-medium text-gray-600 mb-2">Payment method</p>
+                  <p className="text-xs font-semibold text-gray-500 mb-2">Payment method</p>
                   <div className="flex gap-2">
                     {prop.stripeEnabled && (
                       <button onClick={() => setPayProvider('stripe')}
-                        className={`flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${payProvider === 'stripe' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                        className="flex-1 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all"
+                        style={payProvider === 'stripe' ? { borderColor: primary, backgroundColor: `${primary}0d`, color: primary } : { borderColor: '#e5e7eb', color: '#4b5563' }}>
                         💳 Card
                       </button>
                     )}
@@ -601,10 +661,10 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl p-3.5">
+                <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-2xl p-4">
                   <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-amber-800 leading-snug">
-                    Online booking is not available yet for this property. The host's account is pending verification. Please contact the host directly to arrange your stay.
+                    Online booking is not available yet. Please contact the host directly to arrange your stay.
                   </p>
                 </div>
               )}
@@ -613,8 +673,9 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 <button
                   onClick={() => initMut.mutate()}
                   disabled={!guestName.trim() || !guestEmail.trim() || initMut.isPending}
-                  className="w-full btn-primary py-3 justify-center text-base font-bold">
-                  {initMut.isPending ? <Loader2 size={18} className="animate-spin" /> : null}
+                  className="w-full py-3.5 text-white text-base font-bold shadow-sm hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                  style={btnStyle}>
+                  {initMut.isPending && <Loader2 size={18} className="animate-spin" />}
                   {initMut.isPending ? 'Starting checkout…' : 'Continue to payment'}
                 </button>
               )}
@@ -623,21 +684,20 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
           {/* Step 3: payment */}
           {step === 'payment' && initiated && (
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
+            <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-gray-900">Payment</h2>
+                <h2 className="font-bold text-gray-900 text-lg">Payment</h2>
                 <button onClick={() => { setStep('info'); setInitiated(null) }}
-                  className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
+                  className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors">
                   <X size={13} /> Back
                 </button>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-3 text-xs text-gray-600 space-y-1">
-                <div className="flex justify-between"><span>{prop.name}</span><span>{pricing?.nights} nights</span></div>
-                <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span>${pricing?.total.toFixed(2)}</span></div>
+              <div className="rounded-2xl p-4 text-sm space-y-1.5" style={{ backgroundColor: `${primary}0d` }}>
+                <div className="flex justify-between text-gray-600"><span>{prop.name}</span><span>{pricing?.nights} nights</span></div>
+                <div className="flex justify-between font-bold text-gray-900 text-base"><span>Total</span><span>${pricing?.total.toFixed(2)}</span></div>
               </div>
 
-              {/* Stripe */}
               {payProvider === 'stripe' && initiated.stripeClientSecret && stripePromise && (
                 <Elements stripe={stripePromise} options={{ clientSecret: initiated.stripeClientSecret }}>
                   <StripePaymentForm
@@ -648,19 +708,14 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 </Elements>
               )}
 
-              {/* PayPal */}
               {payProvider === 'paypal' && prop.paypalClientId && (
                 <PayPalScriptProvider options={{ clientId: prop.paypalClientId, currency: 'USD' }}>
                   <PayPalButtons
                     style={{ layout: 'vertical', shape: 'rect', label: 'pay' }}
                     createOrder={() => Promise.resolve(initiated.paypalOrderId!)}
                     onApprove={async (data) => {
-                      try {
-                        await capturePaypal(initiated.bookingId, data.orderID)
-                        setStep('done')
-                      } catch (e: any) {
-                        toast.error(e.response?.data?.message || 'Payment capture failed')
-                      }
+                      try { await capturePaypal(initiated.bookingId, data.orderID); setStep('done') }
+                      catch (e: any) { toast.error(e.response?.data?.message || 'Payment capture failed') }
                     }}
                     onError={() => toast.error('PayPal error. Please try again.')}
                   />
@@ -670,6 +725,12 @@ export function GuestBookingPage({ slug }: { slug: string }) {
           )}
         </div>
       </div>
+
+      {/* ── Branded footer ───────────────────────────────────────────────────── */}
+      <footer className="mt-16 py-8 px-4 bg-gray-900 text-white text-center" style={{ fontFamily: font }}>
+        <p className="font-bold text-sm" style={{ color: accent }}>{brandName}</p>
+        <p className="text-xs text-gray-400 mt-1">© {new Date().getFullYear()} All rights reserved</p>
+      </footer>
     </div>
   )
 }

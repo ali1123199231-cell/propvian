@@ -155,12 +155,6 @@ export function OrgListingPage({ orgSlug, getPropertyUrl }: {
     retry: false,
   })
 
-  // Auto-redirect when there's only one property
-  useEffect(() => {
-    if (site?.properties.length === 1) {
-      navigate(getPropertyUrl(site.properties[0].slug), { replace: true })
-    }
-  }, [site])
 
   // SEO meta tags + analytics injection
   useEffect(() => {
@@ -188,13 +182,6 @@ export function OrgListingPage({ orgSlug, getPropertyUrl }: {
         <Home size={40} className="mx-auto mb-3 text-gray-300" />
         <p className="font-medium">Site not found</p>
       </div>
-    </div>
-  )
-
-  // Show spinner during single-property redirect
-  if (site.properties.length === 1) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 size={32} className="animate-spin text-gray-400" />
     </div>
   )
 
