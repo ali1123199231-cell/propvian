@@ -965,6 +965,8 @@ function CalendarStep({ orgId, onDone, status }: {
 // ── Domain shared helpers ─────────────────────────────────────────────────────
 
 const CNAME_TARGET = 'booking.propvian.com'
+const CF_IP_1 = '188.114.96.11'
+const CF_IP_2 = '188.114.97.11'
 
 function DomainCopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
@@ -1014,19 +1016,29 @@ function DnsHelpModal({ onClose }: { onClose: () => void }) {
           <div className="flex gap-4">
             <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">Add a CNAME record</p>
-              <p className="text-xs text-gray-500 mt-1 mb-3">Create a new DNS record with these exact values:</p>
+              <p className="font-semibold text-gray-900 text-sm">Add these DNS records</p>
+              <p className="text-xs text-gray-500 mt-1 mb-3">Create these 3 records in your DNS settings:</p>
               <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden text-xs font-mono">
                 <div className="grid grid-cols-3 bg-gray-100 text-gray-500 font-sans font-semibold px-3 py-2">
                   <span>Type</span><span>Name / Host</span><span>Value / Points to</span>
                 </div>
-                <div className="grid grid-cols-3 px-3 py-3 text-gray-800 gap-2">
+                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2 border-b border-gray-100">
+                  <span className="font-bold text-orange-500">A</span>
+                  <span>@</span>
+                  <span className="text-green-700">{CF_IP_1}</span>
+                </div>
+                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2 border-b border-gray-100">
+                  <span className="font-bold text-orange-500">A</span>
+                  <span>@</span>
+                  <span className="text-green-700">{CF_IP_2}</span>
+                </div>
+                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2">
                   <span className="font-bold text-blue-600">CNAME</span>
-                  <span>@ <span className="text-gray-400 font-sans">(or www)</span></span>
+                  <span>www</span>
                   <span className="text-green-700 break-all">{CNAME_TARGET}</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">💡 <strong>What is @?</strong> It means the root of your domain (e.g. <em>myvilla.com</em> itself, not a subdomain).</p>
+              <p className="text-xs text-gray-400 mt-2">💡 <strong>What is @?</strong> It means the root of your domain (e.g. <em>myvilla.com</em> itself). The <strong>www</strong> record lets guests use www.yourdomain.com too.</p>
             </div>
           </div>
           <div className="flex gap-4">
@@ -1216,9 +1228,25 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
             <div className="grid grid-cols-3 bg-gray-50 px-4 py-2.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
               <span>Type</span><span>Host / Name</span><span>Value / Points to</span>
             </div>
-            <div className="grid grid-cols-3 px-4 py-3.5 items-center gap-2">
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
+              <span className="font-bold text-orange-500 text-xs">A</span>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
+              <div className="flex items-center gap-1">
+                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{CF_IP_1}</code>
+                <DomainCopyButton text={CF_IP_1} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
+              <span className="font-bold text-orange-500 text-xs">A</span>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
+              <div className="flex items-center gap-1">
+                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{CF_IP_2}</code>
+                <DomainCopyButton text={CF_IP_2} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
               <span className="font-bold text-blue-600 text-xs">CNAME</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@ (or www)</code>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
               <div className="flex items-center gap-1">
                 <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
                 <DomainCopyButton text={CNAME_TARGET} />
@@ -1290,9 +1318,25 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
             <div className="grid grid-cols-3 bg-gray-50 px-4 py-2.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
               <span>Type</span><span>Host / Name</span><span>Value / Points to</span>
             </div>
-            <div className="grid grid-cols-3 px-4 py-3.5 items-center gap-2">
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
+              <span className="font-bold text-orange-500 text-xs">A</span>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
+              <div className="flex items-center gap-1">
+                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{CF_IP_1}</code>
+                <DomainCopyButton text={CF_IP_1} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
+              <span className="font-bold text-orange-500 text-xs">A</span>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
+              <div className="flex items-center gap-1">
+                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{CF_IP_2}</code>
+                <DomainCopyButton text={CF_IP_2} />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
               <span className="font-bold text-blue-600 text-xs">CNAME</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@ (or www)</code>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
               <div className="flex items-center gap-1">
                 <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
                 <DomainCopyButton text={CNAME_TARGET} />
