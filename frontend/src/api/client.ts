@@ -115,6 +115,12 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
 
+    // FormData: browser must set Content-Type (includes boundary); delete any default
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
+      log.debug('FormData upload — Content-Type header removed, browser will set boundary')
+    }
+
     const method = (config.method ?? 'GET').toUpperCase()
     const url = config.url ?? ''
     const hasBody = !!config.data

@@ -32,12 +32,16 @@ public class FileUploadController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<Map<String, String>>> upload(
             @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal CustomUserDetails currentUser) {
-        log.info("FileUploadController.upload — filename={}", file.getOriginalFilename());
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            jakarta.servlet.http.HttpServletRequest request) {
+        log.info("FileUploadController.upload — filename={} size={} contentType={} requestContentType={}",
+                file.getOriginalFilename(), file.getSize(), file.getContentType(),
+                request.getContentType());
         // Always derive orgId from the JWT — never trust a client-supplied value
         String orgId = currentUser.getActiveOrgId() != null
                 ? currentUser.getActiveOrgId().toString()
                 : currentUser.getUserId().toString();
+        log.info("FileUploadController.upload — orgId={} userId={}", orgId, currentUser.getUserId());
         String storedPath = fileUploadService.store(file, orgId);
         return ResponseEntity.ok(ApiResponse.success(Map.of(
                 "path", storedPath,

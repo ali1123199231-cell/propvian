@@ -60,13 +60,17 @@ public class FileUploadService {
     }
 
     public String store(MultipartFile file, String orgId) {
+        log.info("FileUploadService.store — name={} size={} contentType={} empty={}",
+                file.getOriginalFilename(), file.getSize(), file.getContentType(), file.isEmpty());
         if (file.isEmpty()) throw new AppException("File is empty", HttpStatus.BAD_REQUEST);
         if (file.getSize() > MAX_FILE_SIZE)
             throw new AppException("File exceeds 20 MB limit", HttpStatus.BAD_REQUEST);
 
         String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_TYPES.contains(contentType.toLowerCase()))
+        if (contentType == null || !ALLOWED_TYPES.contains(contentType.toLowerCase())) {
+            log.warn("FileUploadService.store — rejected contentType={} allowed={}", contentType, ALLOWED_TYPES);
             throw new AppException("Only PDF, JPG, JPEG and PNG files are allowed", HttpStatus.BAD_REQUEST);
+        }
 
         String original  = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "file");
         String ext       = original.contains(".") ? original.substring(original.lastIndexOf('.')) : "";
