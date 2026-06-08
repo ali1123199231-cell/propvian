@@ -79,13 +79,13 @@ export function TermsPage() {
           </Section>
 
           <Section title="6. Free Trial">
-            <p>New accounts receive a free trial period as specified at the time of registration (currently 14 days). The trial provides access to Service features at no charge. No payment information is required to begin a trial.</p>
+            <p>New accounts receive a free trial period as specified at the time of registration (currently 30 days). The trial provides access to Service features at no charge. No payment information is required to begin a trial.</p>
             <p>After the trial period, continued use of subscription features requires a paid subscription. If you do not subscribe, certain features will be suspended. Your data is retained during the inactive period in accordance with our data retention policies.</p>
             <p>Propvian reserves the right to modify trial terms with reasonable notice.</p>
           </Section>
 
           <Section title="7. Subscription, Billing, and Recurring Charges">
-            <p><strong>Recurring billing disclosure:</strong> Propvian subscriptions are billed on a recurring basis (monthly or annually, as selected). By subscribing, you authorize Propvian to charge your payment method on each billing date for the applicable subscription fee until you cancel.</p>
+            <p><strong>Recurring billing disclosure:</strong> Propvian subscriptions are billed on a recurring monthly basis. By subscribing, you authorize Propvian to charge your payment method on each billing date for the applicable subscription fee until you cancel.</p>
             <p>Current pricing is displayed on the Pricing page. Propvian reserves the right to change subscription pricing with at least 30 days' written notice to existing subscribers. Price changes take effect on your next billing cycle after the notice period.</p>
             <p>Payment is processed through Stripe. By providing payment information, you represent that you are authorized to use the payment method and authorize charges to it.</p>
             <p>If a payment fails, we will notify you and attempt to reprocess the charge. Access to subscription features may be suspended if payment remains outstanding after reasonable collection attempts. You are responsible for ensuring your payment information remains current.</p>

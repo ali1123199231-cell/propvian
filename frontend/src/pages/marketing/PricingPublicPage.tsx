@@ -19,7 +19,7 @@ const directFaqs = [
   {
     question: 'Is there a free trial?',
     answer:
-      'Yes — you get 14 days free to set up your property, connect your domain, and test the booking flow. No credit card required to start.',
+      'Yes — you get 30 days free to set up your property, connect your domain, and test the booking flow. No credit card required to start.',
   },
   {
     question: 'Can I cancel at any time?',
@@ -106,7 +106,7 @@ function DirectPricingPage() {
               <div className="bg-primary-600 px-8 py-6 text-center">
                 <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 mb-4">
                   <Zap size={14} className="text-primary-200" />
-                  <span className="text-sm font-semibold text-white">14-day free trial — no credit card</span>
+                  <span className="text-sm font-semibold text-white">30-day free trial — no credit card</span>
                 </div>
                 <div className="text-white">
                   <div className="flex items-end justify-center gap-1">
