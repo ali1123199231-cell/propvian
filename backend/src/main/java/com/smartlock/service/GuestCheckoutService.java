@@ -113,17 +113,22 @@ public class GuestCheckoutService {
 
     @Transactional(readOnly = true)
     public PublicOrgSiteResponse getOrgSite(String orgSlug) {
+        log.info("[ORG-SITE] Request for orgSlug='{}'", orgSlug);
         Organization org = organizationRepository.findBySlug(orgSlug)
                 .orElseThrow(() -> new AppException("Site not found", HttpStatus.NOT_FOUND));
 
         WebsiteConfig config = websiteConfigRepository.findByOrganizationId(org.getId()).orElse(null);
 
         if (config == null || !"PUBLISHED".equals(config.getStatus())) {
+            log.warn("[ORG-SITE] Blocked for org='{}': config={} status={}", orgSlug, config != null ? "exists" : "null", config != null ? config.getStatus() : "n/a");
             throw new AppException("Site not found", HttpStatus.NOT_FOUND);
         }
 
         List<Property> activeProperties = propertyRepository
                 .findByOrganizationIdAndStatus(org.getId(), PropertyStatus.ACTIVE);
+        log.info("[ORG-SITE] org='{}' activeProperties={} stickyBook={} exitIntent={} customCss={}",
+                orgSlug, activeProperties.size(), config.isStickyBookButton(), config.isExitIntentEnabled(),
+                config.getCustomCss() != null ? "set" : "null");
 
         List<PublicOrgSiteResponse.PublicPropertyCard> cards = activeProperties.stream()
                 .map(p -> {
@@ -209,8 +214,12 @@ public class GuestCheckoutService {
 
     @Transactional(readOnly = true)
     public GuestPropertyResponse getPropertyInfo(String slug) {
+        log.info("[GUEST-PROPERTY] Request for slug='{}'", slug);
         Property property = resolveProperty(slug);
+        log.info("[GUEST-PROPERTY] Resolved property id={} name='{}' status={} currency={}",
+                property.getId(), property.getName(), property.getStatus(), property.getCurrency());
         if (property.getStatus() != PropertyStatus.ACTIVE) {
+            log.warn("[GUEST-PROPERTY] Blocked: property id={} is not ACTIVE (status={})", property.getId(), property.getStatus());
             throw new AppException("Property not found", HttpStatus.NOT_FOUND);
         }
 
@@ -223,6 +232,7 @@ public class GuestCheckoutService {
                 && v.isStripePayoutsEnabled()
                 && v.isStripeGuestEnabled();
         boolean paypalEnabled = v != null && v.getPaypalAccountId() != null && v.isPaypalGuestEnabled();
+        log.info("[GUEST-PROPERTY] Payment methods: stripe={} paypal={}", stripeEnabled, paypalEnabled);
 
         // Manually blocked dates (fully inclusive [start, end])
         List<GuestPropertyResponse.BlockedRange> blocked = new ArrayList<>(
@@ -272,8 +282,17 @@ public class GuestCheckoutService {
                         .map(a -> new GuestPropertyResponse.AmenityInfo(a.getCategory(), a.getName(), a.getIcon()))
                         .toList();
         if (amenities.isEmpty()) {
+            log.info("[GUEST-PROPERTY] No amenities saved — using {} defaults", DEFAULT_AMENITIES.size());
             amenities = DEFAULT_AMENITIES;
+        } else {
+            log.info("[GUEST-PROPERTY] Loaded {} amenities, {} house rules, {} blocked ranges, {} pricing rules",
+                    amenities.size(), houseRules.size(), blocked.size(), pricing.size());
         }
+
+        log.info("[GUEST-PROPERTY] Building response: minStay={} maxStay={} instantBooking={} hasPromos={} securityDeposit={} beds={} propertyType='{}'",
+                property.getMinStayNights(), property.getMaxStayNights(), property.isInstantBooking(),
+                hasActivePromos(property.getOrganizationId()), property.getSecurityDeposit(),
+                property.getBeds(), property.getPropertyType());
 
         return GuestPropertyResponse.builder()
                 .id(property.getId().toString())
@@ -332,13 +351,18 @@ public class GuestCheckoutService {
 
     @Transactional
     public GuestInitiateResponse initiateBooking(String slug, GuestInitiateRequest req) {
+        log.info("[GUEST-INITIATE] slug='{}' checkIn={} checkOut={} guests={} provider={} promo='{}'",
+                slug, req.getCheckInDate(), req.getCheckOutDate(), req.getNumberOfGuests(),
+                req.getPaymentProvider(), req.getPromoCode());
         Property property = resolveProperty(slug);
 
         CalendarEngine.AvailabilityResult avail = calendarEngine.checkAvailability(
                 property.getId(), req.getCheckInDate(), req.getCheckOutDate());
         if (!avail.available()) {
+            log.warn("[GUEST-INITIATE] Availability check FAILED for property={}: {}", property.getId(), avail.reason());
             throw new AppException(avail.reason(), HttpStatus.CONFLICT);
         }
+        log.info("[GUEST-INITIATE] Availability OK for property={}", property.getId());
 
         HostVerification v = verificationRepository.findByOrganizationId(property.getOrganizationId())
                 .orElseThrow(() -> new AppException("This property cannot accept payments yet", HttpStatus.SERVICE_UNAVAILABLE));
@@ -359,6 +383,7 @@ public class GuestCheckoutService {
 
         BigDecimal total = calculateTotal(property, req, promo);
         String currency = property.getCurrency() != null ? property.getCurrency().toUpperCase() : "USD";
+        log.info("[GUEST-INITIATE] Calculated total={} {} promo={}", total, currency, promo != null ? promo.getCode() : "none");
 
         BigDecimal discountAmt = BigDecimal.ZERO;
         if (promo != null) {
@@ -387,6 +412,8 @@ public class GuestCheckoutService {
         if (promo != null) {
             promo.setUsesCount(promo.getUsesCount() + 1);
             promoCodeRepository.save(promo);
+            log.info("[GUEST-INITIATE] Promo '{}' applied: discount={} {} usesCount now={}",
+                    promo.getCode(), discountAmt, currency, promo.getUsesCount());
         }
 
         if ("stripe".equals(provider)) {
@@ -493,14 +520,18 @@ public class GuestCheckoutService {
 
     private BigDecimal calculateTotal(Property property, GuestInitiateRequest req, PromoCode promo) {
         long nights = req.getCheckInDate().until(req.getCheckOutDate(), ChronoUnit.DAYS);
+        log.info("[CALC-TOTAL] property={} nights={} minStay={} maxStay={}", property.getId(), nights, property.getMinStayNights(), property.getMaxStayNights());
         if (nights < 1) throw new AppException("Check-out must be after check-in", HttpStatus.BAD_REQUEST);
         if (property.getMinStayNights() > 0 && nights < property.getMinStayNights()) {
+            log.warn("[CALC-TOTAL] REJECTED: nights={} below minStay={}", nights, property.getMinStayNights());
             throw new AppException("Minimum stay is " + property.getMinStayNights() + " nights", HttpStatus.BAD_REQUEST);
         }
         if (property.getMaxStayNights() > 0 && nights > property.getMaxStayNights()) {
+            log.warn("[CALC-TOTAL] REJECTED: nights={} above maxStay={}", nights, property.getMaxStayNights());
             throw new AppException("Maximum stay is " + property.getMaxStayNights() + " nights", HttpStatus.BAD_REQUEST);
         }
         if (promo != null && promo.getMinNights() != null && nights < promo.getMinNights()) {
+            log.warn("[CALC-TOTAL] REJECTED: promo '{}' requires minNights={} but got {}", promo.getCode(), promo.getMinNights(), nights);
             throw new AppException("This promo code requires a minimum stay of " + promo.getMinNights() + " nights", HttpStatus.BAD_REQUEST);
         }
 
@@ -516,11 +547,13 @@ public class GuestCheckoutService {
         }
 
         if (nightlyRate.compareTo(BigDecimal.ZERO) == 0) {
+            log.warn("[CALC-TOTAL] REJECTED: no nightly rate for property={}", property.getId());
             throw new AppException("This property is not available for booking yet — no rate has been set", HttpStatus.BAD_REQUEST);
         }
 
         BigDecimal cleaning = property.getCleaningFee() != null ? property.getCleaningFee() : BigDecimal.ZERO;
         BigDecimal subtotal = nightlyRate.multiply(BigDecimal.valueOf(nights)).add(cleaning);
+        log.info("[CALC-TOTAL] rate={} × {} nights + cleaning={} = subtotal={}", nightlyRate, nights, cleaning, subtotal);
 
         if (promo != null) {
             if ("PERCENT".equalsIgnoreCase(promo.getDiscountType())) {
@@ -553,27 +586,28 @@ public class GuestCheckoutService {
 
     @Transactional(readOnly = true)
     public PromoValidationResponse validatePromoCode(String orgSlug, String code) {
+        log.info("[PROMO-VALIDATE] orgSlug='{}' code='{}'", orgSlug, code);
         Organization org = organizationRepository.findBySlug(orgSlug)
                 .orElse(null);
         if (org == null) {
+            log.warn("[PROMO-VALIDATE] Organization not found for slug='{}'", orgSlug);
             return PromoValidationResponse.builder().valid(false).message("Organization not found").build();
         }
         return promoCodeRepository.findByOrganizationIdAndCodeIgnoreCase(org.getId(), code.trim())
                 .filter(PromoCode::isActive)
                 .filter(p -> p.getExpiresAt() == null || p.getExpiresAt().isAfter(java.time.Instant.now()))
                 .filter(p -> p.getMaxUses() == null || p.getUsesCount() < p.getMaxUses())
-                .map(p -> PromoValidationResponse.builder()
-                        .valid(true)
-                        .code(p.getCode())
-                        .discountType(p.getDiscountType())
-                        .discountValue(p.getDiscountValue())
-                        .minNights(p.getMinNights())
-                        .message(buildPromoMessage(p))
-                        .build())
-                .orElse(PromoValidationResponse.builder()
-                        .valid(false)
-                        .message("Invalid or expired promo code")
-                        .build());
+                .map(p -> {
+                    log.info("[PROMO-VALIDATE] VALID code='{}' type={} value={} minNights={}", p.getCode(), p.getDiscountType(), p.getDiscountValue(), p.getMinNights());
+                    return PromoValidationResponse.builder()
+                            .valid(true).code(p.getCode()).discountType(p.getDiscountType())
+                            .discountValue(p.getDiscountValue()).minNights(p.getMinNights())
+                            .message(buildPromoMessage(p)).build();
+                })
+                .orElseGet(() -> {
+                    log.warn("[PROMO-VALIDATE] INVALID or expired code='{}' for org='{}'", code, orgSlug);
+                    return PromoValidationResponse.builder().valid(false).message("Invalid or expired promo code").build();
+                });
     }
 
     private boolean hasActivePromos(java.util.UUID orgId) {
