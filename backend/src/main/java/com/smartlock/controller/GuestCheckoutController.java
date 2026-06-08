@@ -6,6 +6,8 @@ import com.smartlock.dto.response.guest.GuestInitiateResponse;
 import com.smartlock.dto.response.guest.GuestPropertyResponse;
 import com.smartlock.dto.response.guest.PromoValidationResponse;
 import com.smartlock.dto.response.guest.PublicOrgSiteResponse;
+import com.smartlock.domain.enums.VerificationStatus;
+import com.smartlock.repository.HostVerificationRepository;
 import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.service.FileUploadService;
 import com.smartlock.service.GuestCheckoutService;
@@ -31,17 +33,36 @@ public class GuestCheckoutController {
 
     private final GuestCheckoutService guestCheckoutService;
     private final OrganizationRepository organizationRepository;
+    private final HostVerificationRepository hostVerificationRepository;
     private final FileUploadService fileUploadService;
 
-    /** Called by Caddy on-demand TLS to validate a subdomain before issuing a cert */
+    /** Called by Caddy on-demand TLS to validate a domain before issuing a cert */
     @GetMapping("/api/public/check-subdomain")
     public ResponseEntity<Void> checkSubdomain(@RequestParam String domain) {
         log.debug("GuestCheckoutController.checkSubdomain — domain={}", domain);
-        String slug = domain.replaceAll("\\.propvian\\.com$", "").toLowerCase();
-        if (slug.isEmpty() || slug.contains(".")) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        return organizationRepository.existsBySlug(slug)
+        // *.propvian.com subdomains: validate by org slug
+        if (domain.endsWith(".propvian.com")) {
+            String slug = domain.replaceAll("\\.propvian\\.com$", "").toLowerCase();
+            if (slug.isEmpty() || slug.contains(".")) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return organizationRepository.existsBySlug(slug)
+                    ? ResponseEntity.ok().build()
+                    : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        // Custom domains: only issue certs for verified (APPROVED) domains
+        return hostVerificationRepository.existsByCustomDomainAndDomainStatus(domain, VerificationStatus.APPROVED)
                 ? ResponseEntity.ok().build()
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    /** Resolve a custom domain to its org slug — used by the frontend on custom-domain hostnames */
+    @GetMapping("/api/public/resolve-domain")
+    public ResponseEntity<ApiResponse<Map<String, String>>> resolveDomain(@RequestParam String domain) {
+        log.debug("GuestCheckoutController.resolveDomain — domain={}", domain);
+        return hostVerificationRepository
+                .findByCustomDomainAndDomainStatus(domain, VerificationStatus.APPROVED)
+                .flatMap(hv -> organizationRepository.findById(hv.getOrganizationId()))
+                .map(org -> ResponseEntity.ok(ApiResponse.success(Map.of("orgSlug", org.getSlug()))))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
 
     /** Org site data (branding + all active properties) — no auth required */
