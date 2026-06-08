@@ -1022,11 +1022,11 @@ function DnsHelpModal({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="grid grid-cols-3 px-3 py-3 text-gray-800 gap-2">
                   <span className="font-bold text-blue-600">CNAME</span>
-                  <span>www <span className="text-gray-400 font-sans">(or subdomain)</span></span>
+                  <span>@ <span className="text-gray-400 font-sans">(or www)</span></span>
                   <span className="text-green-700 break-all">{CNAME_TARGET}</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">💡 Use <strong>www</strong> or a subdomain like <strong>booking</strong>. Avoid <strong>@</strong> (root domain) — most registrars block CNAME on root because it already has A records.</p>
+              <p className="text-xs text-gray-400 mt-2">💡 <strong>What is @?</strong> It means the root of your domain (e.g. <em>myvilla.com</em> itself, not a subdomain).</p>
             </div>
           </div>
           <div className="flex gap-4">
@@ -1218,15 +1218,14 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
             </div>
             <div className="grid grid-cols-3 px-4 py-3.5 items-center gap-2">
               <span className="font-bold text-blue-600 text-xs">CNAME</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@ (or www)</code>
               <div className="flex items-center gap-1">
                 <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
                 <DomainCopyButton text={CNAME_TARGET} />
               </div>
             </div>
           </div>
-          <p className="text-xs text-gray-400 mb-1">DNS changes take 5–30 minutes to propagate.</p>
-          <p className="text-xs text-gray-400 mb-3">Use <strong>www</strong> or a subdomain (e.g. <strong>booking</strong>) as the Host — not <strong>@</strong>, as root domains usually already have A records which block CNAME creation.</p>
+          <p className="text-xs text-gray-400 mb-3">DNS changes take 5–30 minutes to propagate.</p>
           <div className="flex items-center gap-3 flex-wrap">
             <button onClick={checkDns} disabled={checking}
               className="btn-primary text-sm py-2 flex items-center gap-2">
@@ -1293,7 +1292,7 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
             </div>
             <div className="grid grid-cols-3 px-4 py-3.5 items-center gap-2">
               <span className="font-bold text-blue-600 text-xs">CNAME</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@ (or www)</code>
               <div className="flex items-center gap-1">
                 <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
                 <DomainCopyButton text={CNAME_TARGET} />
@@ -1301,7 +1300,6 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
             </div>
           </div>
           <p className="mt-2 text-xs text-gray-400">DNS propagation: 5–30 minutes. SSL issued automatically once confirmed.</p>
-          <p className="mt-1 text-xs text-gray-400">Use <strong>www</strong> or a subdomain as Host — avoid <strong>@</strong>, it usually conflicts with existing A records.</p>
         </div>
       )}
 
