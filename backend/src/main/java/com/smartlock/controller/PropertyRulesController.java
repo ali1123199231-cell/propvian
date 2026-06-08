@@ -1,9 +1,11 @@
 package com.smartlock.controller;
 
+import com.smartlock.domain.PropertyAmenity;
 import com.smartlock.domain.PropertyHouseRule;
 import com.smartlock.domain.PropertySeasonalRule;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.exception.AppException;
+import com.smartlock.repository.PropertyAmenityRepository;
 import com.smartlock.repository.PropertyHouseRuleRepository;
 import com.smartlock.repository.PropertySeasonalRuleRepository;
 import com.smartlock.service.OrganizationSecurityService;
@@ -16,6 +18,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -31,6 +34,7 @@ public class PropertyRulesController {
 
     private final PropertyHouseRuleRepository houseRuleRepo;
     private final PropertySeasonalRuleRepository seasonalRuleRepo;
+    private final PropertyAmenityRepository amenityRepo;
     private final OrganizationSecurityService orgSecurity;
 
     // ── House rules ───────────────────────────────────────────────────────────
@@ -128,7 +132,53 @@ public class PropertyRulesController {
         return ResponseEntity.ok(ApiResponse.success(houseRuleRepo.findByPropertyId(propertyId)));
     }
 
+    // ── Amenities ─────────────────────────────────────────────────────────────
+
+    @GetMapping("/amenities")
+    public ResponseEntity<ApiResponse<List<PropertyAmenity>>> listAmenities(
+            @PathVariable UUID propertyId) {
+        orgSecurity.requirePropertyAccess(propertyId);
+        return ResponseEntity.ok(ApiResponse.success(amenityRepo.findByPropertyId(propertyId)));
+    }
+
+    @PutMapping("/amenities")
+    @Transactional
+    public ResponseEntity<ApiResponse<List<PropertyAmenity>>> replaceAmenities(
+            @PathVariable UUID propertyId,
+            @RequestBody List<AmenityRequest> reqs) {
+        orgSecurity.requirePropertyAccess(propertyId);
+        amenityRepo.deleteByPropertyId(propertyId);
+        List<PropertyAmenity> saved = amenityRepo.saveAll(
+                reqs.stream().map(r -> PropertyAmenity.builder()
+                        .propertyId(propertyId)
+                        .category(r.getCategory() != null ? r.getCategory() : "general")
+                        .name(r.getName())
+                        .icon(r.getIcon())
+                        .build()).toList());
+        return ResponseEntity.ok(ApiResponse.success(saved));
+    }
+
+    @DeleteMapping("/amenities/{amenityId}")
+    public ResponseEntity<ApiResponse<Void>> deleteAmenity(
+            @PathVariable UUID propertyId,
+            @PathVariable UUID amenityId) {
+        orgSecurity.requirePropertyAccess(propertyId);
+        PropertyAmenity a = amenityRepo.findById(amenityId)
+                .orElseThrow(() -> new AppException("Amenity not found", HttpStatus.NOT_FOUND));
+        if (!a.getPropertyId().equals(propertyId))
+            throw new AppException("Access denied", HttpStatus.FORBIDDEN);
+        amenityRepo.delete(a);
+        return ResponseEntity.ok(ApiResponse.success("Deleted"));
+    }
+
     // ── DTOs ──────────────────────────────────────────────────────────────────
+
+    @Data
+    public static class AmenityRequest {
+        @NotBlank String name;
+        String category;
+        String icon;
+    }
 
     @Data
     public static class HouseRuleRequest {

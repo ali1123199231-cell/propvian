@@ -7,7 +7,7 @@ import {
   CheckCircle, Clock, XCircle, Circle, ChevronRight, ChevronLeft,
   ShieldCheck, Home, Link, Calendar, CreditCard, Globe, BadgeCheck,
   Loader2, AlertTriangle, ExternalLink, Info, Upload, X, Copy,
-  RefreshCw, Check, Plug, WifiOff, Wifi, ArrowRight, HelpCircle, Search,
+  RefreshCw, Check, Plug, WifiOff, Wifi, ArrowRight, HelpCircle, Search, Pencil, Trash2,
 } from 'lucide-react'
 import { Link as RouterLink } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -1122,6 +1122,13 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
   const [dnsResult, setDnsResult] = useState<{ verified: boolean; message: string } | null>(null)
   const [showDnsHelp, setShowDnsHelp] = useState(false)
   const [showBuyDomain, setShowBuyDomain] = useState(false)
+  const [editingDomain, setEditingDomain] = useState(false)
+
+  const deleteDomainMut = useMutation({
+    mutationFn: () => verificationApi.deleteDomain(orgId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['verification', orgId] }); toast.success('Domain removed') },
+    onError: () => toast.error('Failed to remove domain'),
+  })
 
   const checkDns = async () => {
     setChecking(true); setDnsResult(null)
@@ -1159,8 +1166,37 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
     } catch (err: any) { toast.error(err.response?.data?.message || 'Failed') }
   }
 
-  if (status === 'APPROVED') return (
-    <ApprovedState label="Domain" note={savedDomain ? `Your domain ${savedDomain} is live.` : 'Domain is verified.'} />
+  if (status === 'APPROVED' && !editingDomain) return (
+    <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <CheckCircle size={20} className="text-green-500 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-green-800">Domain verified</p>
+            <p className="text-sm text-green-600">{savedDomain || 'Your domain is live.'}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setEditingDomain(true)}
+            className="text-xs font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Pencil size={12} /> Edit
+          </button>
+          <button
+            onClick={() => {
+              if (window.confirm(`Remove the custom domain "${savedDomain}"?`)) {
+                deleteDomainMut.mutate()
+              }
+            }}
+            disabled={deleteDomainMut.isPending}
+            className="text-xs font-medium text-red-500 hover:text-red-700 flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={12} /> Remove
+          </button>
+        </div>
+      </div>
+    </div>
   )
 
   return (

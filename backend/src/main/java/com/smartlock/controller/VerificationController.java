@@ -4,11 +4,14 @@ import com.smartlock.dto.request.verification.*;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.dto.response.common.PageResponse;
 import com.smartlock.dto.response.verification.VerificationStatusResponse;
+import com.smartlock.repository.HostVerificationRepository;
 import com.smartlock.security.CustomUserDetails;
+import com.smartlock.service.OrganizationSecurityService;
 import com.smartlock.service.VerificationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -28,6 +31,8 @@ import java.util.UUID;
 public class VerificationController {
 
     private final VerificationService verificationService;
+    private final HostVerificationRepository hostVerificationRepository;
+    private final OrganizationSecurityService orgSecurity;
 
     // ── Host endpoints ────────────────────────────────────────────────────────
 
@@ -75,6 +80,30 @@ public class VerificationController {
     @PostMapping("/organizations/{orgId}/verification/domain/check-dns")
     public ResponseEntity<ApiResponse<Map<String, Object>>> checkDomainDns(@PathVariable UUID orgId) {
         return ResponseEntity.ok(ApiResponse.success(verificationService.checkDomainDns(orgId)));
+    }
+
+    @DeleteMapping("/organizations/{orgId}/verification/domain")
+    public ResponseEntity<ApiResponse<VerificationStatusResponse>> deleteDomain(@PathVariable UUID orgId) {
+        return ResponseEntity.ok(ApiResponse.success(verificationService.deleteDomain(orgId)));
+    }
+
+    @PatchMapping("/organizations/{orgId}/verification/payment-methods")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> togglePaymentMethod(
+            @PathVariable UUID orgId,
+            @RequestBody TogglePaymentRequest req) {
+        orgSecurity.requireOrgAccess(orgId);
+        hostVerificationRepository.findByOrganizationId(orgId).ifPresent(v -> {
+            if ("stripe".equalsIgnoreCase(req.getProvider())) v.setStripeGuestEnabled(req.isEnabled());
+            else if ("paypal".equalsIgnoreCase(req.getProvider())) v.setPaypalGuestEnabled(req.isEnabled());
+            hostVerificationRepository.save(v);
+        });
+        return ResponseEntity.ok(ApiResponse.success(Map.of("ok", true)));
+    }
+
+    @Data
+    public static class TogglePaymentRequest {
+        String provider; // "stripe" | "paypal"
+        boolean enabled;
     }
 
     @PostMapping("/verification/test-ical")

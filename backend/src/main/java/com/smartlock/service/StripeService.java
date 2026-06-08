@@ -12,6 +12,7 @@ import com.stripe.model.*;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.CustomerCreateParams;
+import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.billingportal.SessionCreateParams;
 import com.stripe.param.checkout.SessionCreateParams.LineItem;
@@ -249,6 +250,48 @@ public class StripeService {
         });
     }
 
+    /** Fetches the current subscription state directly from Stripe and syncs it to the DB. */
+    @Transactional
+    public void syncSubscriptionStatus(UUID orgId) {
+        initStripe();
+        Subscription sub = billingService.getSubscription(orgId);
+        String stripeSubId = sub.getStripeSubscriptionId();
+        if (stripeSubId == null || stripeSubId.isBlank()) {
+            log.info("No Stripe subscription ID for org {}, nothing to sync", orgId);
+            return;
+        }
+        try {
+            com.stripe.model.Subscription stripeSub = com.stripe.model.Subscription.retrieve(stripeSubId);
+            long quantity = stripeSub.getItems().getData().isEmpty() ? 1
+                    : stripeSub.getItems().getData().get(0).getQuantity();
+            sub.setLockQuota((int) quantity);
+            if (stripeSub.getCurrentPeriodStart() != null)
+                sub.setCurrentPeriodStart(Instant.ofEpochSecond(stripeSub.getCurrentPeriodStart()));
+            if (stripeSub.getCurrentPeriodEnd() != null)
+                sub.setCurrentPeriodEnd(Instant.ofEpochSecond(stripeSub.getCurrentPeriodEnd()));
+            sub.setCancelAtPeriodEnd(Boolean.TRUE.equals(stripeSub.getCancelAtPeriodEnd()));
+
+            String status = stripeSub.getStatus();
+            if ("active".equals(status)) {
+                sub.setStatus(SubscriptionStatus.ACTIVE);
+                sub.setFailedPaymentAt(null);
+            } else if ("past_due".equals(status)) {
+                sub.setStatus(SubscriptionStatus.PAST_DUE);
+            } else if ("canceled".equals(status) || "cancelled".equals(status)) {
+                sub.setStatus(SubscriptionStatus.CANCELLED);
+                if (sub.getCancelledAt() == null) sub.setCancelledAt(Instant.now());
+            } else if ("trialing".equals(status)) {
+                sub.setStatus(SubscriptionStatus.TRIALING);
+            }
+            subscriptionRepository.save(sub);
+            log.info("Synced subscription status for org {} → {}", orgId, status);
+        } catch (StripeException e) {
+            log.warn("Failed to sync subscription for org {}: {}", orgId, e.getMessage());
+            throw new AppException("Could not sync with Stripe: " + e.getMessage(),
+                    org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE);
+        }
+    }
+
     // ── Guest booking payment ─────────────────────────────────────────────────
 
     /** Creates a Stripe PaymentIntent that transfers funds to the host's connected account. */
@@ -260,21 +303,22 @@ public class StripeService {
         }
         long amountCents = amount.multiply(BigDecimal.valueOf(100)).longValue();
 
-        PaymentIntentCreateParams.Builder builder = PaymentIntentCreateParams.builder()
+        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                 .setAmount(amountCents)
                 .setCurrency(currency.toLowerCase())
                 .addPaymentMethodType("card")
                 .putMetadata("bookingId", bookingId.toString())
-                .putMetadata("type", "guest_booking");
+                .putMetadata("type", "guest_booking")
+                .build();
 
         if (hostStripeAccountId != null && !hostStripeAccountId.isBlank()) {
-            builder.setTransferData(
-                    PaymentIntentCreateParams.TransferData.builder()
-                            .setDestination(hostStripeAccountId)
-                            .build());
+            RequestOptions options = RequestOptions.builder()
+                    .setStripeAccount(hostStripeAccountId)
+                    .build();
+            return PaymentIntent.create(params, options).getClientSecret();
         }
 
-        return PaymentIntent.create(builder.build()).getClientSecret();
+        return PaymentIntent.create(params).getClientSecret();
     }
 
     private void handleGuestPaymentIntentSucceeded(Event event) {

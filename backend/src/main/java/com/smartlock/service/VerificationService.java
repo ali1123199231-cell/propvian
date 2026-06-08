@@ -270,6 +270,18 @@ public class VerificationService {
         return toResponse(verificationRepository.save(v));
     }
 
+    @Transactional
+    public VerificationStatusResponse deleteDomain(UUID orgId) {
+        HostVerification v = getOrCreate(orgId);
+        v.setCustomDomain(null);
+        v.setDomainStatus(VerificationStatus.NOT_STARTED);
+        v.setDomainVerificationToken(null);
+        v.setDomainCnameTarget(null);
+        v.setDomainVerifiedAt(null);
+        recalculate(v);
+        return toResponse(verificationRepository.save(v));
+    }
+
     public record ICalTestResult(boolean success, String message) {}
 
     public ICalTestResult testIcalUrl(String url) {
@@ -597,7 +609,8 @@ public class VerificationService {
                         v.getStripeConnectedAt() != null ? v.getStripeConnectedAt() : v.getPaypalConnectedAt(),
                         null, null,
                         List.of(safe(v.getStripeAccountId()), String.valueOf(v.isStripeChargesEnabled()),
-                                String.valueOf(v.isStripePayoutsEnabled()), safe(v.getPaypalAccountId()))))
+                                String.valueOf(v.isStripePayoutsEnabled()), safe(v.getPaypalAccountId()),
+                                String.valueOf(v.isStripeGuestEnabled()), String.valueOf(v.isPaypalGuestEnabled()))))
                 .domainStep(buildStep("domain_setup", "Domain Connection", v.getDomainStatus(),
                         dEnabled, v.getDomainVerifiedAt(), null, null,
                         List.of(safe(v.getCustomDomain()), safe(v.getDomainCnameTarget()), safe(v.getDomainVerificationToken()))))

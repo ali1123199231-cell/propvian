@@ -1082,6 +1082,17 @@ function SectionEditor({
               />
             </Field>
           </div>
+          {property && !cfg.title && (
+            <AutoFill
+              onClick={() =>
+                setCfg({
+                  title: `Photos of ${property.name}`,
+                  subtitle: `Take a look inside your home away from home`,
+                })
+              }
+              label="Auto-fill from property"
+            />
+          )}
         </div>
       )
 
@@ -1146,6 +1157,17 @@ function SectionEditor({
               placeholder="Everything you need for a comfortable stay"
             />
           </Field>
+          {property && !cfg.title && (
+            <AutoFill
+              onClick={() =>
+                setCfg({
+                  title: 'What\'s included',
+                  subtitle: `Everything you need for a comfortable stay at ${property.name}`,
+                })
+              }
+              label="Auto-fill from property"
+            />
+          )}
           <div>
             <p className="text-xs font-semibold text-gray-600 mb-2">Select Amenities</p>
             <div className="grid grid-cols-2 gap-2">
@@ -1379,6 +1401,12 @@ function SectionEditor({
             color="#6366F1"
             onChange={(v) => setCfg({ showContactButton: v })}
           />
+          {property && !cfg.hostName && (
+            <AutoFill
+              onClick={() => setCfg({ hostName: property.name || 'Your Host' })}
+              label="Auto-fill host name from property"
+            />
+          )}
         </div>
       )
 
@@ -1481,6 +1509,23 @@ function SectionEditor({
           >
             <Plus size={12} /> Add rule
           </button>
+          {property && rules.length === 0 && (
+            <AutoFill
+              onClick={() =>
+                setCfg({
+                  title: 'House Rules',
+                  rules: [
+                    { icon: '🔕', text: 'Please keep noise down after 10pm' },
+                    { icon: '🚬', text: 'No smoking indoors' },
+                    { icon: '🐾', text: 'Pets allowed with prior approval' },
+                    { icon: '🔑', text: `Check-in from ${property.checkInTime || '15:00'}` },
+                    { icon: '🧹', text: `Check-out by ${property.checkOutTime || '11:00'}` },
+                  ],
+                })
+              }
+              label="Add default house rules"
+            />
+          )}
         </div>
       )
     }

@@ -19,7 +19,9 @@ import com.smartlock.repository.DirectBookingRepository;
 import com.smartlock.repository.HostVerificationRepository;
 import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.CalendarIntervalRepository;
+import com.smartlock.repository.PropertyAmenityRepository;
 import com.smartlock.repository.PropertyBlockedDateRepository;
+import com.smartlock.repository.PropertyHouseRuleRepository;
 import com.smartlock.repository.PropertyPhotoRepository;
 import com.smartlock.repository.PropertyPricingRuleRepository;
 import com.smartlock.repository.PropertyRepository;
@@ -72,6 +74,8 @@ public class GuestCheckoutService {
     private final CalendarIntervalRepository calendarIntervalRepository;
     private final PropertyBlockedDateRepository blockedRepo;
     private final PropertyPricingRuleRepository pricingRepo;
+    private final PropertyHouseRuleRepository houseRuleRepo;
+    private final PropertyAmenityRepository amenityRepo;
     private final PromoCodeRepository promoCodeRepository;
     private final UserRepository userRepository;
     private final WebsiteConfigRepository websiteConfigRepository;
@@ -205,8 +209,9 @@ public class GuestCheckoutService {
         boolean stripeEnabled = v != null
                 && v.getStripeAccountId() != null
                 && v.isStripeChargesEnabled()
-                && v.isStripePayoutsEnabled();
-        boolean paypalEnabled = v != null && v.getPaypalAccountId() != null;
+                && v.isStripePayoutsEnabled()
+                && v.isStripeGuestEnabled();
+        boolean paypalEnabled = v != null && v.getPaypalAccountId() != null && v.isPaypalGuestEnabled();
 
         // Manually blocked dates (fully inclusive [start, end])
         List<GuestPropertyResponse.BlockedRange> blocked = new ArrayList<>(
@@ -246,6 +251,19 @@ public class GuestCheckoutService {
                 ? List.of(fileUploadService.toPublicUrl(property.getImageUrl()))
                 : photos;
 
+        List<GuestPropertyResponse.HouseRuleInfo> houseRules =
+                houseRuleRepo.findByPropertyId(property.getId()).stream()
+                        .map(r -> new GuestPropertyResponse.HouseRuleInfo(r.getRuleKey(), r.isAllowed(), r.getNotes()))
+                        .toList();
+
+        List<GuestPropertyResponse.AmenityInfo> amenities =
+                amenityRepo.findByPropertyId(property.getId()).stream()
+                        .map(a -> new GuestPropertyResponse.AmenityInfo(a.getCategory(), a.getName(), a.getIcon()))
+                        .toList();
+        if (amenities.isEmpty()) {
+            amenities = DEFAULT_AMENITIES;
+        }
+
         return GuestPropertyResponse.builder()
                 .id(property.getId().toString())
                 .orgSlug(orgSlug)
@@ -268,7 +286,11 @@ public class GuestCheckoutService {
                 .stripeEnabled(stripeEnabled)
                 .paypalEnabled(paypalEnabled)
                 .stripePublishableKey(stripeEnabled ? systemConfigService.getActiveStripePublishableKey() : null)
+                .stripeConnectedAccountId(stripeEnabled ? v.getStripeAccountId() : null)
                 .paypalClientId(paypalEnabled ? systemConfigService.getPaypalClientId() : null)
+                .hasActivePromos(hasActivePromos(property.getOrganizationId()))
+                .houseRules(houseRules)
+                .amenities(amenities)
                 .blockedDates(blocked)
                 .pricingRules(pricing)
                 .brandName(wc != null && wc.getBrandName() != null ? wc.getBrandName() : (org != null ? org.getName() : null))
@@ -279,6 +301,14 @@ public class GuestCheckoutService {
                 .buttonStyle(wc != null && wc.getButtonStyle() != null ? wc.getButtonStyle() : "rounded")
                 .build();
     }
+
+    private static final List<GuestPropertyResponse.AmenityInfo> DEFAULT_AMENITIES = List.of(
+            new GuestPropertyResponse.AmenityInfo("essentials", "WiFi", "wifi"),
+            new GuestPropertyResponse.AmenityInfo("essentials", "Washing machine", "washing-machine"),
+            new GuestPropertyResponse.AmenityInfo("workspace",  "Workspace",       "laptop"),
+            new GuestPropertyResponse.AmenityInfo("entertainment", "TV",            "tv"),
+            new GuestPropertyResponse.AmenityInfo("outdoor",    "Balcony",         "sun")
+    );
 
     // ── Initiate checkout (creates booking + payment intent / PayPal order) ───
 
@@ -421,11 +451,11 @@ public class GuestCheckoutService {
 
     private void validateProvider(String provider, HostVerification v) {
         if ("stripe".equals(provider)) {
-            if (v.getStripeAccountId() == null || !v.isStripeChargesEnabled() || !v.isStripePayoutsEnabled()) {
+            if (v.getStripeAccountId() == null || !v.isStripeChargesEnabled() || !v.isStripePayoutsEnabled() || !v.isStripeGuestEnabled()) {
                 throw new AppException("Stripe is not available for this property", HttpStatus.BAD_REQUEST);
             }
         } else if ("paypal".equals(provider)) {
-            if (v.getPaypalAccountId() == null) {
+            if (v.getPaypalAccountId() == null || !v.isPaypalGuestEnabled()) {
                 throw new AppException("PayPal is not available for this property", HttpStatus.BAD_REQUEST);
             }
         } else {
@@ -498,6 +528,13 @@ public class GuestCheckoutService {
                         .valid(false)
                         .message("Invalid or expired promo code")
                         .build());
+    }
+
+    private boolean hasActivePromos(java.util.UUID orgId) {
+        return promoCodeRepository.findByOrganizationIdOrderByCreatedAtDesc(orgId).stream()
+                .anyMatch(p -> p.isActive()
+                        && (p.getExpiresAt() == null || p.getExpiresAt().isAfter(java.time.Instant.now()))
+                        && (p.getMaxUses() == null || p.getUsesCount() < p.getMaxUses()));
     }
 
     private String buildPromoMessage(PromoCode p) {

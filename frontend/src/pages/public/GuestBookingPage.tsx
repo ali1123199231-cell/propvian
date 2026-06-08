@@ -14,6 +14,9 @@ import {
 
 interface BlockedRange { startDate: string; endDate: string }
 interface PricingRule { startDate: string; endDate: string; nightlyRate: number }
+interface HouseRuleInfo { ruleKey: string; allowed: boolean; notes?: string }
+interface AmenityInfo  { category: string; name: string; icon?: string }
+
 interface PropertyInfo {
   id: string; orgSlug: string; name: string; description: string; imageUrl: string
   photoUrls: string[]
@@ -21,7 +24,10 @@ interface PropertyInfo {
   baseNightlyRate: number; cleaningFee: number; checkInTime: string; checkOutTime: string
   cancellationPolicy: string; minStayNights: number; instantBooking: boolean
   stripeEnabled: boolean; paypalEnabled: boolean
-  stripePublishableKey: string; paypalClientId: string
+  stripePublishableKey: string; stripeConnectedAccountId: string; paypalClientId: string
+  hasActivePromos: boolean
+  houseRules?: HouseRuleInfo[]
+  amenities?: AmenityInfo[]
   // Org branding
   brandName?: string; brandLogoUrl?: string
   primaryColor?: string; accentColor?: string; fontFamily?: string; buttonStyle?: string
@@ -264,7 +270,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
   useEffect(() => {
     if (prop?.stripeEnabled && prop.stripePublishableKey && !stripePromise) {
-      setStripePromise(loadStripe(prop.stripePublishableKey))
+      setStripePromise(loadStripe(prop.stripePublishableKey, { stripeAccount: prop.stripeConnectedAccountId }))
     }
     if (prop?.stripeEnabled) setPayProvider('stripe')
     else if (prop?.paypalEnabled) setPayProvider('paypal')
@@ -506,6 +512,44 @@ export function GuestBookingPage({ slug }: { slug: string }) {
               <strong className="font-semibold">Cancellation policy:</strong> {fmtCancellationPolicy(prop.cancellationPolicy)}
             </div>
           )}
+
+          {/* Amenities */}
+          {prop.amenities && prop.amenities.length > 0 && (
+            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">What's included</p>
+              <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+                {prop.amenities.map((a, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                    <CheckCircle size={13} className="text-emerald-500 flex-shrink-0" />
+                    {a.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* House rules */}
+          {prop.houseRules && prop.houseRules.length > 0 && (
+            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">House rules</p>
+              <div className="space-y-1.5">
+                {prop.houseRules.map((r, i) => {
+                  const label = r.ruleKey === 'PETS' ? 'Pets' : r.ruleKey === 'SMOKING' ? 'Smoking' :
+                    r.ruleKey === 'PARTIES' ? 'Parties / events' : r.ruleKey === 'QUIET_HOURS' ? 'Quiet hours' :
+                    r.ruleKey === 'CHILDREN' ? 'Children' : r.ruleKey.replace(/_/g, ' ')
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className={r.allowed ? 'text-emerald-600' : 'text-red-500'}>{r.allowed ? '✓' : '✕'}</span>
+                      <span className={r.allowed ? 'text-gray-700' : 'text-gray-500 line-through-subtle'}>
+                        {label}{r.allowed ? ' allowed' : ' not allowed'}
+                      </span>
+                      {r.notes && <span className="text-xs text-gray-400 ml-1">({r.notes})</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── Right: booking flow ─────────────────────────────────────────── */}
@@ -622,8 +666,8 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 </div>
               </div>
 
-              {/* Promo code */}
-              <div>
+              {/* Promo code — only shown when the host has active promo codes */}
+              {prop.hasActivePromos && <div>
                 <p className="text-xs font-semibold text-gray-500 mb-1.5">Promo code</p>
                 <div className="flex gap-2">
                   <input
@@ -647,7 +691,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 </div>
                 {promoApplied && <p className="text-xs text-emerald-600 font-medium mt-1.5">✓ {promoApplied.message}</p>}
                 {promoError  && <p className="text-xs text-red-500 mt-1.5">{promoError}</p>}
-              </div>
+              </div>}
 
               {/* Payment method selector */}
               {(prop.stripeEnabled || prop.paypalEnabled) ? (

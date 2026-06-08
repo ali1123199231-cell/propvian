@@ -119,6 +119,31 @@ public class BillingController {
         return ResponseEntity.ok(ApiResponse.success(Map.of("url", approvalUrl)));
     }
 
+    @PostMapping("/sync")
+    public ResponseEntity<ApiResponse<BillingStatusResponse>> syncSubscription(
+            @PathVariable UUID orgId,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        orgSecurity.requireOrgAccess(orgId);
+        stripeService.syncSubscriptionStatus(orgId);
+
+        Subscription sub = billingService.getSubscription(orgId);
+        long usedLocks = billingService.getUsedLockCount(orgId);
+        BillingStatusResponse response = BillingStatusResponse.builder()
+                .status(sub.getStatus().name())
+                .trialActive(billingService.isTrialActive(sub))
+                .paidActive(billingService.isPaidActive(sub))
+                .accessActive(billingService.isAccessActive(sub))
+                .trialEnd(sub.getTrialEnd())
+                .currentPeriodEnd(sub.getCurrentPeriodEnd())
+                .lockQuota(billingService.getLockQuota(sub))
+                .usedLocks(usedLocks)
+                .cancelAtPeriodEnd(Boolean.TRUE.equals(sub.getCancelAtPeriodEnd()))
+                .paymentProvider(sub.getPaymentProvider())
+                .failedPaymentAt(sub.getFailedPaymentAt())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @PutMapping("/quota")
     public ResponseEntity<ApiResponse<BillingStatusResponse>> updateLockQuota(
             @PathVariable UUID orgId,

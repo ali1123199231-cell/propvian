@@ -131,3 +131,29 @@ export const seasonalRulesApi = {
     await apiClient.delete(`/properties/${propertyId}/seasonal-rules/${ruleId}`)
   },
 }
+
+// ── Amenities ─────────────────────────────────────────────────────────────────
+
+export interface PropertyAmenity {
+  id?: string
+  propertyId?: string
+  category: string
+  name: string
+  icon?: string
+}
+
+export const amenitiesApi = {
+  list: async (propertyId: string): Promise<PropertyAmenity[]> => {
+    const { data } = await apiClient.get(`/properties/${propertyId}/amenities`)
+    return data.data
+  },
+
+  replace: async (propertyId: string, amenities: Omit<PropertyAmenity, 'id' | 'propertyId'>[]): Promise<PropertyAmenity[]> => {
+    const { data } = await apiClient.put(`/properties/${propertyId}/amenities`, amenities)
+    return data.data
+  },
+
+  delete: async (propertyId: string, amenityId: string): Promise<void> => {
+    await apiClient.delete(`/properties/${propertyId}/amenities/${amenityId}`)
+  },
+}

@@ -27,6 +27,11 @@ export const billingApi = {
     return res.data.data
   },
 
+  syncSubscription: async (orgId: string): Promise<BillingStatus> => {
+    const res = await apiClient.post(`/organizations/${orgId}/billing/sync`)
+    return res.data.data
+  },
+
   trackEvent: async (orgId: string, eventType: string, metadata?: Record<string, unknown>): Promise<void> => {
     await apiClient.post(`/organizations/${orgId}/events/track`, { eventType, metadata }).catch(() => {})
   },

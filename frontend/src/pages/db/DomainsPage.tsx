@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Globe, CheckCircle, Clock, XCircle, Plus, ExternalLink, X,
-  ChevronRight, Search, Copy, RefreshCw, HelpCircle, Zap,
+  ChevronRight, Search, Copy, RefreshCw, HelpCircle, Zap, Trash2, Pencil,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -245,6 +245,15 @@ export function DomainsPage() {
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed'),
   })
 
+  const deleteMut = useMutation({
+    mutationFn: () => verificationApi.deleteDomain(orgId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['verification', orgId] })
+      toast.success('Custom domain removed')
+    },
+    onError: (err: any) => toast.error(err.response?.data?.message || 'Failed to remove domain'),
+  })
+
   async function checkDns() {
     setCheckingDns(true)
     try {
@@ -340,6 +349,27 @@ export function DomainsPage() {
             >
               <Plus size={13} /> Connect domain
             </button>
+          )}
+          {customDomain && !showForm && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowForm(true)}
+                className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 transition-colors"
+              >
+                <Pencil size={12} /> Edit
+              </button>
+              <button
+                onClick={() => {
+                  if (window.confirm('Remove this custom domain? Your Propvian subdomain will still work.')) {
+                    deleteMut.mutate()
+                  }
+                }}
+                disabled={deleteMut.isPending}
+                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+              >
+                <Trash2 size={12} /> {deleteMut.isPending ? 'Removing…' : 'Remove'}
+              </button>
+            </div>
           )}
         </div>
         <p className="text-xs text-gray-400 mb-4">

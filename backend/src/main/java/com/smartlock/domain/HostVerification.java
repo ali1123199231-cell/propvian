@@ -172,6 +172,14 @@ public class HostVerification {
     @Builder.Default
     private boolean stripePayoutsEnabled = false;
 
+    @Column(name = "stripe_guest_enabled", nullable = false)
+    @Builder.Default
+    private boolean stripeGuestEnabled = true;
+
+    @Column(name = "paypal_guest_enabled", nullable = false)
+    @Builder.Default
+    private boolean paypalGuestEnabled = true;
+
     // ── Domain ────────────────────────────────────────────────────────────────
     @Column(name = "custom_domain", length = 255)
     private String customDomain;

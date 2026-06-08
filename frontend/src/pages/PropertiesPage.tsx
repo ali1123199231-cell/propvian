@@ -13,7 +13,7 @@ import { z } from 'zod'
 import toast from 'react-hot-toast'
 import { propertiesApi } from '@/api/properties'
 import { fileUploadApi } from '@/api/fileUpload'
-import { houseRulesApi } from '@/api/calendarEngine'
+import { houseRulesApi, amenitiesApi, type PropertyAmenity } from '@/api/calendarEngine'
 import { useAuthStore } from '@/store/authStore'
 import { useSystemStore } from '@/store/systemStore'
 import { COUNTRIES } from '@/constants/countries'
@@ -76,6 +76,29 @@ const CANCELLATION_POLICIES = [
   { value: 'MODERATE',       label: 'Moderate',        sub: 'Full refund 5 days before' },
   { value: 'STRICT',         label: 'Strict',          sub: '50% refund up to 1 week before' },
   { value: 'NON_REFUNDABLE', label: 'Non-refundable',  sub: 'No refunds' },
+]
+
+const AMENITY_PRESETS: { key: string; label: string; category: string; icon: string }[] = [
+  { key: 'wifi',      label: 'WiFi',           category: 'essentials',    icon: 'wifi' },
+  { key: 'kitchen',   label: 'Kitchen',        category: 'essentials',    icon: 'utensils' },
+  { key: 'parking',   label: 'Parking',        category: 'essentials',    icon: 'car' },
+  { key: 'pool',      label: 'Pool',           category: 'outdoor',       icon: 'waves' },
+  { key: 'ac',        label: 'A/C',            category: 'climate',       icon: 'wind' },
+  { key: 'workspace', label: 'Workspace',      category: 'workspace',     icon: 'laptop' },
+  { key: 'tv',        label: 'TV',             category: 'entertainment', icon: 'tv' },
+  { key: 'balcony',   label: 'Balcony',        category: 'outdoor',       icon: 'sun' },
+  { key: 'hot_tub',   label: 'Hot Tub',        category: 'outdoor',       icon: 'thermometer' },
+  { key: 'garden',    label: 'Garden',         category: 'outdoor',       icon: 'trees' },
+  { key: 'bbq',       label: 'BBQ',            category: 'outdoor',       icon: 'flame' },
+  { key: 'washer',    label: 'Washer/Dryer',   category: 'essentials',    icon: 'washing-machine' },
+  { key: 'coffee',    label: 'Coffee machine', category: 'kitchen',       icon: 'coffee' },
+  { key: 'dishwasher',label: 'Dishwasher',     category: 'kitchen',       icon: 'check-circle' },
+  { key: 'gym',       label: 'Gym',            category: 'fitness',       icon: 'dumbbell' },
+  { key: 'sauna',     label: 'Sauna',          category: 'wellness',      icon: 'flame' },
+  { key: 'pets',      label: 'Pet-friendly',   category: 'policies',      icon: 'paw-print' },
+  { key: 'elevator',  label: 'Elevator',       category: 'accessibility', icon: 'arrow-up' },
+  { key: 'fireplace', label: 'Fireplace',      category: 'comfort',       icon: 'flame' },
+  { key: 'sea_view',  label: 'Sea view',       category: 'views',         icon: 'waves' },
 ]
 
 // ── Status badge helper ───────────────────────────────────────────────────────
@@ -781,7 +804,19 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
   const orgId = activeOrg?.id ?? ''
   const qc = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [tab, setTab] = useState<'details' | 'pricing' | 'policies' | 'photos'>('details')
+  const [tab, setTab] = useState<'details' | 'pricing' | 'policies' | 'amenities' | 'photos'>('details')
+  const [amenities, setAmenities] = useState<string[]>([])
+  const [amenitiesLoaded, setAmenitiesLoaded] = useState(false)
+
+  // Load amenities lazily when tab is first opened
+  const loadAmenities = async () => {
+    if (amenitiesLoaded) return
+    try {
+      const saved = await amenitiesApi.list(property.id)
+      setAmenities(saved.map(a => a.name.toLowerCase().replace(/\s+/g, '_')))
+    } catch { /* non-fatal */ }
+    setAmenitiesLoaded(true)
+  }
 
   interface PhotoItem { url: string; id?: string }
   const [photos, setPhotos] = useState<PhotoItem[]>(
@@ -893,6 +928,17 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
         try { await propertiesApi.reorderPhotos(orgId, property.id, orderedIds) } catch { /* non-fatal */ }
       }
 
+      // Save amenities if the tab was opened
+      if (amenitiesLoaded) {
+        const amenityItems = amenities.map(key => {
+          const preset = AMENITY_PRESETS.find(p => p.key === key)
+          return preset
+            ? { name: preset.label, category: preset.category, icon: preset.icon }
+            : { name: key, category: 'general', icon: '' }
+        })
+        try { await amenitiesApi.replace(property.id, amenityItems) } catch { /* non-fatal */ }
+      }
+
       qc.invalidateQueries({ queryKey: ['properties', orgId] })
       toast.success('Property updated')
       onSaved()
@@ -902,10 +948,11 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
   }
 
   const TABS = [
-    { id: 'details',  label: 'Details' },
-    { id: 'pricing',  label: isDirect ? 'Pricing' : 'Room' },
-    { id: 'policies', label: 'Policies' },
-    { id: 'photos',   label: `Photos${photos.length > 0 ? ` (${photos.length})` : ''}` },
+    { id: 'details',   label: 'Details' },
+    { id: 'pricing',   label: isDirect ? 'Pricing' : 'Room' },
+    { id: 'policies',  label: 'Policies' },
+    { id: 'amenities', label: `Amenities${amenities.length > 0 ? ` (${amenities.length})` : ''}` },
+    { id: 'photos',    label: `Photos${photos.length > 0 ? ` (${photos.length})` : ''}` },
   ]
 
   return (
@@ -920,7 +967,7 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
 
         <div className="flex border-b border-gray-100 px-6">
           {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id as any)}
+            <button key={t.id} onClick={() => { setTab(t.id as any); if (t.id === 'amenities') loadAmenities() }}
               className={`py-3 px-4 text-sm font-medium border-b-2 -mb-px transition-colors ${
                 tab === t.id ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}>
@@ -1087,6 +1134,39 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
                     <input {...register('bufferDaysAfter')} type="number" min="0" max="14" className="input-base" />
                   </div>
                 </div>
+              </div>
+            )}
+
+            {tab === 'amenities' && (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-500">Select all amenities available at your property. These will appear on your guest booking page.</p>
+                {!amenitiesLoaded ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+                    <Loader2 size={14} className="animate-spin" /> Loading…
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {AMENITY_PRESETS.map(preset => {
+                      const active = amenities.includes(preset.key)
+                      return (
+                        <button
+                          key={preset.key}
+                          type="button"
+                          onClick={() => setAmenities(prev => active ? prev.filter(k => k !== preset.key) : [...prev, preset.key])}
+                          className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium text-left transition-all ${
+                            active ? 'border-primary-300 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                          }`}
+                        >
+                          <span className="flex-shrink-0">{active ? '✓' : '+'}</span>
+                          {preset.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+                {amenities.length > 0 && (
+                  <p className="text-xs text-gray-400">{amenities.length} amenities selected</p>
+                )}
               </div>
             )}
 

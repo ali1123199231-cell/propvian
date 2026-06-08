@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  User, Lock, Bell, Building2, CheckCircle,
-  AlertCircle, AlertTriangle, Info, Calendar, Zap, CreditCard, Users,
+  User, Lock, Bell, Building2,
+  AlertTriangle, Info, Calendar, CreditCard,
   Globe, Loader2, Camera, Copy, Check, Mail, MessageCircle, LifeBuoy,
-  X, Save,
+  AlertCircle, CheckCircle, X, Save,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -60,12 +60,8 @@ const NOTIFICATION_ITEMS = [
   { key: 'RESERVATION_CANCELLED',  label: 'Reservation cancelled',  description: 'A guest cancels or a booking is removed',          icon: AlertTriangle,   color: 'text-amber-500' },
   { key: 'NEW_GUEST_MESSAGE',      label: 'New guest message',      description: 'A guest sends a message through your booking site', icon: MessageCircle,   color: 'text-primary-500' },
   { key: 'PAYMENT_RECEIVED',       label: 'Payment received',       description: 'A guest payment is successfully processed',         icon: CreditCard,      color: 'text-green-500' },
-  { key: 'LOCK_DISCONNECTED',      label: 'Lock disconnected',      description: 'A smart lock loses its connection',                 icon: AlertCircle,     color: 'text-red-500' },
   { key: 'SUBSCRIPTION_EXPIRING',  label: 'Subscription expiring',  description: 'Your plan is about to expire or renew',             icon: CreditCard,      color: 'text-amber-500' },
   { key: 'SYNC_FAILED',            label: 'Calendar sync failed',   description: 'An iCal feed fails to sync',                       icon: AlertCircle,     color: 'text-red-500' },
-  { key: 'SYNC_COMPLETED',         label: 'Calendar sync success',  description: 'An iCal feed syncs successfully',                  icon: CheckCircle,     color: 'text-emerald-500' },
-  { key: 'MEMBER_INVITED',         label: 'Team member invited',    description: 'A new member is added to your account',            icon: Users,           color: 'text-primary-500' },
-  { key: 'CLEANER_ASSIGNED',       label: 'Cleaner task assigned',  description: 'A cleaning task is assigned for a property',       icon: Zap,             color: 'text-teal-500' },
   { key: 'SUPPORT_REPLY',          label: 'Support reply',          description: 'Propvian support responds to one of your tickets',  icon: LifeBuoy,        color: 'text-purple-500' },
 ]
 

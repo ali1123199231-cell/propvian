@@ -65,6 +65,11 @@ export const verificationApi = {
     return res.data.data
   },
 
+  async deleteDomain(orgId: string): Promise<VerificationProgress> {
+    const res = await apiClient.delete<Res<VerificationProgress>>(`/organizations/${orgId}/verification/domain`)
+    return res.data.data
+  },
+
   async testIcal(url: string): Promise<{ success: boolean; message: string }> {
     const res = await apiClient.post<Res<{ success: boolean; message: string }>>('/verification/test-ical', { url })
     return res.data.data
@@ -103,5 +108,9 @@ export const verificationApi = {
   async getPaypalConnectUrl(orgId: string): Promise<{ url: string; dev?: string }> {
     const res = await apiClient.get<Res<{ url: string; dev?: string }>>(`/paypal/connect-url?orgId=${orgId}`)
     return res.data.data
+  },
+
+  async togglePaymentMethod(orgId: string, provider: 'stripe' | 'paypal', enabled: boolean): Promise<void> {
+    await apiClient.patch(`/organizations/${orgId}/verification/payment-methods`, { provider, enabled })
   },
 }

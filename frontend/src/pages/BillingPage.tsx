@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { CreditCard, Lock, Check, AlertTriangle, Clock, Minus, Plus, Zap, Building2, DollarSign, ArrowRight } from 'lucide-react'
+import { CreditCard, Lock, Check, AlertTriangle, Clock, Minus, Plus, Zap, Building2, DollarSign, ArrowRight, RefreshCw } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { Link } from 'react-router-dom'
 import { billingApi } from '@/api/billing'
@@ -368,6 +368,7 @@ function DirectBookingSubscribeButtons({ orgId, activeCount }: { orgId: string; 
 // ── Direct Booking Billing ────────────────────────────────────────────────────
 
 function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: () => void }) {
+  const queryClient = useQueryClient()
   const { data: propsData } = useQuery({
     queryKey: ['properties', orgId],
     queryFn: () => propertiesApi.list(orgId, 0, 100),
@@ -377,6 +378,15 @@ function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: ()
     queryKey: ['billing-status', orgId],
     queryFn: () => billingApi.getStatus(orgId),
     enabled: !!orgId,
+  })
+
+  const syncMut = useMutation({
+    mutationFn: () => billingApi.syncSubscription(orgId),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['billing-status', orgId], data)
+      toast.success('Subscription status synced from Stripe')
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message || 'Sync failed'),
   })
   const activeCount = propsData?.content.filter(p => p.status === 'ACTIVE').length ?? 0
   const monthlyTotal = activeCount * 10
@@ -398,6 +408,16 @@ function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: ()
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusInfo.color}`}>
                   {statusInfo.label}
                 </span>
+              )}
+              {billing?.paymentProvider === 'STRIPE' && (
+                <button
+                  onClick={() => syncMut.mutate()}
+                  disabled={syncMut.isPending}
+                  title="Sync status from Stripe"
+                  className="ml-auto p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw size={13} className={syncMut.isPending ? 'animate-spin' : ''} />
+                </button>
               )}
             </div>
           </div>
@@ -477,35 +497,101 @@ function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: ()
       </div>
 
       {/* Manage / Subscribe */}
+      <ManageOrSubscribeSection
+        orgId={orgId}
+        billing={billing ?? null}
+        activeCount={activeCount}
+      />
+    </div>
+  )
+}
+
+function ManageOrSubscribeSection({
+  orgId, billing, activeCount,
+}: {
+  orgId: string
+  billing: BillingStatus | null
+  activeCount: number
+}) {
+  const [showProviderPicker, setShowProviderPicker] = useState(false)
+  const [loading, setLoading] = useState<'stripe' | 'paypal' | null>(null)
+  const qty = Math.max(1, activeCount)
+
+  const handleSwitchStripe = async () => {
+    setLoading('stripe')
+    try {
+      const url = await billingApi.createStripePortal(orgId)
+      window.location.href = url
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || 'Could not open billing portal.')
+      setLoading(null)
+    }
+  }
+
+  const handleSwitchPaypal = async () => {
+    setLoading('paypal')
+    try {
+      const url = await billingApi.createPaypalCheckout(orgId, qty)
+      window.location.href = url
+    } catch {
+      setLoading(null)
+    }
+  }
+
+  if (!billing?.paymentProvider) {
+    return (
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="font-semibold text-gray-900 mb-3">
-          {billing?.paymentProvider ? 'Manage subscription' : 'Subscribe'}
-        </h3>
-        {billing?.paymentProvider === 'STRIPE' ? (
-          <>
-            <button onClick={onPortal} className="btn-primary py-2.5 px-5 text-sm flex items-center gap-2 justify-center">
-              <CreditCard size={14} /> Update payment method
-            </button>
-            <p className="text-xs text-gray-400 mt-3">
-              Opens the Stripe billing portal where you can update your card or cancel.
-            </p>
-          </>
-        ) : billing?.paymentProvider === 'PAYPAL' ? (
-          <p className="text-sm text-gray-600">
-            Your subscription is managed via PayPal.{' '}
-            <a
-              href="https://www.paypal.com/myaccount/autopay/"
-              target="_blank" rel="noopener noreferrer"
-              className="text-primary-600 underline"
-            >
-              Manage it in your PayPal account
-            </a>
-            .
-          </p>
-        ) : (
-          <DirectBookingSubscribeButtons orgId={orgId} activeCount={activeCount} />
-        )}
+        <h3 className="font-semibold text-gray-900 mb-3">Subscribe</h3>
+        <DirectBookingSubscribeButtons orgId={orgId} activeCount={activeCount} />
       </div>
+    )
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <h3 className="font-semibold text-gray-900 mb-3">Manage subscription</h3>
+      {!showProviderPicker ? (
+        <>
+          <button
+            onClick={() => setShowProviderPicker(true)}
+            className="btn-primary py-2.5 px-5 text-sm flex items-center gap-2 justify-center"
+          >
+            <CreditCard size={14} /> Update payment method
+          </button>
+          <p className="text-xs text-gray-400 mt-3">
+            Current provider: {billing.paymentProvider === 'STRIPE' ? 'Stripe (card)' : 'PayPal'}. Click to update or switch.
+          </p>
+        </>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600 mb-3">Choose your payment provider:</p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleSwitchStripe}
+              disabled={loading !== null}
+              className="flex-1 btn-primary flex items-center justify-center gap-2 py-2.5"
+            >
+              <CreditCard size={16} />
+              {loading === 'stripe' ? 'Redirecting…' : 'Stripe (card)'}
+            </button>
+            <button
+              onClick={handleSwitchPaypal}
+              disabled={loading !== null}
+              className="flex-1 py-2.5 px-4 border-2 border-[#0070ba] text-[#0070ba] font-semibold rounded-xl hover:bg-[#f0f7ff] transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="font-bold text-[#003087]">Pay</span>
+              <span className="font-bold text-[#009cde]">Pal</span>
+              {loading === 'paypal' ? '…' : ''}
+            </button>
+          </div>
+          <button
+            onClick={() => setShowProviderPicker(false)}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   )
 }
