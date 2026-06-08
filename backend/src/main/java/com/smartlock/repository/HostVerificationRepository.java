@@ -13,6 +13,10 @@ public interface HostVerificationRepository extends JpaRepository<HostVerificati
 
     Optional<HostVerification> findByOrganizationId(UUID organizationId);
 
+    Optional<HostVerification> findByCustomDomainAndDomainStatus(String customDomain, VerificationStatus domainStatus);
+
+    boolean existsByCustomDomainAndDomainStatus(String customDomain, VerificationStatus domainStatus);
+
     Page<HostVerification> findByAdminStatus(VerificationStatus adminStatus, Pageable pageable);
 
     long countByAdminStatus(VerificationStatus adminStatus);
