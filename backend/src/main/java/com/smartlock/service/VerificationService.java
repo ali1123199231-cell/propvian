@@ -568,8 +568,7 @@ public class VerificationService {
             statuses.add(v.getCalendarStatus());
         if (systemConfigService.isVerificationStepEnabled("payment_setup"))
             statuses.add(v.getPaymentStatus());
-        if (systemConfigService.isVerificationStepEnabled("domain_setup")
-                && v.getCustomDomain() != null && !v.getCustomDomain().isBlank())
+        if (systemConfigService.isVerificationStepEnabled("domain_setup"))
             statuses.add(v.getDomainStatus());
         if (systemConfigService.isVerificationStepEnabled("admin_approval"))
             statuses.add(v.getAdminStatus());
