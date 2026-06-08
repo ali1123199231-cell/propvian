@@ -23,14 +23,19 @@ public class GuestPropertyResponse {
     private String country;
     private Integer maxGuests;
     private Integer bedrooms;
+    private Integer beds;
     private Integer bathrooms;
     private BigDecimal baseNightlyRate;
     private BigDecimal cleaningFee;
+    private BigDecimal securityDeposit;
     private String checkInTime;
     private String checkOutTime;
     private String cancellationPolicy;
     private int minStayNights;
+    private int maxStayNights;
     private boolean instantBooking;
+    private boolean depositRequired;
+    private BigDecimal depositPercent;
 
     // Payment methods available for this host
     private boolean stripeEnabled;

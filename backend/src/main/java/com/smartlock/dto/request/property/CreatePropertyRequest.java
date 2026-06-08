@@ -39,6 +39,7 @@ public class CreatePropertyRequest {
 
     private Integer maxGuests;
     private Integer bedrooms;
+    private Integer beds;
     private Integer bathrooms;
 
     private UUID cleanerUserId;

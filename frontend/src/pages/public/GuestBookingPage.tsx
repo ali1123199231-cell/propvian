@@ -20,9 +20,10 @@ interface AmenityInfo  { category: string; name: string; icon?: string }
 interface PropertyInfo {
   id: string; orgSlug: string; name: string; description: string; imageUrl: string
   photoUrls: string[]
-  city: string; country: string; maxGuests: number; bedrooms: number; bathrooms: number
-  baseNightlyRate: number; cleaningFee: number; checkInTime: string; checkOutTime: string
-  cancellationPolicy: string; minStayNights: number; instantBooking: boolean
+  city: string; country: string; maxGuests: number; bedrooms: number; beds?: number; bathrooms: number
+  baseNightlyRate: number; cleaningFee: number; securityDeposit?: number; checkInTime: string; checkOutTime: string
+  cancellationPolicy: string; minStayNights: number; maxStayNights?: number; instantBooking: boolean
+  depositRequired?: boolean; depositPercent?: number
   stripeEnabled: boolean; paypalEnabled: boolean
   stripePublishableKey: string; stripeConnectedAccountId: string; paypalClientId: string
   hasActivePromos: boolean
@@ -469,7 +470,13 @@ export function GuestBookingPage({ slug }: { slug: string }) {
             {prop.bedrooms   && (
               <span className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl"
                 style={{ backgroundColor: `${primary}12`, color: primary }}>
-                <BedDouble size={15} />{prop.bedrooms} bed{prop.bedrooms !== 1 ? 's' : ''}
+                <BedDouble size={15} />{prop.bedrooms} bedroom{prop.bedrooms !== 1 ? 's' : ''}
+              </span>
+            )}
+            {prop.beds && (
+              <span className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl"
+                style={{ backgroundColor: `${primary}12`, color: primary }}>
+                <BedDouble size={15} />{prop.beds} bed{prop.beds !== 1 ? 's' : ''}
               </span>
             )}
             {prop.bathrooms  && (
@@ -563,6 +570,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                   {prop.baseNightlyRate ? <>${prop.baseNightlyRate}<span className="text-sm font-normal text-gray-400"> / night</span></> : 'Select dates'}
                 </h2>
                 {prop.minStayNights > 1 && <span className="text-xs text-gray-400">{prop.minStayNights} night min</span>}
+                {prop.maxStayNights && prop.maxStayNights < 365 && <span className="text-xs text-gray-400">{prop.maxStayNights} night max</span>}
               </div>
               <p className="text-xs text-gray-400 mb-5">Click a date to start your selection</p>
               <DatePicker prop={prop} checkIn={checkIn} checkOut={checkOut}
@@ -570,7 +578,9 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
               {checkIn && checkOut && pricing && (() => {
                 const belowMin = prop.minStayNights > 1 && pricing.nights < prop.minStayNights
+                const aboveMax = prop.maxStayNights && prop.maxStayNights < 365 && pricing.nights > prop.maxStayNights
                 const noRate = !prop.baseNightlyRate
+                const secDep = prop.securityDeposit && prop.securityDeposit > 0 ? prop.securityDeposit : null
                 return (
                   <>
                     <div className="mt-5 pt-4 border-t border-gray-100 space-y-2 text-sm">
@@ -587,6 +597,12 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                               <span>Cleaning fee</span><span>${pricing.cleaning.toFixed(2)}</span>
                             </div>
                           )}
+                          {secDep && (
+                            <div className="flex justify-between text-gray-500">
+                              <span>Security deposit <span className="text-xs">(refundable)</span></span>
+                              <span>${Number(secDep).toFixed(2)}</span>
+                            </div>
+                          )}
                           <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100 text-base">
                             <span>Total</span><span>${pricing.total.toFixed(2)}</span>
                           </div>
@@ -598,9 +614,14 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                         Minimum stay is {prop.minStayNights} nights. You selected {pricing.nights}.
                       </p>
                     )}
+                    {aboveMax && (
+                      <p className="text-xs text-red-500 mt-2">
+                        Maximum stay is {prop.maxStayNights} nights. You selected {pricing.nights}.
+                      </p>
+                    )}
                     <button
                       onClick={() => setStep('info')}
-                      disabled={belowMin || noRate}
+                      disabled={belowMin || !!aboveMax || noRate}
                       className="mt-4 w-full py-3.5 text-white text-base font-bold shadow-sm hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       style={btnStyle}>
                       Continue

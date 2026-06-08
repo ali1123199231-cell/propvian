@@ -64,6 +64,7 @@ public class PropertyService {
                 .imageUrl(request.getImageUrl())
                 .maxGuests(request.getMaxGuests())
                 .bedrooms(request.getBedrooms())
+                .beds(request.getBeds())
                 .bathrooms(request.getBathrooms())
                 .cleanerUserId(request.getCleanerUserId())
                 .currency(request.getCurrency() != null ? request.getCurrency().toUpperCase() : "USD")
@@ -127,6 +128,7 @@ public class PropertyService {
         property.setImageUrl(request.getImageUrl());
         property.setMaxGuests(request.getMaxGuests());
         property.setBedrooms(request.getBedrooms());
+        if (request.getBeds() != null) property.setBeds(request.getBeds());
         property.setBathrooms(request.getBathrooms());
         property.setCleanerUserId(request.getCleanerUserId());
         property.setPropertyType(request.getPropertyType());
@@ -232,6 +234,7 @@ public class PropertyService {
                 .cleanerUserId(p.getCleanerUserId())
                 .maxGuests(p.getMaxGuests())
                 .bedrooms(p.getBedrooms())
+                .beds(p.getBeds())
                 .bathrooms(p.getBathrooms())
                 .lockCount(lockCount)
                 .currency(p.getCurrency())

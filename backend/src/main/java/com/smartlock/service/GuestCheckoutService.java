@@ -202,6 +202,9 @@ public class GuestCheckoutService {
     @Transactional(readOnly = true)
     public GuestPropertyResponse getPropertyInfo(String slug) {
         Property property = resolveProperty(slug);
+        if (property.getStatus() != PropertyStatus.ACTIVE) {
+            throw new AppException("Property not found", HttpStatus.NOT_FOUND);
+        }
 
         HostVerification v = verificationRepository.findByOrganizationId(property.getOrganizationId())
                 .orElse(null);
@@ -275,14 +278,19 @@ public class GuestCheckoutService {
                 .country(property.getCountry())
                 .maxGuests(property.getMaxGuests())
                 .bedrooms(property.getBedrooms())
+                .beds(property.getBeds())
                 .bathrooms(property.getBathrooms())
                 .baseNightlyRate(property.getBaseNightlyRate())
                 .cleaningFee(property.getCleaningFee())
+                .securityDeposit(property.getSecurityDeposit())
                 .checkInTime(property.getCheckInTime())
                 .checkOutTime(property.getCheckOutTime())
                 .cancellationPolicy(property.getCancellationPolicy())
                 .minStayNights(property.getMinStayNights())
+                .maxStayNights(property.getMaxStayNights())
                 .instantBooking(property.isInstantBooking())
+                .depositRequired(property.isDepositRequired())
+                .depositPercent(property.getDepositPercent())
                 .stripeEnabled(stripeEnabled)
                 .paypalEnabled(paypalEnabled)
                 .stripePublishableKey(stripeEnabled ? systemConfigService.getActiveStripePublishableKey() : null)
@@ -468,6 +476,9 @@ public class GuestCheckoutService {
         if (nights < 1) throw new AppException("Check-out must be after check-in", HttpStatus.BAD_REQUEST);
         if (property.getMinStayNights() > 0 && nights < property.getMinStayNights()) {
             throw new AppException("Minimum stay is " + property.getMinStayNights() + " nights", HttpStatus.BAD_REQUEST);
+        }
+        if (property.getMaxStayNights() > 0 && nights > property.getMaxStayNights()) {
+            throw new AppException("Maximum stay is " + property.getMaxStayNights() + " nights", HttpStatus.BAD_REQUEST);
         }
         if (promo != null && promo.getMinNights() != null && nights < promo.getMinNights()) {
             throw new AppException("This promo code requires a minimum stay of " + promo.getMinNights() + " nights", HttpStatus.BAD_REQUEST);

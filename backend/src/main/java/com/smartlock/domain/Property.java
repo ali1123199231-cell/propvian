@@ -65,6 +65,9 @@ public class Property extends SoftDeletableEntity {
     private Integer bedrooms;
 
     @Column
+    private Integer beds;
+
+    @Column
     private Integer bathrooms;
 
     @Column(name = "wifi_details", columnDefinition = "TEXT")

@@ -336,6 +336,7 @@ function PropertyWizard({ isDirect, onClose, onSaved }: {
         postalCode: data.postalCode || undefined,
         description: data.description || undefined,
         bedrooms: data.bedrooms,
+        beds: data.beds,
         bathrooms: data.bathrooms,
         maxGuests: data.maxGuests,
         checkInTime: data.checkInTime,
@@ -774,6 +775,7 @@ const editSchema = z.object({
   description:        z.string().optional(),
   maxGuests:          z.coerce.number().int().positive().optional().or(z.literal('')),
   bedrooms:           z.coerce.number().int().min(0).optional().or(z.literal('')),
+  beds:               z.coerce.number().int().min(1).optional().or(z.literal('')),
   bathrooms:          z.coerce.number().int().min(0).optional().or(z.literal('')),
   currency:           z.string().length(3).optional(),
   baseNightlyRate:    z.coerce.number().min(0).optional().or(z.literal('')),
@@ -856,6 +858,7 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
       description: property.description ?? '',
       maxGuests: property.maxGuests ?? '',
       bedrooms: property.bedrooms ?? '',
+      beds: (property as any).beds ?? '',
       bathrooms: property.bathrooms ?? '',
       currency: property.currency ?? 'USD',
       baseNightlyRate: property.baseNightlyRate ?? '',
@@ -888,6 +891,7 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
         description: data.description || undefined,
         maxGuests: data.maxGuests || undefined,
         bedrooms: data.bedrooms !== '' ? data.bedrooms : undefined,
+        beds: data.beds !== '' ? data.beds : undefined,
         bathrooms: data.bathrooms !== '' ? data.bathrooms : undefined,
         currency: data.currency || 'USD',
         baseNightlyRate: data.baseNightlyRate || undefined,
@@ -1022,10 +1026,14 @@ function PropertyEditModal({ property, isDirect, onClose, onSaved }: {
                   </div>
                   <input {...register('postalCode')} className="input-base" placeholder="Postal code" />
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Bedrooms</label>
                     <input {...register('bedrooms')}  type="number" min="0" className="input-base" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Beds</label>
+                    <input {...register('beds')}  type="number" min="1" className="input-base" />
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 mb-1">Bathrooms</label>

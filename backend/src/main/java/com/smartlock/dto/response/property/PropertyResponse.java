@@ -31,6 +31,7 @@ public class PropertyResponse {
     private UUID cleanerUserId;
     private Integer maxGuests;
     private Integer bedrooms;
+    private Integer beds;
     private Integer bathrooms;
     private long lockCount;
     private long activeReservationCount;
