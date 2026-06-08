@@ -9,13 +9,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -98,6 +102,40 @@ public class GlobalExceptionHandler {
         log.debug("No handler found: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(buildError(HttpStatus.NOT_FOUND, "Resource not found", "NOT_FOUND", request, null));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex, WebRequest request) {
+        log.debug("Missing request parameter: {}", ex.getParameterName());
+        return ResponseEntity.badRequest()
+                .body(buildError(HttpStatus.BAD_REQUEST,
+                        "Required parameter '" + ex.getParameterName() + "' is missing",
+                        "MISSING_PARAMETER", request, null));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, WebRequest request) {
+        log.debug("Type mismatch for parameter '{}': {}", ex.getName(), ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(buildError(HttpStatus.BAD_REQUEST,
+                        "Invalid value for parameter '" + ex.getName() + "'",
+                        "INVALID_PARAMETER", request, null));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex, WebRequest request) {
+        log.debug("Unreadable request body: {}", ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(buildError(HttpStatus.BAD_REQUEST, "Invalid request body", "INVALID_BODY", request, null));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex, WebRequest request) {
+        log.debug("Method not supported: {} {}", ex.getMethod(), request.getDescription(false));
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(buildError(HttpStatus.METHOD_NOT_ALLOWED,
+                        "Request method '" + ex.getMethod() + "' is not supported",
+                        "METHOD_NOT_ALLOWED", request, null));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

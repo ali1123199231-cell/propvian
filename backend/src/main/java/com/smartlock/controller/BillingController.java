@@ -50,6 +50,7 @@ public class BillingController {
     public ResponseEntity<ApiResponse<BillingStatusResponse>> getBillingStatus(
             @PathVariable UUID orgId,
             @AuthenticationPrincipal CustomUserDetails principal) {
+        log.debug("BillingController.getBillingStatus — orgId={}", orgId);
         orgSecurity.requireOrgAccess(orgId);
         Subscription sub = billingService.getSubscription(orgId);
         long usedLocks = billingService.getUsedLockCount(orgId);
@@ -76,7 +77,7 @@ public class BillingController {
             @PathVariable UUID orgId,
             @Valid @RequestBody CheckoutRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) throws Exception {
-
+        log.info("BillingController.createStripeCheckout — orgId={}", orgId);
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
         User owner = userRepository.findById(org.getOwnerId())
@@ -98,7 +99,7 @@ public class BillingController {
     public ResponseEntity<ApiResponse<Map<String, String>>> createStripePortal(
             @PathVariable UUID orgId,
             @AuthenticationPrincipal CustomUserDetails principal) throws Exception {
-
+        log.info("BillingController.createStripePortal — orgId={}", orgId);
         String returnUrl = frontendUrl + "/billing";
         String portalUrl = stripeService.createCustomerPortalSession(orgId, returnUrl);
         return ResponseEntity.ok(ApiResponse.success(Map.of("url", portalUrl)));
@@ -109,7 +110,7 @@ public class BillingController {
             @PathVariable UUID orgId,
             @Valid @RequestBody CheckoutRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
-
+        log.info("BillingController.createPaypalSubscription — orgId={}", orgId);
         String returnUrl = request.getSuccessUrl() != null ? request.getSuccessUrl()
                 : frontendUrl + "/billing?success=true";
         String cancelUrl = request.getCancelUrl() != null ? request.getCancelUrl()
@@ -123,6 +124,7 @@ public class BillingController {
     public ResponseEntity<ApiResponse<BillingStatusResponse>> syncSubscription(
             @PathVariable UUID orgId,
             @AuthenticationPrincipal CustomUserDetails principal) {
+        log.info("BillingController.syncSubscription — orgId={}", orgId);
         orgSecurity.requireOrgAccess(orgId);
         stripeService.syncSubscriptionStatus(orgId);
 
@@ -149,7 +151,7 @@ public class BillingController {
             @PathVariable UUID orgId,
             @Valid @RequestBody UpdateQuotaRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
-
+        log.info("BillingController.updateLockQuota — orgId={}", orgId);
         billingService.updateLockQuota(orgId, request.getQuantity());
 
         Subscription sub = billingService.getSubscription(orgId);

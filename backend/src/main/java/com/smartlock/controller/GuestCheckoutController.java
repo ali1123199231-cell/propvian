@@ -12,6 +12,7 @@ import com.smartlock.service.GuestCheckoutService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class GuestCheckoutController {
 
     private final GuestCheckoutService guestCheckoutService;
@@ -34,6 +36,7 @@ public class GuestCheckoutController {
     /** Called by Caddy on-demand TLS to validate a subdomain before issuing a cert */
     @GetMapping("/api/public/check-subdomain")
     public ResponseEntity<Void> checkSubdomain(@RequestParam String domain) {
+        log.debug("GuestCheckoutController.checkSubdomain — domain={}", domain);
         String slug = domain.replaceAll("\\.propvian\\.com$", "").toLowerCase();
         if (slug.isEmpty() || slug.contains(".")) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         return organizationRepository.existsBySlug(slug)
@@ -44,6 +47,7 @@ public class GuestCheckoutController {
     /** Org site data (branding + all active properties) — no auth required */
     @GetMapping("/api/public/sites/{orgSlug}")
     public ResponseEntity<ApiResponse<PublicOrgSiteResponse>> getOrgSite(@PathVariable String orgSlug) {
+        log.debug("GuestCheckoutController.getOrgSite — orgSlug={}", orgSlug);
         return ResponseEntity.ok(ApiResponse.success(guestCheckoutService.getOrgSite(orgSlug)));
     }
 
@@ -51,13 +55,16 @@ public class GuestCheckoutController {
     @GetMapping("/api/public/promo/{orgSlug}/{code}")
     public ResponseEntity<ApiResponse<PromoValidationResponse>> validatePromo(
             @PathVariable String orgSlug,
-            @PathVariable String code) {
-        return ResponseEntity.ok(ApiResponse.success(guestCheckoutService.validatePromoCode(orgSlug, code)));
+            @PathVariable String code,
+            @RequestParam(required = false) Integer nights) {
+        log.debug("GuestCheckoutController.validatePromo — orgSlug={}, code={}, nights={}", orgSlug, code, nights);
+        return ResponseEntity.ok(ApiResponse.success(guestCheckoutService.validatePromoCode(orgSlug, code, nights)));
     }
 
     /** Property info + available payment methods — no auth required */
     @GetMapping("/api/public/book/{slug}")
     public ResponseEntity<ApiResponse<GuestPropertyResponse>> getProperty(@PathVariable String slug) {
+        log.debug("GuestCheckoutController.getProperty — slug={}", slug);
         return ResponseEntity.ok(ApiResponse.success(guestCheckoutService.getPropertyInfo(slug)));
     }
 
@@ -66,6 +73,7 @@ public class GuestCheckoutController {
     public ResponseEntity<ApiResponse<GuestInitiateResponse>> initiate(
             @PathVariable String slug,
             @Valid @RequestBody GuestInitiateRequest req) {
+        log.info("GuestCheckoutController.initiate — slug={}", slug);
         return ResponseEntity.ok(ApiResponse.success(guestCheckoutService.initiateBooking(slug, req)));
     }
 
@@ -73,6 +81,7 @@ public class GuestCheckoutController {
     @PostMapping("/api/public/book/confirm-stripe")
     public ResponseEntity<ApiResponse<Void>> confirmStripe(
             @RequestBody Map<String, String> body) {
+        log.info("GuestCheckoutController.confirmStripe — bookingId={}", body.get("bookingId"));
         UUID bookingId = UUID.fromString(body.get("bookingId"));
         String paymentIntentId = body.get("paymentIntentId");
         guestCheckoutService.confirmStripeBooking(bookingId, paymentIntentId);
@@ -83,6 +92,7 @@ public class GuestCheckoutController {
     @PostMapping("/api/public/book/capture-paypal")
     public ResponseEntity<ApiResponse<Void>> capturePaypal(
             @RequestBody Map<String, String> body) {
+        log.info("GuestCheckoutController.capturePaypal — bookingId={}", body.get("bookingId"));
         UUID bookingId = UUID.fromString(body.get("bookingId"));
         String orderId = body.get("orderId");
         guestCheckoutService.captureAndConfirmPaypal(bookingId, orderId);
@@ -99,6 +109,7 @@ public class GuestCheckoutController {
             @PathVariable String orgId,
             @PathVariable String filename,
             HttpServletRequest request) {
+        log.debug("GuestCheckoutController.publicFile — orgId={}, filename={}", orgId, filename);
         Resource resource = fileUploadService.loadDirect(orgId, filename);
         String contentType = "application/octet-stream";
         try {

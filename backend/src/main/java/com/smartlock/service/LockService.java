@@ -2,6 +2,7 @@ package com.smartlock.service;
 
 import com.smartlock.domain.*;
 import com.smartlock.domain.enums.LockStatus;
+import com.smartlock.util.LogMaskingUtil;
 import com.smartlock.dto.request.lock.ConnectLockRequest;
 import com.smartlock.dto.response.lock.LockResponse;
 import com.smartlock.exception.AppException;
@@ -37,9 +38,11 @@ public class LockService {
 
     @Transactional
     public LockResponse connectLock(UUID propertyId, ConnectLockRequest request, UUID userId) {
+        log.info("connectLock — propertyId={} userId={} ttlockId={}", propertyId, userId, request.getTtlockLockId());
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
 
+        log.debug("connectLock — billing check for orgId={}", property.getOrganizationId());
         billingService.enforceCanAddLock(property.getOrganizationId());
 
         lockRepository.findFirstByTtlockLockId(request.getTtlockLockId()).ifPresent(existing -> {
@@ -100,31 +103,38 @@ public class LockService {
 
         lock = lockRepository.save(lock);
         oauthStateRepository.delete(oauthState);
+        log.info("connectLock — success lockId={} name={} ttlockId={} battery={}",
+                lock.getId(), lock.getName(), lock.getTtlockLockId(), lock.getBatteryLevel());
 
         onboardingService.advanceStepIfCurrent(userId, "TTLOCK_CONNECT");
 
-        log.info("Lock connected: {} (TTLock ID: {})", lock.getId(), request.getTtlockLockId());
         return toResponse(lock);
     }
 
     @Transactional(readOnly = true)
     public List<LockResponse> getLocksByProperty(UUID propertyId) {
+        log.debug("getLocksByProperty — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
-        return lockRepository.findByPropertyId(propertyId).stream()
+        List<LockResponse> locks = lockRepository.findByPropertyId(propertyId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+        log.debug("getLocksByProperty — found {} locks", locks.size());
+        return locks;
     }
 
     @Transactional(readOnly = true)
     public LockResponse getLock(UUID lockId) {
+        log.debug("getLock — lockId={}", lockId);
         Lock lock = lockRepository.findById(lockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
         orgSecurity.requirePropertyAccess(lock.getPropertyId());
+        log.debug("getLock — name={} status={} battery={}", lock.getName(), lock.getStatus(), lock.getBatteryLevel());
         return toResponse(lock);
     }
 
     @Transactional
     public void disconnectLock(UUID lockId) {
+        log.info("disconnectLock — lockId={}", lockId);
         Lock lock = lockRepository.findById(lockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
         orgSecurity.requirePropertyAccess(lock.getPropertyId());
@@ -132,19 +142,23 @@ public class LockService {
         lock.setTtlockAccessToken(null);
         lock.setTtlockRefreshToken(null);
         lockRepository.save(lock);
+        log.info("disconnectLock — success lockId={}", lockId);
     }
 
     @Transactional
     public void deleteLock(UUID lockId) {
+        log.info("deleteLock — lockId={}", lockId);
         Lock lock = lockRepository.findById(lockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
         orgSecurity.requirePropertyAccess(lock.getPropertyId());
         lock.softDelete();
         lockRepository.save(lock);
+        log.info("deleteLock — soft-deleted lockId={}", lockId);
     }
 
     @Transactional
     public LockResponse syncLock(UUID lockId) {
+        log.info("syncLock — lockId={}", lockId);
         Lock lock = lockRepository.findById(lockId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lock", lockId));
         orgSecurity.requirePropertyAccess(lock.getPropertyId());
@@ -154,9 +168,10 @@ public class LockService {
             lock.setBatteryLevel(info.getElectricQuantity());
             lock.setLastSyncAt(Instant.now());
             lock.setStatus(LockStatus.CONNECTED);
+            log.info("syncLock — success lockId={} battery={}", lockId, info.getElectricQuantity());
         } catch (Exception e) {
             lock.setStatus(LockStatus.ERROR);
-            log.error("Failed to sync lock {}: {}", lockId, e.getMessage());
+            log.error("syncLock — failed lockId={} error={}", lockId, e.getMessage());
         }
 
         return toResponse(lockRepository.save(lock));

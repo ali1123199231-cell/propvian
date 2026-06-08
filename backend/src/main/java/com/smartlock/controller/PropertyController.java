@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Properties")
 public class PropertyController {
 
@@ -38,6 +40,7 @@ public class PropertyController {
 
     @GetMapping("/api/public/properties/by-slug/{slug}")
     public ResponseEntity<ApiResponse<PropertyResponse>> getBySlug(@PathVariable String slug) {
+        log.debug("PropertyController.getBySlug — slug={}", slug);
         return ResponseEntity.ok(ApiResponse.success(propertyService.getPropertyBySlug(slug)));
     }
 
@@ -49,6 +52,7 @@ public class PropertyController {
             @PathVariable UUID orgId,
             @Valid @RequestBody CreatePropertyRequest request,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
+        log.info("PropertyController.create — orgId={} userId={}", orgId, currentUser.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(propertyService.createProperty(orgId, request, currentUser.getUserId())));
     }
@@ -59,6 +63,7 @@ public class PropertyController {
             @PathVariable UUID orgId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        log.debug("PropertyController.list — orgId={} page={}", orgId, page);
         var pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return ResponseEntity.ok(ApiResponse.success(
                 PageResponse.from(propertyService.getPropertiesByOrg(orgId, pageable))));
@@ -69,6 +74,7 @@ public class PropertyController {
     public ResponseEntity<ApiResponse<PropertyResponse>> get(
             @PathVariable UUID orgId,
             @PathVariable UUID propertyId) {
+        log.debug("PropertyController.get — propertyId={}", propertyId);
         return ResponseEntity.ok(ApiResponse.success(propertyService.getProperty(propertyId, orgId)));
     }
 
@@ -78,6 +84,7 @@ public class PropertyController {
             @PathVariable UUID orgId,
             @PathVariable UUID propertyId,
             @Valid @RequestBody CreatePropertyRequest request) {
+        log.info("PropertyController.update — propertyId={}", propertyId);
         return ResponseEntity.ok(ApiResponse.success(propertyService.updateProperty(propertyId, orgId, request)));
     }
 
@@ -86,6 +93,7 @@ public class PropertyController {
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID orgId,
             @PathVariable UUID propertyId) {
+        log.info("PropertyController.delete — propertyId={}", propertyId);
         propertyService.deleteProperty(propertyId, orgId);
         return ResponseEntity.ok(ApiResponse.success("Property deleted"));
     }
@@ -97,6 +105,7 @@ public class PropertyController {
     public ResponseEntity<ApiResponse<List<PhotoResponse>>> listPhotos(
             @PathVariable UUID orgId,
             @PathVariable UUID propertyId) {
+        log.debug("PropertyController.listPhotos — propertyId={}", propertyId);
         List<PhotoResponse> photos = photoRepository
                 .findByPropertyIdOrderBySortOrderAsc(propertyId).stream()
                 .map(PhotoResponse::from).toList();
@@ -109,6 +118,7 @@ public class PropertyController {
             @PathVariable UUID orgId,
             @PathVariable UUID propertyId,
             @Valid @RequestBody AddPhotoRequest request) {
+        log.info("PropertyController.addPhoto — propertyId={}", propertyId);
         PropertyPhoto photo = PropertyPhoto.builder()
                 .propertyId(propertyId)
                 .url(request.getUrl())
@@ -126,6 +136,7 @@ public class PropertyController {
             @PathVariable UUID orgId,
             @PathVariable UUID propertyId,
             @PathVariable UUID photoId) {
+        log.info("PropertyController.deletePhoto — propertyId={}, photoId={}", propertyId, photoId);
         photoRepository.deleteById(photoId);
         return ResponseEntity.ok(ApiResponse.success("Photo deleted"));
     }
@@ -136,6 +147,7 @@ public class PropertyController {
             @PathVariable UUID orgId,
             @PathVariable UUID propertyId,
             @RequestBody ReorderPhotosRequest request) {
+        log.info("PropertyController.reorderPhotos — propertyId={}", propertyId);
         List<UUID> ids = request.getPhotoIds();
         for (int i = 0; i < ids.size(); i++) {
             final int order = i;

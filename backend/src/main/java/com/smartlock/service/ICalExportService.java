@@ -29,13 +29,16 @@ public class ICalExportService {
 
     @Transactional(readOnly = true)
     public String exportByToken(String token) {
+        log.debug("ICalExportService.exportByToken — tokenPrefix={}...", token.length() > 8 ? token.substring(0, 8) : token);
         Property property = propertyRepository.findByIcalExportToken(token)
                 .orElseThrow(() -> new AppException("Calendar feed not found", HttpStatus.NOT_FOUND));
+        log.info("ICalExportService.exportByToken — property={}", property.getId());
         return generateIcs(property);
     }
 
     @Transactional(readOnly = true)
     public String exportByPropertyId(UUID propertyId, UUID orgId) {
+        log.debug("ICalExportService.exportByPropertyId — propertyId={} orgId={}", propertyId, orgId);
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new AppException("Property not found", HttpStatus.NOT_FOUND));
@@ -44,6 +47,7 @@ public class ICalExportService {
         if (property.getIcalExportToken() == null) {
             property.setIcalExportToken(generateToken());
             propertyRepository.save(property);
+            log.info("ICalExportService.exportByPropertyId — generated new token for property={}", propertyId);
         }
 
         return generateIcs(property);
@@ -51,6 +55,7 @@ public class ICalExportService {
 
     @Transactional
     public String getOrCreateExportToken(UUID propertyId, UUID orgId) {
+        log.debug("ICalExportService.getOrCreateExportToken — propertyId={} orgId={}", propertyId, orgId);
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new AppException("Property not found", HttpStatus.NOT_FOUND));
@@ -58,23 +63,27 @@ public class ICalExportService {
         if (property.getIcalExportToken() == null) {
             property.setIcalExportToken(generateToken());
             propertyRepository.save(property);
+            log.info("ICalExportService.getOrCreateExportToken — created token for property={}", propertyId);
         }
         return property.getIcalExportToken();
     }
 
     @Transactional
     public String rotateExportToken(UUID propertyId, UUID orgId) {
+        log.info("ICalExportService.rotateExportToken — propertyId={} orgId={}", propertyId, orgId);
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new AppException("Property not found", HttpStatus.NOT_FOUND));
         property.setIcalExportToken(generateToken());
         propertyRepository.save(property);
+        log.info("ICalExportService.rotateExportToken — rotated token for property={}", propertyId);
         return property.getIcalExportToken();
     }
 
     private String generateIcs(Property property) {
         List<Reservation> reservations = reservationRepository
                 .findByPropertyIdAndStatusNotCancelled(property.getId());
+        log.debug("ICalExportService.generateIcs — property={} reservations={}", property.getId(), reservations.size());
 
         StringBuilder sb = new StringBuilder();
         sb.append("BEGIN:VCALENDAR\r\n");

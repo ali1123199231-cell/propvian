@@ -50,6 +50,7 @@ public class VerificationService {
 
     @Transactional(readOnly = true)
     public VerificationStatusResponse getStatus(UUID orgId) {
+        log.debug("VerificationService.getStatus — orgId={}", orgId);
         orgSecurity.requireOrgAccess(orgId);
         return toResponse(getOrCreate(orgId));
     }
@@ -71,6 +72,7 @@ public class VerificationService {
 
     @Transactional
     public VerificationStatusResponse submitIdentity(UUID orgId, SubmitIdentityRequest req) {
+        log.info("VerificationService.submitIdentity — orgId={}", orgId);
         orgSecurity.requireOrgAccess(orgId);
         assertStepEnabled("identity_check");
         HostVerification v = getOrCreate(orgId);
@@ -86,6 +88,7 @@ public class VerificationService {
 
     @Transactional
     public VerificationStatusResponse submitPropertyVerification(UUID orgId, SubmitPropertyVerificationRequest req) {
+        log.info("VerificationService.submitPropertyVerification — orgId={}", orgId);
         assertStepEnabled("property_check");
         HostVerification v = getOrCreate(orgId);
         v.setPropertyAddressLine(req.getPropertyAddressLine());
@@ -102,6 +105,8 @@ public class VerificationService {
 
     @Transactional
     public VerificationStatusResponse submitOta(UUID orgId, SubmitOtaRequest req) {
+        log.info("VerificationService.submitOta — orgId={} hasAirbnb={} hasBooking={}",
+                orgId, req.getAirbnbListingUrl() != null, req.getBookingListingUrl() != null);
         assertStepEnabled("ota_check");
         HostVerification v = getOrCreate(orgId);
 
@@ -159,6 +164,7 @@ public class VerificationService {
 
     @Transactional
     public VerificationStatusResponse connectCalendar(UUID orgId, ConnectCalendarRequest req) {
+        log.info("VerificationService.connectCalendar — orgId={}", orgId);
         assertStepEnabled("calendar_sync");
         HostVerification v = getOrCreate(orgId);
         v.setAirbnbIcalUrl(req.getAirbnbIcalUrl());
@@ -211,6 +217,8 @@ public class VerificationService {
 
     @Transactional
     public VerificationStatusResponse connectPayment(UUID orgId, ConnectPaymentRequest req) {
+        log.info("VerificationService.connectPayment — orgId={} hasStripe={} hasPaypal={}",
+                orgId, req.getStripeAccountId() != null, req.getPaypalAccountId() != null);
         assertStepEnabled("payment_setup");
         HostVerification v = getOrCreate(orgId);
         if (req.getStripeAccountId() != null && !req.getStripeAccountId().isBlank()) {
@@ -243,6 +251,7 @@ public class VerificationService {
 
     @Transactional
     public VerificationStatusResponse connectDomain(UUID orgId, ConnectDomainRequest req) {
+        log.info("VerificationService.connectDomain — orgId={} domain={}", orgId, req.getDomain());
         assertStepEnabled("domain_setup");
         HostVerification v = getOrCreate(orgId);
         v.setCustomDomain(req.getDomain());
@@ -272,6 +281,7 @@ public class VerificationService {
 
     @Transactional
     public VerificationStatusResponse deleteDomain(UUID orgId) {
+        log.info("VerificationService.deleteDomain — orgId={}", orgId);
         HostVerification v = getOrCreate(orgId);
         v.setCustomDomain(null);
         v.setDomainStatus(VerificationStatus.NOT_STARTED);

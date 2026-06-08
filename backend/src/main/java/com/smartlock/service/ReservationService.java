@@ -2,6 +2,7 @@ package com.smartlock.service;
 
 import com.smartlock.domain.Organization;
 import com.smartlock.domain.Property;
+import com.smartlock.util.LogMaskingUtil;
 import com.smartlock.domain.Reservation;
 import com.smartlock.domain.User;
 import com.smartlock.domain.enums.ReservationSource;
@@ -55,6 +56,9 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponse createReservation(UUID propertyId, UUID orgId, CreateReservationRequest request) {
+        log.info("createReservation — propertyId={} orgId={} checkIn={} checkOut={} guests={} source={}",
+                propertyId, orgId, request.getCheckInDate(), request.getCheckOutDate(),
+                request.getNumberOfGuests(), request.getSource());
         propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
@@ -76,11 +80,16 @@ public class ReservationService {
                 .build();
 
         reservation = reservationRepository.save(reservation);
+        log.info("createReservation — saved reservationId={} checkinCode={} status={}",
+                reservation.getId(), reservation.getCheckinCode(), reservation.getStatus());
 
         Organization org = organizationRepository.findById(orgId).orElse(null);
         if (org != null) {
             if (org.isAutomationEnabled()) {
+                log.debug("createReservation — publishing ReservationCreatedEvent for automation reservationId={}", reservation.getId());
                 eventPublisher.publishEvent(new ReservationCreatedEvent(this, reservation.getId(), orgId));
+            } else {
+                log.debug("createReservation — automation disabled for orgId={}, skipping event", orgId);
             }
             notifyHostOfNewReservation(reservation, org);
         }
@@ -90,36 +99,45 @@ public class ReservationService {
 
     @Transactional(readOnly = true)
     public Page<ReservationResponse> getReservationsByOrg(UUID orgId, Pageable pageable) {
+        log.debug("getReservationsByOrg — orgId={} page={}/{}", orgId, pageable.getPageNumber(), pageable.getPageSize());
         orgSecurity.requireOrgAccess(orgId);
-        return reservationRepository.findByOrganizationId(orgId, pageable)
+        Page<ReservationResponse> page = reservationRepository.findByOrganizationId(orgId, pageable)
                 .map(r -> toResponse(r, null));
+        log.debug("getReservationsByOrg — returned {} of {}", page.getNumberOfElements(), page.getTotalElements());
+        return page;
     }
 
     @Transactional(readOnly = true)
     public Page<ReservationResponse> getReservationsByProperty(UUID propertyId, Pageable pageable) {
+        log.debug("getReservationsByProperty — propertyId={} page={}", propertyId, pageable.getPageNumber());
         orgSecurity.requirePropertyAccess(propertyId);
-        return reservationRepository.findByPropertyId(propertyId, pageable)
+        Page<ReservationResponse> page = reservationRepository.findByPropertyId(propertyId, pageable)
                 .map(r -> toResponse(r, null));
+        log.debug("getReservationsByProperty — returned {} of {}", page.getNumberOfElements(), page.getTotalElements());
+        return page;
     }
 
     @Transactional(readOnly = true)
     public ReservationResponse getReservation(UUID reservationId) {
+        log.debug("getReservation — reservationId={}", reservationId);
         Reservation r = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", reservationId));
-        // Verify caller owns the property this reservation belongs to
         orgSecurity.requirePropertyAccess(r.getPropertyId());
         long codeCount = accessCodeRepository.countByReservationId(reservationId);
+        log.debug("getReservation — status={} hasAccessCode={}", r.getStatus(), codeCount > 0);
         return toResponse(r, codeCount > 0);
     }
 
     @Transactional
     public ReservationResponse cancelReservation(UUID reservationId, UUID orgId) {
+        log.info("cancelReservation — reservationId={} orgId={}", reservationId, orgId);
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", reservationId));
         orgSecurity.requirePropertyAccess(reservation.getPropertyId());
 
         reservation.setStatus(ReservationStatus.CANCELLED);
         reservation = reservationRepository.save(reservation);
+        log.info("cancelReservation — success reservationId={}", reservationId);
 
         eventPublisher.publishEvent(new ReservationCancelledEvent(this, reservation.getId(), orgId));
 
@@ -128,12 +146,14 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponse checkOut(UUID reservationId, UUID orgId) {
+        log.info("checkOut — reservationId={} orgId={}", reservationId, orgId);
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation", reservationId));
         orgSecurity.requirePropertyAccess(reservation.getPropertyId());
 
         reservation.setStatus(ReservationStatus.CHECKED_OUT);
         reservation = reservationRepository.save(reservation);
+        log.info("checkOut — success reservationId={}", reservationId);
 
         eventPublisher.publishEvent(new ReservationCheckedOutEvent(this, reservation.getId(), orgId));
 

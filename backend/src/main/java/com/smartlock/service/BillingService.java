@@ -98,12 +98,15 @@ public class BillingService {
     public void enforceCanAddProperty(UUID orgId, long currentCount) {
         Subscription sub = getSubscription(orgId);
         if (!isAccessActive(sub)) {
+            log.warn("enforceCanAddProperty — blocked orgId={} status={}", orgId, sub.getStatus());
             throw new AppException(
                     "Your trial has expired or subscription is inactive. Please subscribe to add properties.",
                     HttpStatus.PAYMENT_REQUIRED, "SUBSCRIPTION_INACTIVE");
         }
         int quota = getPropertyQuota(sub);
+        log.debug("enforceCanAddProperty — orgId={} used={} quota={}", orgId, currentCount, quota);
         if (currentCount >= quota) {
+            log.warn("enforceCanAddProperty — quota exceeded orgId={} used={} quota={}", orgId, currentCount, quota);
             throw new AppException(
                     "Property limit reached (" + currentCount + "/" + quota + "). Upgrade your plan to add more properties.",
                     HttpStatus.PAYMENT_REQUIRED, "PROPERTY_LIMIT_REACHED");
@@ -114,13 +117,16 @@ public class BillingService {
     public void enforceCanAddLock(UUID orgId) {
         Subscription sub = getSubscription(orgId);
         if (!isAccessActive(sub)) {
+            log.warn("enforceCanAddLock — blocked orgId={} status={}", orgId, sub.getStatus());
             throw new AppException(
                     "Your trial has expired or subscription is inactive. Please subscribe to add locks.",
                     HttpStatus.PAYMENT_REQUIRED, "SUBSCRIPTION_INACTIVE");
         }
         int quota = getLockQuota(sub);
         long used = getUsedLockCount(orgId);
+        log.debug("enforceCanAddLock — orgId={} used={} quota={}", orgId, used, quota);
         if (used >= quota) {
+            log.warn("enforceCanAddLock — quota exceeded orgId={} used={} quota={}", orgId, used, quota);
             throw new AppException(
                     "Lock quota reached (" + used + "/" + quota + "). Upgrade your plan to add more locks.",
                     HttpStatus.PAYMENT_REQUIRED, "LOCK_QUOTA_EXCEEDED");

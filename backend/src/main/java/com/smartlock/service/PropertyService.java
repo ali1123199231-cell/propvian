@@ -2,6 +2,7 @@ package com.smartlock.service;
 
 import com.smartlock.domain.Property;
 import com.smartlock.domain.enums.PropertyStatus;
+import com.smartlock.util.LogMaskingUtil;
 import com.smartlock.dto.request.property.CreatePropertyRequest;
 import com.smartlock.dto.response.property.PropertyResponse;
 import com.smartlock.exception.AppException;
@@ -47,8 +48,10 @@ public class PropertyService {
 
     @Transactional
     public PropertyResponse createProperty(UUID orgId, CreatePropertyRequest request, UUID userId) {
+        log.info("createProperty — orgId={} userId={} name={}", orgId, userId, request.getName());
         orgSecurity.requireOrgAccess(orgId);
         long currentCount = propertyRepository.countByOrganizationId(orgId);
+        log.debug("createProperty — current property count={}", currentCount);
         billingService.enforceCanAddProperty(orgId, currentCount);
         Property property = Property.builder()
                 .organizationId(orgId)
@@ -90,8 +93,10 @@ public class PropertyService {
                 .build();
 
         PropertyResponse response = toResponse(propertyRepository.save(property));
+        log.info("createProperty — success propertyId={} status={}", response.getId(), response.getStatus());
 
         if (userId != null) {
+            log.debug("createProperty — advancing onboarding step PROPERTY_SETUP for userId={}", userId);
             onboardingService.advanceStepIfCurrent(userId, "PROPERTY_SETUP");
         }
 
@@ -100,21 +105,27 @@ public class PropertyService {
 
     @Transactional(readOnly = true)
     public Page<PropertyResponse> getPropertiesByOrg(UUID orgId, Pageable pageable) {
+        log.debug("getPropertiesByOrg — orgId={} page={}", orgId, pageable.getPageNumber());
         orgSecurity.requireOrgAccess(orgId);
-        return propertyRepository.findByOrganizationId(orgId, pageable)
+        Page<PropertyResponse> page = propertyRepository.findByOrganizationId(orgId, pageable)
                 .map(this::toResponse);
+        log.debug("getPropertiesByOrg — returned {} of {}", page.getNumberOfElements(), page.getTotalElements());
+        return page;
     }
 
     @Transactional(readOnly = true)
     public PropertyResponse getProperty(UUID propertyId, UUID orgId) {
+        log.debug("getProperty — propertyId={} orgId={}", propertyId, orgId);
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
+        log.debug("getProperty — name={} status={}", property.getName(), property.getStatus());
         return toResponse(property);
     }
 
     @Transactional
     public PropertyResponse updateProperty(UUID propertyId, UUID orgId, CreatePropertyRequest request) {
+        log.info("updateProperty — propertyId={} orgId={}", propertyId, orgId);
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));

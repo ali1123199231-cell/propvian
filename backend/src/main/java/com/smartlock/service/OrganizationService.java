@@ -82,6 +82,7 @@ public class OrganizationService {
 
     @Transactional(readOnly = true)
     public OrganizationResponse getOrganization(UUID orgId) {
+        log.debug("OrganizationService.getOrganization — orgId={}", orgId);
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
         return toResponse(org);
@@ -147,6 +148,7 @@ public class OrganizationService {
 
     @Transactional(readOnly = true)
     public List<OrganizationResponse> getUserOrganizations(UUID userId) {
+        log.debug("OrganizationService.getUserOrganizations — userId={}", userId);
         return memberRepository.findByUserId(userId).stream()
                 .map(member -> organizationRepository.findById(member.getOrganizationId()))
                 .filter(opt -> opt.isPresent())
@@ -166,6 +168,7 @@ public class OrganizationService {
 
     @Transactional
     public OrganizationMemberResponse inviteMember(UUID orgId, InviteMemberRequest request, UUID invitedById) {
+        log.info("OrganizationService.inviteMember — orgId={} invitedBy={} role={}", orgId, invitedById, request.getRole());
         User user = userRepository.findByEmail(request.getEmail().toLowerCase())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + request.getEmail()));
 
@@ -183,19 +186,23 @@ public class OrganizationService {
                 .build();
 
         member = memberRepository.save(member);
+        log.info("OrganizationService.inviteMember — added userId={} to orgId={} role={}", user.getId(), orgId, request.getRole());
         return toMemberResponse(member, user);
     }
 
     @Transactional
     public void removeMember(UUID orgId, UUID userId) {
+        log.info("OrganizationService.removeMember — orgId={} userId={}", orgId, userId);
         OrganizationMember member = memberRepository.findByOrganizationIdAndUserId(orgId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
 
         if (member.getRole() == MemberRole.OWNER) {
+            log.warn("OrganizationService.removeMember — blocked: cannot remove owner userId={}", userId);
             throw new IllegalStateException("Cannot remove the organization owner");
         }
 
         memberRepository.delete(member);
+        log.info("OrganizationService.removeMember — removed userId={} from orgId={}", userId, orgId);
     }
 
     private OrganizationResponse toResponse(Organization org) {

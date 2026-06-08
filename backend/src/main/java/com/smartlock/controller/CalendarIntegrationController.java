@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,6 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Tag(name = "Calendar Integrations")
 @SecurityRequirement(name = "bearerAuth")
+@Slf4j
 public class CalendarIntegrationController {
 
     private final CalendarIntegrationService calendarIntegrationService;
@@ -36,6 +38,7 @@ public class CalendarIntegrationController {
             @PathVariable UUID propertyId,
             @Valid @RequestBody CreateCalendarIntegrationRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("CalendarIntegrationController.create — propertyId={}", propertyId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(calendarIntegrationService.createIntegration(
                         propertyId, userDetails.getActiveOrgId(), request)));
@@ -43,6 +46,7 @@ public class CalendarIntegrationController {
 
     @GetMapping("/properties/{propertyId}/calendar-integrations")
     public ResponseEntity<ApiResponse<List<CalendarIntegrationResponse>>> list(@PathVariable UUID propertyId) {
+        log.debug("CalendarIntegrationController.list — propertyId={}", propertyId);
         return ResponseEntity.ok(ApiResponse.success(calendarIntegrationService.getByProperty(propertyId)));
     }
 
@@ -50,6 +54,7 @@ public class CalendarIntegrationController {
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID integrationId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("CalendarIntegrationController.delete — integrationId={}", integrationId);
         calendarIntegrationService.deleteIntegration(integrationId, userDetails.getActiveOrgId());
         return ResponseEntity.ok(ApiResponse.success("Integration deleted"));
     }
@@ -58,6 +63,7 @@ public class CalendarIntegrationController {
     public ResponseEntity<ApiResponse<Void>> sync(
             @PathVariable UUID integrationId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("CalendarIntegrationController.sync — integrationId={}", integrationId);
         calendarIntegrationService.triggerSync(integrationId, userDetails.getActiveOrgId());
         return ResponseEntity.ok(ApiResponse.success("Sync triggered"));
     }
@@ -67,6 +73,7 @@ public class CalendarIntegrationController {
     public ResponseEntity<ApiResponse<Map<String, String>>> getExportToken(
             @PathVariable UUID propertyId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.debug("CalendarIntegrationController.getExportToken — propertyId={}", propertyId);
         String token = icalExportService.getOrCreateExportToken(propertyId, userDetails.getActiveOrgId());
         return ResponseEntity.ok(ApiResponse.success(Map.of("token", token)));
     }
@@ -76,6 +83,7 @@ public class CalendarIntegrationController {
     public ResponseEntity<ApiResponse<Map<String, String>>> rotateToken(
             @PathVariable UUID propertyId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("CalendarIntegrationController.rotateToken — propertyId={}", propertyId);
         String token = icalExportService.rotateExportToken(propertyId, userDetails.getActiveOrgId());
         return ResponseEntity.ok(ApiResponse.success(Map.of("token", token)));
     }

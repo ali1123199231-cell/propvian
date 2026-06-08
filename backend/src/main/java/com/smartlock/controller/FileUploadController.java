@@ -6,6 +6,7 @@ import com.smartlock.service.FileUploadService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,6 +23,7 @@ import java.util.Map;
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
 @Tag(name = "Files")
+@Slf4j
 public class FileUploadController {
 
     private final FileUploadService fileUploadService;
@@ -31,6 +33,7 @@ public class FileUploadController {
     public ResponseEntity<ApiResponse<Map<String, String>>> upload(
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
+        log.info("FileUploadController.upload — filename={}", file.getOriginalFilename());
         // Always derive orgId from the JWT — never trust a client-supplied value
         String orgId = currentUser.getActiveOrgId() != null
                 ? currentUser.getActiveOrgId().toString()
@@ -45,6 +48,7 @@ public class FileUploadController {
     @GetMapping("/files/view")
     public ResponseEntity<Resource> viewSigned(@RequestParam("token") String token,
                                                HttpServletRequest request) {
+        log.debug("FileUploadController.viewSigned — token=***");
         Resource resource = fileUploadService.loadSigned(token);
         return buildResourceResponse(resource, request);
     }
@@ -55,6 +59,7 @@ public class FileUploadController {
                                          @PathVariable String filename,
                                          @AuthenticationPrincipal CustomUserDetails currentUser,
                                          HttpServletRequest request) {
+        log.debug("FileUploadController.view — orgId={}, filename={}", orgId, filename);
         // Restrict direct access to the caller's own org files
         String callerOrgId = currentUser.getActiveOrgId() != null
                 ? currentUser.getActiveOrgId().toString() : "";

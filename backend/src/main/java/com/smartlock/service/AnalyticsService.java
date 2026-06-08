@@ -7,6 +7,7 @@ import com.smartlock.domain.enums.ReservationStatus;
 import com.smartlock.dto.response.analytics.DashboardStatsResponse;
 import com.smartlock.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AnalyticsService {
 
     private final PropertyRepository propertyRepository;
@@ -26,6 +28,7 @@ public class AnalyticsService {
 
     @Transactional(readOnly = true)
     public DashboardStatsResponse getDashboardStats(UUID orgId, UUID userId) {
+        log.debug("AnalyticsService.getDashboardStats — orgId={} userId={}", orgId, userId);
         long totalProperties = propertyRepository.countByOrganizationId(orgId);
         long activeProperties = propertyRepository.countByOrganizationIdAndStatus(orgId, PropertyStatus.ACTIVE);
 
@@ -48,7 +51,7 @@ public class AnalyticsService {
                 ? (double) (activeReservations + checkedInReservations) / totalProperties * 100
                 : 0.0;
 
-        return DashboardStatsResponse.builder()
+        DashboardStatsResponse stats = DashboardStatsResponse.builder()
                 .totalProperties(totalProperties)
                 .activeProperties(activeProperties)
                 .totalLocks(totalLocks)
@@ -61,5 +64,10 @@ public class AnalyticsService {
                 .unreadNotifications(unreadNotifications)
                 .occupancyRate(Math.round(occupancyRate * 10.0) / 10.0)
                 .build();
+
+        log.info("AnalyticsService.getDashboardStats — org={} props={}/{} locks={}/{} reservations={} occupancy={}%",
+                orgId, activeProperties, totalProperties, connectedLocks, totalLocks,
+                activeReservations + checkedInReservations, stats.getOccupancyRate());
+        return stats;
     }
 }

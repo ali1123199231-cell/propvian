@@ -24,6 +24,7 @@ import com.smartlock.repository.PropertyBlockedDateRepository;
 import com.smartlock.repository.PropertyHouseRuleRepository;
 import com.smartlock.repository.PropertyPhotoRepository;
 import com.smartlock.repository.PropertyPricingRuleRepository;
+import com.smartlock.repository.PropertySeasonalRuleRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.PromoCodeRepository;
 import com.smartlock.repository.UserRepository;
@@ -74,6 +75,7 @@ public class GuestCheckoutService {
     private final CalendarIntervalRepository calendarIntervalRepository;
     private final PropertyBlockedDateRepository blockedRepo;
     private final PropertyPricingRuleRepository pricingRepo;
+    private final PropertySeasonalRuleRepository seasonalRuleRepo;
     private final PropertyHouseRuleRepository houseRuleRepo;
     private final PropertyAmenityRepository amenityRepo;
     private final PromoCodeRepository promoCodeRepository;
@@ -257,8 +259,16 @@ public class GuestCheckoutService {
                                 r.getStartDate().toString(), r.getEndDate().toString(), r.getNightlyRate()))
                         .toList();
 
-        Organization org = organizationRepository.findById(property.getOrganizationId()).orElse(null);
-        String orgSlug = org != null ? org.getSlug() : null;
+        List<GuestPropertyResponse.SeasonalRuleInfo> seasonalRules =
+                seasonalRuleRepo.findByPropertyIdOrderByStartDateAsc(property.getId()).stream()
+                        .map(r -> new GuestPropertyResponse.SeasonalRuleInfo(
+                                r.getStartDate().toString(), r.getEndDate().toString(),
+                                r.getMinStayDays(), r.getMaxStayDays()))
+                        .toList();
+
+        Organization org = organizationRepository.findById(property.getOrganizationId())
+                .orElseThrow(() -> new AppException("Property not found", HttpStatus.NOT_FOUND));
+        String orgSlug = org.getSlug();
         WebsiteConfig wc = websiteConfigRepository.findByOrganizationId(property.getOrganizationId()).orElse(null);
 
         List<String> photos = propertyPhotoRepository
@@ -289,9 +299,10 @@ public class GuestCheckoutService {
                     amenities.size(), houseRules.size(), blocked.size(), pricing.size());
         }
 
-        log.info("[GUEST-PROPERTY] Building response: minStay={} maxStay={} instantBooking={} hasPromos={} securityDeposit={} beds={} propertyType='{}'",
+        boolean bookingsEnabled = v != null && v.isBookingsEnabled();
+        log.info("[GUEST-PROPERTY] Building response: minStay={} maxStay={} instantBooking={} bookingsEnabled={} hasPromos={} securityDeposit={} beds={} propertyType='{}'",
                 property.getMinStayNights(), property.getMaxStayNights(), property.isInstantBooking(),
-                hasActivePromos(property.getOrganizationId()), property.getSecurityDeposit(),
+                bookingsEnabled, hasActivePromos(property.getOrganizationId()), property.getSecurityDeposit(),
                 property.getBeds(), property.getPropertyType());
 
         return GuestPropertyResponse.builder()
@@ -325,11 +336,13 @@ public class GuestCheckoutService {
                 .stripePublishableKey(stripeEnabled ? systemConfigService.getActiveStripePublishableKey() : null)
                 .stripeConnectedAccountId(stripeEnabled ? v.getStripeAccountId() : null)
                 .paypalClientId(paypalEnabled ? systemConfigService.getPaypalClientId() : null)
+                .bookingsEnabled(bookingsEnabled)
                 .hasActivePromos(hasActivePromos(property.getOrganizationId()))
                 .houseRules(houseRules)
                 .amenities(amenities)
                 .blockedDates(blocked)
                 .pricingRules(pricing)
+                .seasonalRules(seasonalRules)
                 .brandName(wc != null && wc.getBrandName() != null ? wc.getBrandName() : (org != null ? org.getName() : null))
                 .brandLogoUrl(wc != null ? wc.getBrandLogoUrl() : null)
                 .primaryColor(wc != null && wc.getPrimaryColor() != null ? wc.getPrimaryColor() : "#6366F1")
@@ -363,6 +376,9 @@ public class GuestCheckoutService {
             throw new AppException(avail.reason(), HttpStatus.CONFLICT);
         }
         log.info("[GUEST-INITIATE] Availability OK for property={}", property.getId());
+
+        organizationRepository.findById(property.getOrganizationId())
+                .orElseThrow(() -> new AppException("Property not found", HttpStatus.NOT_FOUND));
 
         HostVerification v = verificationRepository.findByOrganizationId(property.getOrganizationId())
                 .orElseThrow(() -> new AppException("This property cannot accept payments yet", HttpStatus.SERVICE_UNAVAILABLE));
@@ -585,8 +601,8 @@ public class GuestCheckoutService {
     // ── Public promo code validation ──────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public PromoValidationResponse validatePromoCode(String orgSlug, String code) {
-        log.info("[PROMO-VALIDATE] orgSlug='{}' code='{}'", orgSlug, code);
+    public PromoValidationResponse validatePromoCode(String orgSlug, String code, Integer nights) {
+        log.info("[PROMO-VALIDATE] orgSlug='{}' code='{}' nights={}", orgSlug, code, nights);
         Organization org = organizationRepository.findBySlug(orgSlug)
                 .orElse(null);
         if (org == null) {
@@ -598,6 +614,12 @@ public class GuestCheckoutService {
                 .filter(p -> p.getExpiresAt() == null || p.getExpiresAt().isAfter(java.time.Instant.now()))
                 .filter(p -> p.getMaxUses() == null || p.getUsesCount() < p.getMaxUses())
                 .map(p -> {
+                    if (nights != null && p.getMinNights() != null && nights < p.getMinNights()) {
+                        log.warn("[PROMO-VALIDATE] REJECTED minNights: code='{}' requires {} nights but got {}", p.getCode(), p.getMinNights(), nights);
+                        return PromoValidationResponse.builder().valid(false)
+                                .message("This promo code requires a minimum stay of " + p.getMinNights() + " nights")
+                                .minNights(p.getMinNights()).build();
+                    }
                     log.info("[PROMO-VALIDATE] VALID code='{}' type={} value={} minNights={}", p.getCode(), p.getDiscountType(), p.getDiscountValue(), p.getMinNights());
                     return PromoValidationResponse.builder()
                             .valid(true).code(p.getCode()).discountType(p.getDiscountType())

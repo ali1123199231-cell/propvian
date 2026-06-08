@@ -22,6 +22,7 @@ public class PayPalWebhookController {
             @RequestHeader(value = "PAYPAL-CERT-URL",          required = false) String certUrl,
             @RequestHeader(value = "PAYPAL-AUTH-ALGO",         required = false) String authAlgo,
             @RequestHeader(value = "PAYPAL-TRANSMISSION-SIG",  required = false) String signature) {
+        log.info("PayPalWebhookController.handleWebhook — transmissionId={}", transmissionId);
         try {
             payPalService.handleWebhook(payload, transmissionId, transmissionTime, certUrl, authAlgo, signature);
             return ResponseEntity.ok().build();

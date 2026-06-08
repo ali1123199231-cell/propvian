@@ -189,7 +189,7 @@ public class TTLockOAuthController {
     public ResponseEntity<ApiResponse<List<TTLockLockListResponse.LockItem>>> getAvailableLocks(
             @RequestParam String state,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
-
+        log.debug("TTLockOAuthController.getAvailableLocks — userId={}", currentUser.getUserId());
         UUID stateId = UUID.fromString(state);
         TtlockOAuthState oauthState = stateRepository.findById(stateId)
                 .orElseThrow(() -> new IllegalArgumentException("OAuth state not found or expired"));

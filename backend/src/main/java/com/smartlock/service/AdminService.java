@@ -40,6 +40,7 @@ public class AdminService {
     // ── Dashboard ─────────────────────────────────────────────────────────────
 
     public AdminDashboardResponse getDashboard() {
+        log.debug("AdminService.getDashboard");
         long totalUsers = userRepository.count();
         long totalOrgs  = organizationRepository.count();
         long pendingVerifs  = hostVerificationRepository.countByAdminStatus(VerificationStatus.PENDING);
@@ -51,7 +52,7 @@ public class AdminService {
         Instant since24h = Instant.now().minus(24, ChronoUnit.HOURS);
         long recentErrors = errorLogRepository.countByCreatedAtAfter(since24h);
 
-        return AdminDashboardResponse.builder()
+        AdminDashboardResponse dashboard = AdminDashboardResponse.builder()
                 .totalUsers(totalUsers)
                 .totalOrganizations(totalOrgs)
                 .pendingVerifications(pendingVerifs)
@@ -60,11 +61,15 @@ public class AdminService {
                 .trialingSubscriptions(trialingSubs)
                 .recentErrors(recentErrors)
                 .build();
+        log.info("AdminService.getDashboard — users={} orgs={} pendingVerifs={} recentErrors={}",
+                totalUsers, totalOrgs, pendingVerifs, recentErrors);
+        return dashboard;
     }
 
     // ── Users ─────────────────────────────────────────────────────────────────
 
     public PageResponse<AdminUserResponse> listUsers(String q, int page, int size) {
+        log.debug("AdminService.listUsers — q={} page={}", q != null ? "[filtered]" : "all", page);
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<User> users = (q != null && !q.isBlank())
                 ? userRepository.searchUsers(q, pageable)
@@ -80,23 +85,30 @@ public class AdminService {
 
     @Transactional
     public AdminUserResponse changeUserRole(UUID userId, Role newRole) {
+        log.info("AdminService.changeUserRole — userId={} newRole={}", userId, newRole);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
+        Role oldRole = user.getRole();
         user.setRole(newRole);
-        return AdminUserResponse.from(userRepository.save(user));
+        AdminUserResponse result = AdminUserResponse.from(userRepository.save(user));
+        log.info("AdminService.changeUserRole — changed from {} to {} for userId={}", oldRole, newRole, userId);
+        return result;
     }
 
     @Transactional
     public void deactivateUser(UUID userId) {
+        log.info("AdminService.deactivateUser — userId={}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
         user.softDelete();
         userRepository.save(user);
+        log.info("AdminService.deactivateUser — deactivated userId={}", userId);
     }
 
     // ── Organizations ─────────────────────────────────────────────────────────
 
     public PageResponse<AdminOrgResponse> listOrganizations(String q, int page, int size) {
+        log.debug("AdminService.listOrganizations — q={} page={}", q != null ? "[filtered]" : "all", page);
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Organization> orgs = (q != null && !q.isBlank())
                 ? organizationRepository.searchOrganizations(q, pageable)
@@ -112,15 +124,19 @@ public class AdminService {
 
     @Transactional
     public void suspendOrganization(UUID orgId) {
+        log.info("AdminService.suspendOrganization — orgId={}", orgId);
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new AppException("Organization not found", HttpStatus.NOT_FOUND));
         org.softDelete();
         organizationRepository.save(org);
+        log.info("AdminService.suspendOrganization — suspended orgId={}", orgId);
     }
 
     @Transactional
     public void restoreOrganization(UUID orgId) {
+        log.info("AdminService.restoreOrganization — orgId={}", orgId);
         organizationRepository.restoreById(orgId);
+        log.info("AdminService.restoreOrganization — restored orgId={}", orgId);
     }
 
     private AdminOrgResponse buildOrgResponse(Organization org) {

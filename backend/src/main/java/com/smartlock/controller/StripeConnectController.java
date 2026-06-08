@@ -50,6 +50,7 @@ public class StripeConnectController {
     @GetMapping("/connect-url")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<Map<String, String>>> connectUrl(@RequestParam String orgId) {
+        log.debug("StripeConnectController.connectUrl — orgId={}", orgId);
         String clientId = systemConfigService.getActiveStripeConnectClientId();
 
         if (clientId.isBlank()) {

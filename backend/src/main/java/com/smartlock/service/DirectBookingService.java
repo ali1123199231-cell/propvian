@@ -2,6 +2,7 @@ package com.smartlock.service;
 
 import com.smartlock.domain.DirectBooking;
 import com.smartlock.domain.Organization;
+import com.smartlock.util.LogMaskingUtil;
 import com.smartlock.domain.Property;
 import com.smartlock.domain.enums.DirectBookingStatus;
 import com.smartlock.dto.request.directbooking.CreateDirectBookingRequest;
@@ -47,9 +48,13 @@ public class DirectBookingService {
 
     @Transactional
     public DirectBookingResponse createBooking(UUID orgId, CreateDirectBookingRequest req) {
+        log.info("createBooking — orgId={} propertyId={} checkIn={} checkOut={} guests={} guestEmail={}",
+                orgId, req.getPropertyId(), req.getCheckInDate(), req.getCheckOutDate(),
+                req.getNumberOfGuests(), LogMaskingUtil.maskEmail(req.getGuestEmail()));
         orgSecurity.requireOrgAccess(orgId);
         // Enforce booking gate
         if (!verificationService.isBookingEnabled(orgId)) {
+            log.warn("createBooking — rejected: booking gate disabled for orgId={}", orgId);
             throw new AppException("Bookings are disabled until verification is complete", HttpStatus.FORBIDDEN);
         }
 
@@ -59,11 +64,12 @@ public class DirectBookingService {
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new AppException("Property not found in this organization", HttpStatus.NOT_FOUND));
 
-        // CalendarEngine handles: advisory lock + availability check + stay rule validation
-        // This replaces the old findConflictingBookings() call
+        log.debug("createBooking — checking availability propertyId={} {} → {}",
+                propertyId, req.getCheckInDate(), req.getCheckOutDate());
         CalendarEngine.AvailabilityResult avail = calendarEngine.checkAvailability(
                 propertyId, req.getCheckInDate(), req.getCheckOutDate());
         if (!avail.available()) {
+            log.warn("createBooking — unavailable propertyId={} reason={}", propertyId, avail.reason());
             throw new AppException(avail.reason(), HttpStatus.CONFLICT);
         }
 
@@ -82,38 +88,48 @@ public class DirectBookingService {
                 .build();
 
         booking = bookingRepository.save(booking);
+        log.info("createBooking — saved bookingId={} status={}", booking.getId(), booking.getStatus());
 
         // Register dates in the calendar engine (advisory lock + GIST constraint protection)
         calendarEngine.registerBookedInterval(
                 propertyId, req.getCheckInDate(), req.getCheckOutDate(),
-                booking.getId(), "DirectBooking: " + req.getGuestEmail());
+                booking.getId(), "DirectBooking: " + LogMaskingUtil.maskEmail(req.getGuestEmail()));
+        log.debug("createBooking — calendar interval registered for bookingId={}", booking.getId());
 
         return toResponse(booking);
     }
 
     @Transactional(readOnly = true)
     public PageResponse<DirectBookingResponse> listBookings(UUID orgId, Pageable pageable) {
+        log.debug("listBookings — orgId={} page={}", orgId, pageable.getPageNumber());
         orgSecurity.requireOrgAccess(orgId);
-        return PageResponse.from(
+        PageResponse<DirectBookingResponse> result = PageResponse.from(
                 bookingRepository.findByOrganizationId(orgId, pageable).map(this::toResponse));
+        log.debug("listBookings — returned {} of {}", result.getContent().size(), result.getTotalElements());
+        return result;
     }
 
     @Transactional(readOnly = true)
     public DirectBookingResponse getBooking(UUID orgId, UUID bookingId) {
+        log.debug("getBooking — orgId={} bookingId={}", orgId, bookingId);
         DirectBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException("Booking not found", HttpStatus.NOT_FOUND));
         if (!booking.getOrganizationId().equals(orgId)) {
+            log.warn("getBooking — access denied orgId={} bookingId={}", orgId, bookingId);
             throw new AppException("Access denied", HttpStatus.FORBIDDEN);
         }
+        log.debug("getBooking — status={}", booking.getStatus());
         return toResponse(booking);
     }
 
     @Transactional
     public DirectBookingResponse confirmBooking(UUID orgId, UUID bookingId) {
+        log.info("confirmBooking — orgId={} bookingId={}", orgId, bookingId);
         DirectBooking booking = requireBooking(orgId, bookingId);
         booking.setStatus(DirectBookingStatus.CONFIRMED);
         booking.setPaymentStatus("PAID");
         bookingRepository.save(booking);
+        log.info("confirmBooking — success bookingId={}", bookingId);
         notifyHostOfConfirmedBooking(orgId, booking);
         return toResponse(booking);
     }
@@ -138,8 +154,10 @@ public class DirectBookingService {
 
     @Transactional
     public DirectBookingResponse cancelBooking(UUID orgId, UUID bookingId, String reason) {
+        log.info("cancelBooking — orgId={} bookingId={} reason={}", orgId, bookingId, reason);
         DirectBooking booking = requireBooking(orgId, bookingId);
         if (booking.getStatus() == DirectBookingStatus.CANCELLED) {
+            log.warn("cancelBooking — already cancelled bookingId={}", bookingId);
             throw new AppException("Booking is already cancelled", HttpStatus.BAD_REQUEST);
         }
         booking.setStatus(DirectBookingStatus.CANCELLED);
@@ -147,32 +165,39 @@ public class DirectBookingService {
         booking.setCancellationReason(reason);
         bookingRepository.save(booking);
 
-        // Release calendar dates (removes BOOKED + BUFFER intervals)
+        log.debug("cancelBooking — releasing calendar intervals for bookingId={}", bookingId);
         calendarEngine.cancelBookingDates(booking.getId());
+        log.info("cancelBooking — success bookingId={}", bookingId);
 
         return toResponse(booking);
     }
 
     @Transactional
     public DirectBookingResponse checkInBooking(UUID orgId, UUID bookingId) {
+        log.info("checkInBooking — orgId={} bookingId={}", orgId, bookingId);
         DirectBooking booking = requireBooking(orgId, bookingId);
         if (booking.getStatus() != DirectBookingStatus.CONFIRMED) {
+            log.warn("checkInBooking — wrong status={} bookingId={}", booking.getStatus(), bookingId);
             throw new AppException("Booking must be CONFIRMED to check in (current: " + booking.getStatus() + ")", HttpStatus.BAD_REQUEST);
         }
         booking.setStatus(DirectBookingStatus.CHECKED_IN);
+        log.info("checkInBooking — success bookingId={}", bookingId);
         return toResponse(bookingRepository.save(booking));
     }
 
     @Transactional
     public DirectBookingResponse checkOutBooking(UUID orgId, UUID bookingId) {
+        log.info("checkOutBooking — orgId={} bookingId={}", orgId, bookingId);
         DirectBooking booking = requireBooking(orgId, bookingId);
         if (booking.getStatus() != DirectBookingStatus.CHECKED_IN) {
+            log.warn("checkOutBooking — wrong status={} bookingId={}", booking.getStatus(), bookingId);
             throw new AppException("Booking must be CHECKED_IN to check out (current: " + booking.getStatus() + ")", HttpStatus.BAD_REQUEST);
         }
         booking.setStatus(DirectBookingStatus.CHECKED_OUT);
         bookingRepository.save(booking);
+        log.info("checkOutBooking — success bookingId={}", bookingId);
 
-        // Create a cleaner task for this checkout
+        log.debug("checkOutBooking — creating cleaner task for bookingId={}", bookingId);
         cleanerTaskService.createCleanerTaskForDirectBooking(bookingId, orgId);
 
         return toResponse(booking);

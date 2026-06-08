@@ -1,24 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Log levels are controlled per-profile in application-dev.yml / application-prod.yml.
+
+  To silence all debug logs:
+    Set logging.level.com.smartlock=INFO in application-dev.yml
+    or at runtime: set env var LOGGING_LEVEL_COM_SMARTLOCK=INFO
+
+  To silence the HTTP request filter only:
+    logging.level.com.smartlock.filter.RequestLoggingFilter=WARN
+
+  MDC fields available in every log line (when set):
+    %X{requestId}  — short correlation ID per HTTP request
+-->
 <configuration>
+
+    <!-- ── Console appender ───────────────────────────────────────────────── -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <immediateFlush>true</immediateFlush>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <!-- Include requestId from MDC when present -->
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{30}%X{requestId:+[%X{requestId}]} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
 
-    <logger name="com.smartlock" level="INFO" additivity="false">
-        <appender-ref ref="STDOUT"/>
-    </logger>
-    <logger name="org.springframework.security" level="WARN" additivity="false">
-        <appender-ref ref="STDOUT"/>
-    </logger>
-    <logger name="org.hibernate.SQL" level="WARN" additivity="false">
-        <appender-ref ref="STDOUT"/>
-    </logger>
+    <!-- ── Spring profile: dev ────────────────────────────────────────────── -->
+    <springProfile name="dev">
+        <logger name="com.smartlock" level="DEBUG" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="com.smartlock.filter.RequestLoggingFilter" level="DEBUG" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="org.springframework.security" level="INFO" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="org.springframework.web" level="INFO" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="org.hibernate.orm.jdbc.bind" level="TRACE" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+    </springProfile>
 
-    <root level="INFO">
+    <!-- ── Spring profile: prod ───────────────────────────────────────────── -->
+    <springProfile name="prod">
+        <logger name="com.smartlock" level="INFO" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <!-- In prod, request filter only logs errors/warnings automatically -->
+        <logger name="com.smartlock.filter.RequestLoggingFilter" level="WARN" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="org.springframework.security" level="WARN" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="org.hibernate.SQL" level="WARN" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+    </springProfile>
+
+    <!-- ── Fallback (no profile / test) ──────────────────────────────────── -->
+    <springProfile name="!dev &amp; !prod">
+        <logger name="com.smartlock" level="INFO" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="org.springframework.security" level="WARN" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+        <logger name="org.hibernate.SQL" level="WARN" additivity="false">
+            <appender-ref ref="STDOUT"/>
+        </logger>
+    </springProfile>
+
+    <root level="WARN">
         <appender-ref ref="STDOUT"/>
     </root>
+
 </configuration>

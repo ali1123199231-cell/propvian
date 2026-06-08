@@ -4,6 +4,7 @@ import com.smartlock.domain.Property;
 import com.smartlock.domain.PropertySeasonalRule;
 import com.smartlock.repository.PropertySeasonalRuleRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -16,6 +17,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PropertyRuleResolver {
 
     private final PropertySeasonalRuleRepository seasonalRuleRepo;
@@ -28,11 +30,15 @@ public class PropertyRuleResolver {
     ) {}
 
     public ResolvedRules resolve(Property property, LocalDate checkIn, LocalDate checkOut) {
+        log.debug("PropertyRuleResolver.resolve — property={} checkIn={} checkOut={}", property.getId(), checkIn, checkOut);
         List<PropertySeasonalRule> seasons =
                 seasonalRuleRepo.findOverlapping(property.getId(), checkIn, checkOut.minusDays(1));
 
         if (seasons.isEmpty()) {
-            return fromProperty(property);
+            ResolvedRules base = fromProperty(property);
+            log.debug("PropertyRuleResolver.resolve — no seasons, using base rules minStay={} maxStay={}",
+                    base.minStayDays(), base.maxStayDays());
+            return base;
         }
 
         // Apply the most restrictive values across all overlapping seasons.
@@ -48,7 +54,10 @@ public class PropertyRuleResolver {
             if (s.getBufferDaysAfter()  != null) bufAfter  = Math.max(bufAfter,  s.getBufferDaysAfter());
         }
 
-        return new ResolvedRules(minStay, maxStay, bufBefore, bufAfter);
+        ResolvedRules resolved = new ResolvedRules(minStay, maxStay, bufBefore, bufAfter);
+        log.debug("PropertyRuleResolver.resolve — applied {} season(s), minStay={} maxStay={} bufBefore={} bufAfter={}",
+                seasons.size(), minStay, maxStay, bufBefore, bufAfter);
+        return resolved;
     }
 
     private ResolvedRules fromProperty(Property p) {

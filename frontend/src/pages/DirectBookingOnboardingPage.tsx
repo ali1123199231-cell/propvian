@@ -16,9 +16,11 @@ export function DirectBookingOnboardingPage() {
   const [resending, setResending] = useState(false)
   const [countdown, setCountdown] = useState(0)
 
-  // Already verified — skip straight to dashboard
+  // Already verified — complete onboarding then go to dashboard
   useEffect(() => {
     if (user?.emailVerified) {
+      onboardingApi.complete().catch(() => {})
+      updateUser({ onboardingCompleted: true, onboardingStep: 'COMPLETED' })
       navigate('/dashboard', { replace: true })
     }
   }, [])

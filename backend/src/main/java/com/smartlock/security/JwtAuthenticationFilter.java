@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String token = resolveToken(request);
+        String uri = request.getRequestURI();
 
         if (StringUtils.hasText(token)) {
             try {
@@ -45,9 +46,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
+                log.debug("JWT auth — userId={} orgId={} role={} uri={}", userId, orgId, role, uri);
             } catch (JwtException e) {
-                log.debug("JWT validation failed: {}", e.getMessage());
+                log.debug("JWT validation failed for {} — {}", uri, e.getMessage());
             }
+        } else {
+            log.debug("JWT auth — no token, anonymous request uri={}", uri);
         }
 
         filterChain.doFilter(request, response);

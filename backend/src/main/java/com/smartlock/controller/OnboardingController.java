@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/onboarding")
 @RequiredArgsConstructor
+@Slf4j
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Onboarding")
 public class OnboardingController {
@@ -35,6 +37,7 @@ public class OnboardingController {
     @Operation(summary = "Get current onboarding state")
     public ResponseEntity<ApiResponse<OnboardingStateResponse>> getState(
             @AuthenticationPrincipal CustomUserDetails currentUser) {
+        log.debug("OnboardingController.getState — userId={}", currentUser.getUserId());
         return ResponseEntity.ok(ApiResponse.success(onboardingService.getState(currentUser.getUserId())));
     }
 
@@ -43,7 +46,7 @@ public class OnboardingController {
     public ResponseEntity<ApiResponse<OnboardingStateResponse>> selectLock(
             @Valid @RequestBody SelectLockRequest request,
             @AuthenticationPrincipal CustomUserDetails currentUser) {
-
+        log.info("OnboardingController.selectLock — userId={} lockId={}", currentUser.getUserId(), request.getTtlockLockId());
         UUID userId = currentUser.getUserId();
         UUID stateId = UUID.fromString(request.getOauthState());
 
@@ -78,6 +81,7 @@ public class OnboardingController {
     @Operation(summary = "Mark onboarding as complete (after calendar setup or skip)")
     public ResponseEntity<ApiResponse<Void>> complete(
             @AuthenticationPrincipal CustomUserDetails currentUser) {
+        log.info("OnboardingController.complete — userId={}", currentUser.getUserId());
         onboardingService.complete(currentUser.getUserId());
         return ResponseEntity.ok(ApiResponse.success("Onboarding completed"));
     }

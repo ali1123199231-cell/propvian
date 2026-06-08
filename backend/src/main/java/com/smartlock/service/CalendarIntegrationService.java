@@ -7,6 +7,7 @@ import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.repository.CalendarIntegrationRepository;
 import com.smartlock.repository.PropertyRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CalendarIntegrationService {
 
     private final CalendarIntegrationRepository calendarIntegrationRepository;
@@ -25,6 +27,8 @@ public class CalendarIntegrationService {
 
     @Transactional
     public CalendarIntegrationResponse createIntegration(UUID propertyId, UUID orgId, CreateCalendarIntegrationRequest request) {
+        log.info("CalendarIntegrationService.createIntegration — propertyId={} orgId={} platform={}",
+                propertyId, orgId, request.getPlatform());
         propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));
@@ -43,12 +47,14 @@ public class CalendarIntegrationService {
                 .build();
 
         CalendarIntegration saved = calendarIntegrationRepository.save(integration);
+        log.info("CalendarIntegrationService.createIntegration — created id={}", saved.getId());
         triggerSync(saved.getId(), orgId);
         return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public List<CalendarIntegrationResponse> getByProperty(UUID propertyId) {
+        log.debug("CalendarIntegrationService.getByProperty — propertyId={}", propertyId);
         return calendarIntegrationRepository.findByPropertyId(propertyId).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -56,14 +62,17 @@ public class CalendarIntegrationService {
 
     @Transactional
     public void deleteIntegration(UUID integrationId, UUID orgId) {
+        log.info("CalendarIntegrationService.deleteIntegration — integrationId={} orgId={}", integrationId, orgId);
         CalendarIntegration integration = calendarIntegrationRepository.findById(integrationId)
                 .orElseThrow(() -> new ResourceNotFoundException("CalendarIntegration", integrationId));
         integration.setDeletedAt(java.time.Instant.now());
         calendarIntegrationRepository.save(integration);
+        log.info("CalendarIntegrationService.deleteIntegration — soft-deleted");
     }
 
     @Async
     public void triggerSync(UUID integrationId, UUID orgId) {
+        log.debug("CalendarIntegrationService.triggerSync — integrationId={}", integrationId);
         calendarIntegrationRepository.findById(integrationId).ifPresent(calendarSyncService::syncIntegration);
     }
 

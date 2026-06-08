@@ -2,6 +2,7 @@ package com.smartlock.service;
 
 import com.smartlock.domain.BookingHold;
 import com.smartlock.domain.CalendarInterval;
+import com.smartlock.util.LogMaskingUtil;
 import com.smartlock.domain.HostVerification;
 import com.smartlock.domain.Property;
 import com.smartlock.domain.PropertyBlockedDate;
@@ -64,6 +65,7 @@ public class CalendarEngine {
 
     @Transactional(readOnly = true)
     public AvailabilityResult checkAvailability(UUID propertyId, LocalDate checkIn, LocalDate checkOut) {
+        log.debug("checkAvailability — propertyId={} {} → {}", propertyId, checkIn, checkOut);
         validateDates(checkIn, checkOut);
 
         Property property = requireActiveProperty(propertyId);
@@ -73,11 +75,14 @@ public class CalendarEngine {
         if (!conflicts.isEmpty()) {
             String states = conflicts.stream().map(CalendarInterval::getState).distinct()
                     .reduce((a, b) -> a + "," + b).orElse("UNKNOWN");
+            log.info("checkAvailability — BLOCKED propertyId={} {} → {} conflicts={}", propertyId, checkIn, checkOut, states);
             return AvailabilityResult.blocked("Dates conflict with existing " + states + " intervals");
         }
         if (!blockedDateRepo.findOverlapping(propertyId, checkIn, checkOut).isEmpty()) {
+            log.info("checkAvailability — BLOCKED by host propertyId={} {} → {}", propertyId, checkIn, checkOut);
             return AvailabilityResult.blocked("Dates are blocked by the host");
         }
+        log.debug("checkAvailability — AVAILABLE propertyId={} {} → {}", propertyId, checkIn, checkOut);
         return AvailabilityResult.ok();
     }
 
@@ -102,11 +107,13 @@ public class CalendarEngine {
         Property property = requireActiveProperty(propertyId);
         validateStayRules(property, checkIn, checkOut);
 
+        log.debug("createHold — acquiring advisory lock for propertyId={}", propertyId);
         acquireAdvisoryLock(propertyId);
 
         // Re-check inside lock scope (TOCTOU prevention)
         List<CalendarInterval> conflicts = intervalRepo.findBlockingOverlap(propertyId, checkIn, checkOut);
         if (!conflicts.isEmpty()) {
+            log.warn("createHold — conflict detected propertyId={} {} → {}", propertyId, checkIn, checkOut);
             throw new AppException("Property is not available for the selected dates", HttpStatus.CONFLICT);
         }
 
@@ -140,8 +147,9 @@ public class CalendarEngine {
         interval.setHoldId(hold.getId());
         intervalRepo.save(interval);
 
-        log.info("Hold created: property={} hold={} [{} → {}] expires={}",
-                propertyId, hold.getId(), checkIn, checkOut, expiresAt);
+        log.info("createHold — success propertyId={} holdId={} intervalId={} {} → {} guestEmail={} expiresAt={}",
+                propertyId, hold.getId(), interval.getId(), checkIn, checkOut,
+                LogMaskingUtil.maskEmail(guestEmail), expiresAt);
 
         return new HoldResult(hold.getId(), interval.getId(), expiresAt);
     }

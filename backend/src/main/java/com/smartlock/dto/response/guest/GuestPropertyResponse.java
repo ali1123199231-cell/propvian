@@ -54,6 +54,9 @@ public class GuestPropertyResponse {
     private String fontFamily;
     private String buttonStyle;
 
+    // Whether bookings are currently enabled for this property's org
+    private boolean bookingsEnabled;
+
     // Whether the org has at least one active promo code
     private boolean hasActivePromos;
 
@@ -64,6 +67,7 @@ public class GuestPropertyResponse {
     // Unavailability data for the date picker
     private List<BlockedRange> blockedDates;
     private List<PricingRuleInfo> pricingRules;
+    private List<SeasonalRuleInfo> seasonalRules;
 
     @Data
     @AllArgsConstructor
@@ -98,5 +102,15 @@ public class GuestPropertyResponse {
         private String startDate;
         private String endDate;
         private BigDecimal nightlyRate;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SeasonalRuleInfo {
+        private String startDate;
+        private String endDate;
+        private Integer minStayNights;
+        private Integer maxStayNights;
     }
 }

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Authentication")
 public class AuthController {
 
@@ -31,6 +33,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> register(
             @Valid @RequestBody RegisterRequest request,
             HttpServletRequest httpRequest) {
+        log.debug("AuthController.register — ip={}", resolveClientIp(httpRequest));
         rateLimiter.check(resolveClientIp(httpRequest));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(authService.register(request)));
@@ -41,6 +44,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
+        log.debug("AuthController.login — ip={}", resolveClientIp(httpRequest));
         rateLimiter.check(resolveClientIp(httpRequest));
         return ResponseEntity.ok(ApiResponse.success(authService.login(request)));
     }

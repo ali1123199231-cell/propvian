@@ -53,6 +53,7 @@ public class PayPalConnectController {
     @GetMapping("/connect-url")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponse<Map<String, String>>> connectUrl(@RequestParam String orgId) {
+        log.debug("PayPalConnectController.connectUrl — orgId={}", orgId);
         String clientId = systemConfigService.getActivePaypalClientId();
 
         if (clientId.isBlank()) {
@@ -81,7 +82,7 @@ public class PayPalConnectController {
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String error,
             HttpServletResponse response) throws IOException {
-
+        log.info("PayPalConnectController.connectCallback — state={}", state);
         String callbackPage = frontendUrl + "/oauth-callback";
 
         if (error != null || code == null) {

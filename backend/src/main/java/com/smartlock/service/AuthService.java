@@ -2,6 +2,7 @@ package com.smartlock.service;
 
 import com.smartlock.domain.*;
 import com.smartlock.domain.enums.MemberRole;
+import com.smartlock.util.LogMaskingUtil;
 import com.smartlock.domain.enums.Role;
 import com.smartlock.dto.request.auth.LoginRequest;
 import com.smartlock.dto.request.auth.RefreshTokenRequest;
@@ -59,22 +60,26 @@ public class AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         String email = request.getEmail().toLowerCase();
+        log.info("register — email={}", LogMaskingUtil.maskEmail(email));
 
         User existingUser = userRepository.findByEmail(email).orElse(null);
         if (existingUser != null) {
             if (existingUser.isOnboardingCompleted()) {
+                log.warn("register — duplicate email attempt email={}", LogMaskingUtil.maskEmail(email));
                 throw new DuplicateResourceException("An account with this email already exists");
             }
             // Incomplete onboarding — verify password then resume where they left off
             if (!passwordEncoder.matches(request.getPassword(), existingUser.getPasswordHash())) {
+                log.warn("register — incomplete-onboarding password mismatch email={}", LogMaskingUtil.maskEmail(email));
                 throw new DuplicateResourceException("An account with this email already exists");
             }
             if ("EMAIL_VERIFICATION".equals(existingUser.getOnboardingStep())) {
+                log.debug("register — resending verification code userId={}", existingUser.getId());
                 sendVerificationCode(existingUser);
             }
             List<OrganizationMember> memberships = memberRepository.findByUserId(existingUser.getId());
             UUID orgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
-            log.info("Resuming incomplete registration for user: {}", email);
+            log.info("register — resuming incomplete registration userId={} step={}", existingUser.getId(), existingUser.getOnboardingStep());
             return buildAuthResponse(existingUser, orgId);
         }
 
@@ -113,6 +118,7 @@ public class AuthService {
                 .timezone("UTC")
                 .build();
         org = organizationRepository.save(org);
+        log.debug("register — org created orgId={} slug={}", org.getId(), org.getSlug());
 
         memberRepository.save(OrganizationMember.builder()
                 .organizationId(org.getId())
@@ -122,17 +128,19 @@ public class AuthService {
                 .build());
 
         sendVerificationCode(user);
-        log.info("New user registered: {} (org: {})", user.getEmail(), org.getId());
+        log.info("register — new user created userId={} orgId={}", user.getId(), org.getId());
 
         return buildAuthResponse(user, org.getId());
     }
 
     @Transactional
     public AuthResponse verifyEmail(VerifyEmailRequest request, UUID userId) {
+        log.info("verifyEmail — userId={}", userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException("User not found", HttpStatus.NOT_FOUND));
 
         if (user.isEmailVerified()) {
+            log.info("verifyEmail — already verified userId={}", userId);
             List<OrganizationMember> memberships = memberRepository.findByUserId(userId);
             UUID orgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
             return buildAuthResponse(user, orgId);
@@ -140,9 +148,13 @@ public class AuthService {
 
         EmailVerificationCode code = verificationCodeRepository
                 .findFirstByUserIdAndCodeAndUsedAtIsNull(userId, request.getCode())
-                .orElseThrow(() -> new AppException("Invalid verification code", HttpStatus.BAD_REQUEST, "INVALID_CODE"));
+                .orElseThrow(() -> {
+                    log.warn("verifyEmail — invalid code userId={}", userId);
+                    return new AppException("Invalid verification code", HttpStatus.BAD_REQUEST, "INVALID_CODE");
+                });
 
         if (code.isExpired()) {
+            log.warn("verifyEmail — expired code userId={}", userId);
             throw new AppException("Verification code has expired. Please request a new one.", HttpStatus.BAD_REQUEST, "CODE_EXPIRED");
         }
 
@@ -152,6 +164,7 @@ public class AuthService {
         user.setEmailVerified(true);
         user.setOnboardingStep("TTLOCK_CONNECT");
         userRepository.save(user);
+        log.info("verifyEmail — success userId={} nextStep=TTLOCK_CONNECT", userId);
 
         List<OrganizationMember> memberships = memberRepository.findByUserId(userId);
         UUID orgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
@@ -181,11 +194,13 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
+        String email = request.getEmail().toLowerCase();
+        log.info("login — attempt email={}", LogMaskingUtil.maskEmail(email));
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail().toLowerCase(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(email, request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail().toLowerCase())
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new InvalidTokenException("User not found"));
 
         user.setLastLoginAt(Instant.now());
@@ -193,18 +208,24 @@ public class AuthService {
 
         List<OrganizationMember> memberships = memberRepository.findByUserId(user.getId());
         UUID activeOrgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
+        log.info("login — success userId={} orgId={} step={}", user.getId(), activeOrgId, user.getOnboardingStep());
 
         return buildAuthResponse(user, activeOrgId);
     }
 
     @Transactional
     public AuthResponse refreshToken(RefreshTokenRequest request) {
+        log.debug("refreshToken — validating token");
         RefreshToken storedToken = refreshTokenRepository.findByTokenAndRevokedAtIsNull(request.getRefreshToken())
-                .orElseThrow(() -> new InvalidTokenException("Invalid refresh token"));
+                .orElseThrow(() -> {
+                    log.warn("refreshToken — invalid or revoked token");
+                    return new InvalidTokenException("Invalid refresh token");
+                });
 
         if (storedToken.isExpired()) {
             storedToken.setRevokedAt(Instant.now());
             refreshTokenRepository.save(storedToken);
+            log.warn("refreshToken — expired token userId={}", storedToken.getUserId());
             throw new InvalidTokenException("Refresh token expired");
         }
 
@@ -216,20 +237,24 @@ public class AuthService {
 
         List<OrganizationMember> memberships = memberRepository.findByUserId(user.getId());
         UUID activeOrgId = memberships.isEmpty() ? null : memberships.get(0).getOrganizationId();
+        log.info("refreshToken — issued new tokens userId={}", user.getId());
 
         return buildAuthResponse(user, activeOrgId);
     }
 
     @Transactional
     public void logout(String accessToken, UUID userId) {
+        log.info("logout — userId={}", userId);
         try {
             Claims claims = jwtTokenProvider.validateAndExtractClaims(accessToken);
             long remainingMs = jwtTokenProvider.getRemainingMs(claims);
             jwtTokenProvider.blacklistToken(claims.getId(), remainingMs);
+            log.debug("logout — access token blacklisted remainingMs={}", remainingMs);
         } catch (JwtException e) {
-            // token already invalid, ignore
+            log.debug("logout — access token already invalid: {}", e.getMessage());
         }
         refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
+        log.info("logout — all refresh tokens revoked userId={}", userId);
     }
 
     private void sendVerificationCode(User user) {

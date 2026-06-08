@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
+@Slf4j
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Subscriptions")
 public class SubscriptionController {
@@ -34,6 +36,7 @@ public class SubscriptionController {
 
     @GetMapping("/subscriptions/plans")
     public ResponseEntity<ApiResponse<List<SubscriptionPlan>>> getPlans() {
+        log.debug("SubscriptionController.getPlans");
         return ResponseEntity.ok(ApiResponse.success(planRepository.findByIsActiveTrueOrderByMonthlyPriceAsc()));
     }
 
@@ -41,6 +44,7 @@ public class SubscriptionController {
     public ResponseEntity<ApiResponse<SubscriptionView>> getSubscription(
             @PathVariable UUID orgId,
             @AuthenticationPrincipal CustomUserDetails principal) {
+        log.debug("SubscriptionController.getSubscription — orgId={}", orgId);
         orgSecurity.requireOrgAccess(orgId);
         Subscription sub = subscriptionRepository.findByOrganizationId(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found"));

@@ -37,9 +37,11 @@ public class AutomationService {
     private final CalendarIntegrationRepository calendarIntegrationRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final BillingService billingService;
+    private final OrganizationSecurityService orgSecurity;
 
     @Transactional(readOnly = true)
     public AutomationStatusResponse getStatus(UUID orgId) {
+        orgSecurity.requireOrgAccess(orgId);
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
         boolean hasLocks = lockRepository.existsConnectedByOrganizationId(orgId);
@@ -54,6 +56,7 @@ public class AutomationService {
 
     @Transactional
     public AutomationStatusResponse enableAutomation(UUID orgId) {
+        orgSecurity.requireOrgAccess(orgId);
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
 
@@ -101,6 +104,7 @@ public class AutomationService {
 
     @Transactional
     public AutomationStatusResponse disableAutomation(UUID orgId) {
+        orgSecurity.requireOrgAccess(orgId);
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization", orgId));
 

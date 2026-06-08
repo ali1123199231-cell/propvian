@@ -14,6 +14,7 @@ import {
 
 interface BlockedRange { startDate: string; endDate: string }
 interface PricingRule { startDate: string; endDate: string; nightlyRate: number }
+interface SeasonalRule { startDate: string; endDate: string; minStayNights?: number; maxStayNights?: number }
 interface HouseRuleInfo { ruleKey: string; allowed: boolean; notes?: string }
 interface AmenityInfo  { category: string; name: string; icon?: string }
 
@@ -25,6 +26,7 @@ interface PropertyInfo {
   baseNightlyRate: number; cleaningFee: number; securityDeposit?: number; checkInTime: string; checkOutTime: string
   cancellationPolicy: string; minStayNights: number; maxStayNights?: number; instantBooking: boolean
   depositRequired?: boolean; depositPercent?: number
+  bookingsEnabled: boolean
   stripeEnabled: boolean; paypalEnabled: boolean
   stripePublishableKey: string; stripeConnectedAccountId: string; paypalClientId: string
   hasActivePromos: boolean
@@ -33,7 +35,9 @@ interface PropertyInfo {
   // Org branding
   brandName?: string; brandLogoUrl?: string
   primaryColor?: string; accentColor?: string; fontFamily?: string; buttonStyle?: string
-  blockedDates: BlockedRange[]; pricingRules: PricingRule[]
+  blockedDates: BlockedRange[]
+  pricingRules: PricingRule[]
+  seasonalRules?: SeasonalRule[]
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -576,6 +580,16 @@ export function GuestBookingPage({ slug }: { slug: string }) {
         {/* ── Right: booking flow ─────────────────────────────────────────── */}
         <div className="lg:col-span-2 space-y-4 lg:sticky lg:top-24">
 
+          {!prop.bookingsEnabled && (
+            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
+              <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Bookings temporarily unavailable</p>
+                <p className="text-xs text-amber-700 mt-0.5">Online booking is currently disabled for this property. Please contact the host directly.</p>
+              </div>
+            </div>
+          )}
+
           {/* Step 1: dates */}
           {step === 'dates' && (
             <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-xl">
@@ -591,8 +605,11 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 onSelect={(ci, co) => { setCheckIn(ci); setCheckOut(co) }} />
 
               {checkIn && checkOut && pricing && (() => {
-                const belowMin = prop.minStayNights > 1 && pricing.nights < prop.minStayNights
-                const aboveMax = prop.maxStayNights && prop.maxStayNights < 365 && pricing.nights > prop.maxStayNights
+                const activeSeasonalRule = prop.seasonalRules?.find(r => r.startDate <= checkIn && r.endDate >= checkIn)
+                const effectiveMin = activeSeasonalRule?.minStayNights ?? prop.minStayNights
+                const effectiveMax = activeSeasonalRule?.maxStayNights ?? prop.maxStayNights
+                const belowMin = effectiveMin > 1 && pricing.nights < effectiveMin
+                const aboveMax = effectiveMax && effectiveMax < 365 && pricing.nights > effectiveMax
                 const noRate = !prop.baseNightlyRate
                 const secDep = prop.securityDeposit && prop.securityDeposit > 0 ? prop.securityDeposit : null
                 return (
@@ -625,17 +642,20 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                     </div>
                     {belowMin && (
                       <p className="text-xs text-red-500 mt-2">
-                        Minimum stay is {prop.minStayNights} nights. You selected {pricing.nights}.
+                        Minimum stay is {effectiveMin} nights{activeSeasonalRule ? ' during this period' : ''}. You selected {pricing.nights}.
                       </p>
                     )}
                     {aboveMax && (
                       <p className="text-xs text-red-500 mt-2">
-                        Maximum stay is {prop.maxStayNights} nights. You selected {pricing.nights}.
+                        Maximum stay is {effectiveMax} nights{activeSeasonalRule ? ' during this period' : ''}. You selected {pricing.nights}.
                       </p>
+                    )}
+                    {!prop.bookingsEnabled && (
+                      <p className="text-xs text-amber-600 mt-2 font-medium">Bookings are temporarily unavailable for this property.</p>
                     )}
                     <button
                       onClick={() => setStep('info')}
-                      disabled={belowMin || !!aboveMax || noRate}
+                      disabled={belowMin || !!aboveMax || noRate || !prop.bookingsEnabled}
                       className="mt-4 w-full py-3.5 text-white text-base font-bold shadow-sm hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                       style={btnStyle}>
                       Continue
@@ -732,7 +752,14 @@ export function GuestBookingPage({ slug }: { slug: string }) {
               </div>}
 
               {/* Payment method selector */}
-              {(prop.stripeEnabled || prop.paypalEnabled) ? (
+              {!prop.bookingsEnabled ? (
+                <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                  <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-amber-800 leading-snug">
+                    Bookings are temporarily unavailable. Please contact the host directly to arrange your stay.
+                  </p>
+                </div>
+              ) : (prop.stripeEnabled || prop.paypalEnabled) ? (
                 <div>
                   <p className="text-xs font-semibold text-gray-500 mb-2">Payment method</p>
                   <div className="flex gap-2">
@@ -760,7 +787,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 </div>
               )}
 
-              {(prop.stripeEnabled || prop.paypalEnabled) && (
+              {prop.bookingsEnabled && (prop.stripeEnabled || prop.paypalEnabled) && (
                 <button
                   onClick={() => initMut.mutate()}
                   disabled={!guestName.trim() || !guestEmail.trim() || initMut.isPending}

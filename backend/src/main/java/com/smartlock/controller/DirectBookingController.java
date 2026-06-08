@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Tag(name = "Direct Bookings")
 @SecurityRequirement(name = "bearerAuth")
+@Slf4j
 public class DirectBookingController {
 
     private final DirectBookingService bookingService;
@@ -32,6 +34,7 @@ public class DirectBookingController {
     public ResponseEntity<ApiResponse<DirectBookingResponse>> create(
             @PathVariable UUID orgId,
             @Valid @RequestBody CreateDirectBookingRequest req) {
+        log.info("DirectBookingController.create — orgId={}", orgId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(bookingService.createBooking(orgId, req)));
     }
@@ -41,6 +44,7 @@ public class DirectBookingController {
             @PathVariable UUID orgId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        log.debug("DirectBookingController.list — orgId={}", orgId);
         var pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return ResponseEntity.ok(ApiResponse.success(bookingService.listBookings(orgId, pageable)));
     }
@@ -49,6 +53,7 @@ public class DirectBookingController {
     public ResponseEntity<ApiResponse<DirectBookingResponse>> get(
             @PathVariable UUID orgId,
             @PathVariable UUID bookingId) {
+        log.debug("DirectBookingController.get — orgId={}, bookingId={}", orgId, bookingId);
         return ResponseEntity.ok(ApiResponse.success(bookingService.getBooking(orgId, bookingId)));
     }
 
@@ -56,6 +61,7 @@ public class DirectBookingController {
     public ResponseEntity<ApiResponse<DirectBookingResponse>> confirm(
             @PathVariable UUID orgId,
             @PathVariable UUID bookingId) {
+        log.info("DirectBookingController.confirm — orgId={}, bookingId={}", orgId, bookingId);
         return ResponseEntity.ok(ApiResponse.success(bookingService.confirmBooking(orgId, bookingId)));
     }
 
@@ -64,6 +70,7 @@ public class DirectBookingController {
             @PathVariable UUID orgId,
             @PathVariable UUID bookingId,
             @RequestParam(required = false) String reason) {
+        log.info("DirectBookingController.cancel — orgId={}, bookingId={}", orgId, bookingId);
         return ResponseEntity.ok(ApiResponse.success(bookingService.cancelBooking(orgId, bookingId, reason)));
     }
 
@@ -71,6 +78,7 @@ public class DirectBookingController {
     public ResponseEntity<ApiResponse<DirectBookingResponse>> checkIn(
             @PathVariable UUID orgId,
             @PathVariable UUID bookingId) {
+        log.info("DirectBookingController.checkIn — orgId={}, bookingId={}", orgId, bookingId);
         return ResponseEntity.ok(ApiResponse.success(bookingService.checkInBooking(orgId, bookingId)));
     }
 
@@ -78,6 +86,7 @@ public class DirectBookingController {
     public ResponseEntity<ApiResponse<DirectBookingResponse>> checkOut(
             @PathVariable UUID orgId,
             @PathVariable UUID bookingId) {
+        log.info("DirectBookingController.checkOut — orgId={}, bookingId={}", orgId, bookingId);
         return ResponseEntity.ok(ApiResponse.success(bookingService.checkOutBooking(orgId, bookingId)));
     }
 
@@ -85,6 +94,7 @@ public class DirectBookingController {
     public ResponseEntity<ApiResponse<List<LocalDate>>> unavailableDates(
             @PathVariable UUID orgId,
             @RequestParam UUID propertyId) {
+        log.debug("DirectBookingController.unavailableDates — propertyId={}", propertyId);
         return ResponseEntity.ok(ApiResponse.success(bookingService.getUnavailableDates(propertyId)));
     }
 }

@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Calendar Engine")
+@Slf4j
 public class CalendarEngineController {
 
     private final CalendarEngine calendarEngine;
@@ -38,7 +40,7 @@ public class CalendarEngineController {
             @PathVariable UUID propertyId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkIn,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut) {
-
+        log.debug("CalendarEngineController.checkAvailability — propertyId={}, checkIn={}", propertyId, checkIn);
         CalendarEngine.AvailabilityResult result =
                 calendarEngine.checkAvailability(propertyId, checkIn, checkOut);
         return ResponseEntity.ok(ApiResponse.success(result));
@@ -50,7 +52,7 @@ public class CalendarEngineController {
             @PathVariable UUID propertyId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-
+        log.debug("CalendarEngineController.getPublicCalendar — propertyId={}, from={}", propertyId, from);
         List<CalendarInterval> intervals = calendarEngine.getCalendar(propertyId, from, to);
         return ResponseEntity.ok(ApiResponse.success(intervals));
     }
@@ -62,7 +64,7 @@ public class CalendarEngineController {
     public ResponseEntity<ApiResponse<HoldResponse>> createHold(
             @PathVariable UUID propertyId,
             @Valid @RequestBody CreateHoldRequest req) {
-
+        log.info("CalendarEngineController.createHold — propertyId={}", propertyId);
         CalendarEngine.HoldResult result = calendarEngine.createHold(
                 propertyId,
                 req.getCheckIn(),
@@ -81,6 +83,7 @@ public class CalendarEngineController {
     @DeleteMapping("/api/public/holds/{holdId}")
     @Operation(summary = "Release a hold (guest abandoned checkout)")
     public ResponseEntity<ApiResponse<Void>> releaseHold(@PathVariable UUID holdId) {
+        log.info("CalendarEngineController.releaseHold — holdId={}", holdId);
         calendarEngine.releaseHold(holdId);
         return ResponseEntity.ok(ApiResponse.success("Hold released"));
     }
@@ -94,7 +97,7 @@ public class CalendarEngineController {
             @PathVariable UUID propertyId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-
+        log.debug("CalendarEngineController.getCalendar — propertyId={}, from={}", propertyId, from);
         orgSecurity.requirePropertyAccess(propertyId);
         List<CalendarInterval> intervals = calendarEngine.getCalendar(propertyId, from, to);
         return ResponseEntity.ok(ApiResponse.success(intervals));
@@ -108,7 +111,7 @@ public class CalendarEngineController {
     public ResponseEntity<ApiResponse<CalendarInterval>> blockDates(
             @PathVariable UUID propertyId,
             @Valid @RequestBody BlockDatesRequest req) {
-
+        log.info("CalendarEngineController.blockDates — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         CalendarInterval interval = calendarEngine.blockDates(
                 propertyId, req.getStartDate(), req.getEndDate(), null, req.getReason());
@@ -121,7 +124,7 @@ public class CalendarEngineController {
     public ResponseEntity<ApiResponse<Void>> unblockDates(
             @PathVariable UUID propertyId,
             @PathVariable UUID intervalId) {
-
+        log.info("CalendarEngineController.unblockDates — propertyId={}, intervalId={}", propertyId, intervalId);
         orgSecurity.requirePropertyAccess(propertyId);
         calendarEngine.unblockDates(intervalId, null);
         return ResponseEntity.ok(ApiResponse.success("Dates unblocked"));

@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Tag(name = "Availability & Pricing")
 @SecurityRequirement(name = "bearerAuth")
+@Slf4j
 public class AvailabilityController {
 
     private final PropertyBlockedDateRepository blockedRepo;
@@ -38,6 +40,7 @@ public class AvailabilityController {
 
     @GetMapping("/blocked-dates")
     public ResponseEntity<ApiResponse<List<PropertyBlockedDate>>> listBlocked(@PathVariable UUID propertyId) {
+        log.debug("AvailabilityController.listBlocked — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         return ResponseEntity.ok(ApiResponse.success(blockedRepo.findByPropertyId(propertyId)));
     }
@@ -46,6 +49,7 @@ public class AvailabilityController {
     public ResponseEntity<ApiResponse<PropertyBlockedDate>> blockDates(
             @PathVariable UUID propertyId,
             @Valid @RequestBody BlockDatesRequest req) {
+        log.info("AvailabilityController.blockDates — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         if (req.getEndDate().isBefore(req.getStartDate())) {
             throw new AppException("End date must be after start date", HttpStatus.BAD_REQUEST);
@@ -64,6 +68,7 @@ public class AvailabilityController {
     public ResponseEntity<ApiResponse<Void>> unblock(
             @PathVariable UUID propertyId,
             @PathVariable UUID blockId) {
+        log.info("AvailabilityController.unblock — propertyId={}, blockId={}", propertyId, blockId);
         orgSecurity.requirePropertyAccess(propertyId);
         PropertyBlockedDate block = blockedRepo.findById(blockId)
                 .orElseThrow(() -> new AppException("Not found", HttpStatus.NOT_FOUND));
@@ -77,6 +82,7 @@ public class AvailabilityController {
 
     @GetMapping("/pricing-rules")
     public ResponseEntity<ApiResponse<List<PropertyPricingRule>>> listPricing(@PathVariable UUID propertyId) {
+        log.debug("AvailabilityController.listPricing — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         return ResponseEntity.ok(ApiResponse.success(
                 pricingRepo.findByPropertyIdOrderByStartDateAsc(propertyId)));
@@ -86,6 +92,7 @@ public class AvailabilityController {
     public ResponseEntity<ApiResponse<PropertyPricingRule>> createPricing(
             @PathVariable UUID propertyId,
             @Valid @RequestBody PricingRuleRequest req) {
+        log.info("AvailabilityController.createPricing — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         PropertyPricingRule rule = PropertyPricingRule.builder()
                 .propertyId(propertyId)
@@ -104,6 +111,7 @@ public class AvailabilityController {
     public ResponseEntity<ApiResponse<Void>> deletePricing(
             @PathVariable UUID propertyId,
             @PathVariable UUID ruleId) {
+        log.info("AvailabilityController.deletePricing — propertyId={}, ruleId={}", propertyId, ruleId);
         PropertyPricingRule rule = pricingRepo.findById(ruleId)
                 .orElseThrow(() -> new AppException("Not found", HttpStatus.NOT_FOUND));
         if (!rule.getPropertyId().equals(propertyId))
@@ -119,6 +127,7 @@ public class AvailabilityController {
             @PathVariable UUID propertyId,
             @RequestParam LocalDate checkIn,
             @RequestParam LocalDate checkOut) {
+        log.debug("AvailabilityController.checkAvailability — propertyId={}, checkIn={}", propertyId, checkIn);
         List<PropertyBlockedDate> conflicts = blockedRepo.findOverlapping(propertyId, checkIn, checkOut);
         List<PropertyPricingRule> rules     = pricingRepo.findByPropertyIdOrderByStartDateAsc(propertyId);
         return ResponseEntity.ok(ApiResponse.success(Map.of(

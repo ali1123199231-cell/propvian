@@ -8,6 +8,7 @@ import com.smartlock.service.NotificationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,6 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/notifications")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Notifications")
 @SecurityRequirement(name = "bearerAuth")
 public class NotificationController {
@@ -30,6 +32,7 @@ public class NotificationController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        log.debug("NotificationController.list — userId={} page={}", userDetails.getUserId(), page);
         return ResponseEntity.ok(ApiResponse.success(
                 PageResponse.from(notificationService.getNotifications(
                         userDetails.getUserId(), PageRequest.of(page, size)))));
@@ -38,6 +41,7 @@ public class NotificationController {
     @GetMapping("/unread-count")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getUnreadCount(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.debug("NotificationController.getUnreadCount — userId={}", userDetails.getUserId());
         long count = notificationService.getUnreadCount(userDetails.getUserId());
         return ResponseEntity.ok(ApiResponse.success(Map.of("count", count)));
     }
@@ -46,6 +50,7 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<Void>> markRead(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.debug("NotificationController.markRead — id={}", id);
         notificationService.markAsRead(id, userDetails.getUserId());
         return ResponseEntity.ok(ApiResponse.success("Marked as read"));
     }
@@ -53,6 +58,7 @@ public class NotificationController {
     @PutMapping("/read-all")
     public ResponseEntity<ApiResponse<Void>> markAllRead(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("NotificationController.markAllRead — userId={}", userDetails.getUserId());
         notificationService.markAllAsRead(userDetails.getUserId());
         return ResponseEntity.ok(ApiResponse.success("All notifications marked as read"));
     }

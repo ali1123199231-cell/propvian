@@ -16,6 +16,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/properties/{propertyId}")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Property Rules")
 @SecurityRequirement(name = "bearerAuth")
 public class PropertyRulesController {
@@ -42,6 +44,7 @@ public class PropertyRulesController {
     @GetMapping("/house-rules")
     public ResponseEntity<ApiResponse<List<PropertyHouseRule>>> listHouseRules(
             @PathVariable UUID propertyId) {
+        log.debug("PropertyRulesController.listHouseRules — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         return ResponseEntity.ok(ApiResponse.success(houseRuleRepo.findByPropertyId(propertyId)));
     }
@@ -50,6 +53,7 @@ public class PropertyRulesController {
     public ResponseEntity<ApiResponse<PropertyHouseRule>> upsertHouseRule(
             @PathVariable UUID propertyId,
             @Valid @RequestBody HouseRuleRequest req) {
+        log.info("PropertyRulesController.upsertHouseRule — propertyId={} key={}", propertyId, req.getRuleKey());
         orgSecurity.requirePropertyAccess(propertyId);
 
         PropertyHouseRule rule = houseRuleRepo
@@ -68,6 +72,7 @@ public class PropertyRulesController {
     public ResponseEntity<ApiResponse<Void>> deleteHouseRule(
             @PathVariable UUID propertyId,
             @PathVariable UUID ruleId) {
+        log.info("PropertyRulesController.deleteHouseRule — propertyId={}, ruleId={}", propertyId, ruleId);
         orgSecurity.requirePropertyAccess(propertyId);
         PropertyHouseRule rule = houseRuleRepo.findById(ruleId)
                 .orElseThrow(() -> new AppException("House rule not found", HttpStatus.NOT_FOUND));
@@ -82,6 +87,7 @@ public class PropertyRulesController {
     @GetMapping("/seasonal-rules")
     public ResponseEntity<ApiResponse<List<PropertySeasonalRule>>> listSeasonalRules(
             @PathVariable UUID propertyId) {
+        log.debug("PropertyRulesController.listSeasonalRules — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         return ResponseEntity.ok(ApiResponse.success(
                 seasonalRuleRepo.findByPropertyIdOrderByStartDateAsc(propertyId)));
@@ -91,6 +97,7 @@ public class PropertyRulesController {
     public ResponseEntity<ApiResponse<PropertySeasonalRule>> createSeasonalRule(
             @PathVariable UUID propertyId,
             @Valid @RequestBody SeasonalRuleRequest req) {
+        log.info("PropertyRulesController.createSeasonalRule — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         if (req.getEndDate().isBefore(req.getStartDate()))
             throw new AppException("End date must be after start date", HttpStatus.BAD_REQUEST);
@@ -114,6 +121,7 @@ public class PropertyRulesController {
     public ResponseEntity<ApiResponse<Void>> deleteSeasonalRule(
             @PathVariable UUID propertyId,
             @PathVariable UUID ruleId) {
+        log.info("PropertyRulesController.deleteSeasonalRule — propertyId={}, ruleId={}", propertyId, ruleId);
         orgSecurity.requirePropertyAccess(propertyId);
         PropertySeasonalRule rule = seasonalRuleRepo.findById(ruleId)
                 .orElseThrow(() -> new AppException("Seasonal rule not found", HttpStatus.NOT_FOUND));
@@ -129,6 +137,7 @@ public class PropertyRulesController {
     @SecurityRequirement(name = "bearerAuth")  // overridden by security config /api/public/**
     public ResponseEntity<ApiResponse<List<PropertyHouseRule>>> publicHouseRules(
             @PathVariable UUID propertyId) {
+        log.debug("PropertyRulesController.publicHouseRules — propertyId={}", propertyId);
         return ResponseEntity.ok(ApiResponse.success(houseRuleRepo.findByPropertyId(propertyId)));
     }
 
@@ -137,6 +146,7 @@ public class PropertyRulesController {
     @GetMapping("/amenities")
     public ResponseEntity<ApiResponse<List<PropertyAmenity>>> listAmenities(
             @PathVariable UUID propertyId) {
+        log.debug("PropertyRulesController.listAmenities — propertyId={}", propertyId);
         orgSecurity.requirePropertyAccess(propertyId);
         return ResponseEntity.ok(ApiResponse.success(amenityRepo.findByPropertyId(propertyId)));
     }
@@ -146,6 +156,7 @@ public class PropertyRulesController {
     public ResponseEntity<ApiResponse<List<PropertyAmenity>>> replaceAmenities(
             @PathVariable UUID propertyId,
             @RequestBody List<AmenityRequest> reqs) {
+        log.info("PropertyRulesController.replaceAmenities — propertyId={} count={}", propertyId, reqs.size());
         orgSecurity.requirePropertyAccess(propertyId);
         amenityRepo.deleteByPropertyId(propertyId);
         List<PropertyAmenity> saved = amenityRepo.saveAll(
@@ -162,6 +173,7 @@ public class PropertyRulesController {
     public ResponseEntity<ApiResponse<Void>> deleteAmenity(
             @PathVariable UUID propertyId,
             @PathVariable UUID amenityId) {
+        log.info("PropertyRulesController.deleteAmenity — propertyId={}, amenityId={}", propertyId, amenityId);
         orgSecurity.requirePropertyAccess(propertyId);
         PropertyAmenity a = amenityRepo.findById(amenityId)
                 .orElseThrow(() -> new AppException("Amenity not found", HttpStatus.NOT_FOUND));

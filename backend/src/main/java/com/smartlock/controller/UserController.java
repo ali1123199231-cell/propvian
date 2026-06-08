@@ -15,6 +15,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
+@Slf4j
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Users")
 public class UserController {
@@ -32,6 +34,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> getMe(
             @AuthenticationPrincipal CustomUserDetails principal) {
+        log.debug("UserController.getMe — userId={}", principal.getUserId());
         User user = userService.getById(principal.getUserId());
         return ResponseEntity.ok(ApiResponse.success(toUserInfo(user)));
     }
@@ -40,6 +43,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<AuthResponse.UserInfo>> updateProfile(
             @AuthenticationPrincipal CustomUserDetails principal,
             @Valid @RequestBody UpdateProfileRequest request) {
+        log.info("UserController.updateProfile — userId={}", principal.getUserId());
         User user = userService.updateProfile(
                 principal.getUserId(),
                 request.getFirstName(),
@@ -52,6 +56,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @AuthenticationPrincipal CustomUserDetails principal,
             @Valid @RequestBody ChangePasswordRequest request) {
+        log.info("UserController.changePassword — userId={}", principal.getUserId());
         userService.changePassword(principal.getUserId(), request.getCurrentPassword(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success(null));
     }

@@ -61,14 +61,20 @@ public class WebsiteService {
 
     @Transactional(readOnly = true)
     public WebsiteConfigResponse getConfig(UUID orgId) {
+        log.debug("WebsiteService.getConfig — orgId={}", orgId);
         orgSecurity.requireOrgAccess(orgId);
         WebsiteConfig config = websiteRepo.findByOrganizationId(orgId)
-                .orElseGet(() -> createDefaultConfig(orgId));
+                .orElseGet(() -> {
+                    log.info("WebsiteService.getConfig — no config yet, creating default for org={}", orgId);
+                    return createDefaultConfig(orgId);
+                });
+        log.debug("WebsiteService.getConfig — status={} setupCompleted={}", config.getStatus(), config.isSetupCompleted());
         return toConfigResponse(config);
     }
 
     @Transactional
     public WebsiteConfigResponse updateConfig(UUID orgId, WebsiteConfigRequest req) {
+        log.info("WebsiteService.updateConfig — orgId={}", orgId);
         orgSecurity.requireOrgAccess(orgId);
         if (Boolean.TRUE.equals(req.getSetupCompleted()) && propertyRepo.countByOrganizationIdAndStatus(orgId, PropertyStatus.ACTIVE) == 0) {
             throw new AppException("You must have at least one active property before completing website setup.", HttpStatus.BAD_REQUEST);
@@ -106,40 +112,57 @@ public class WebsiteService {
         if (req.getCustomFooterJs() != null)   config.setCustomFooterJs(req.getCustomFooterJs());
         if (req.getSetupCompleted() != null)   config.setSetupCompleted(req.getSetupCompleted());
 
-        return toConfigResponse(websiteRepo.save(config));
+        WebsiteConfigResponse result = toConfigResponse(websiteRepo.save(config));
+        log.info("WebsiteService.updateConfig — success orgId={}", orgId);
+        return result;
     }
 
     @Transactional
     public WebsiteConfigResponse publishWebsite(UUID orgId) {
+        log.info("WebsiteService.publishWebsite — orgId={}", orgId);
+        orgSecurity.requireOrgAccess(orgId);
         if (propertyRepo.countByOrganizationIdAndStatus(orgId, PropertyStatus.ACTIVE) == 0) {
+            log.warn("WebsiteService.publishWebsite — blocked: no active properties org={}", orgId);
             throw new AppException("You must have at least one active property before publishing your website.", HttpStatus.BAD_REQUEST);
         }
         WebsiteConfig config = websiteRepo.findByOrganizationId(orgId)
                 .orElseThrow(() -> new AppException("Website not configured", HttpStatus.NOT_FOUND));
         config.setStatus("PUBLISHED");
         config.setSetupCompleted(true);
-        return toConfigResponse(websiteRepo.save(config));
+        WebsiteConfigResponse result = toConfigResponse(websiteRepo.save(config));
+        log.info("WebsiteService.publishWebsite — published orgId={}", orgId);
+        return result;
     }
 
     @Transactional
     public WebsiteConfigResponse unpublishWebsite(UUID orgId) {
+        log.info("WebsiteService.unpublishWebsite — orgId={}", orgId);
+        orgSecurity.requireOrgAccess(orgId);
         WebsiteConfig config = websiteRepo.findByOrganizationId(orgId)
                 .orElseThrow(() -> new AppException("Website not configured", HttpStatus.NOT_FOUND));
         config.setStatus("DRAFT");
-        return toConfigResponse(websiteRepo.save(config));
+        WebsiteConfigResponse result = toConfigResponse(websiteRepo.save(config));
+        log.info("WebsiteService.unpublishWebsite — unpublished orgId={}", orgId);
+        return result;
     }
 
     // ── Sections ──────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<WebsiteSectionResponse> getSections(UUID orgId) {
+        log.debug("WebsiteService.getSections — orgId={}", orgId);
+        orgSecurity.requireOrgAccess(orgId);
         WebsiteConfig config = getOrCreateConfig(orgId);
-        return sectionRepo.findByWebsiteIdOrderByPosition(config.getId())
+        List<WebsiteSectionResponse> sections = sectionRepo.findByWebsiteIdOrderByPosition(config.getId())
                 .stream().map(this::toSectionResponse).collect(Collectors.toList());
+        log.debug("WebsiteService.getSections — got {} sections", sections.size());
+        return sections;
     }
 
     @Transactional
     public WebsiteSectionResponse addSection(UUID orgId, WebsiteSectionRequest req) {
+        log.info("WebsiteService.addSection — orgId={} type={} pos={}", orgId, req.getSectionType(), req.getPosition());
+        orgSecurity.requireOrgAccess(orgId);
         WebsiteConfig config = getOrCreateConfig(orgId);
         long count = sectionRepo.countByWebsiteId(config.getId());
 
@@ -152,11 +175,15 @@ public class WebsiteService {
                 .config(req.getConfig() != null ? req.getConfig().toString() : defaultConfig(req.getSectionType()))
                 .build();
 
-        return toSectionResponse(sectionRepo.save(section));
+        WebsiteSectionResponse result = toSectionResponse(sectionRepo.save(section));
+        log.info("WebsiteService.addSection — created sectionId={}", result.getId());
+        return result;
     }
 
     @Transactional
     public WebsiteSectionResponse updateSection(UUID orgId, UUID sectionId, WebsiteSectionRequest req) {
+        log.debug("WebsiteService.updateSection — sectionId={} enabled={}", sectionId, req.getEnabled());
+        orgSecurity.requireOrgAccess(orgId);
         WebsiteConfig config = getOrCreateConfig(orgId);
         WebsiteSection section = sectionRepo.findByIdAndWebsiteId(sectionId, config.getId())
                 .orElseThrow(() -> new AppException("Section not found", HttpStatus.NOT_FOUND));
@@ -171,14 +198,18 @@ public class WebsiteService {
 
     @Transactional
     public void deleteSection(UUID orgId, UUID sectionId) {
+        log.info("WebsiteService.deleteSection — orgId={} sectionId={}", orgId, sectionId);
+        orgSecurity.requireOrgAccess(orgId);
         WebsiteConfig config = getOrCreateConfig(orgId);
         WebsiteSection section = sectionRepo.findByIdAndWebsiteId(sectionId, config.getId())
                 .orElseThrow(() -> new AppException("Section not found", HttpStatus.NOT_FOUND));
         sectionRepo.delete(section);
+        log.info("WebsiteService.deleteSection — deleted");
     }
 
     @Transactional
     public List<WebsiteSectionResponse> reorderSections(UUID orgId, ReorderSectionsRequest req) {
+        orgSecurity.requireOrgAccess(orgId);
         WebsiteConfig config = getOrCreateConfig(orgId);
         List<WebsiteSection> sections = sectionRepo.findByWebsiteIdOrderByPosition(config.getId());
 
@@ -204,13 +235,21 @@ public class WebsiteService {
 
     @Transactional(readOnly = true)
     public List<PromoCodeResponse> getPromoCodes(UUID orgId) {
-        return promoRepo.findByOrganizationIdOrderByCreatedAtDesc(orgId)
+        log.debug("WebsiteService.getPromoCodes — orgId={}", orgId);
+        orgSecurity.requireOrgAccess(orgId);
+        List<PromoCodeResponse> codes = promoRepo.findByOrganizationIdOrderByCreatedAtDesc(orgId)
                 .stream().map(this::toPromoResponse).collect(Collectors.toList());
+        log.debug("WebsiteService.getPromoCodes — got {} codes", codes.size());
+        return codes;
     }
 
     @Transactional
     public PromoCodeResponse createPromoCode(UUID orgId, PromoCodeRequest req) {
+        log.info("WebsiteService.createPromoCode — orgId={} code={} type={} value={}",
+                orgId, req.getCode(), req.getDiscountType(), req.getDiscountValue());
+        orgSecurity.requireOrgAccess(orgId);
         if (promoRepo.existsByOrganizationIdAndCodeIgnoreCase(orgId, req.getCode())) {
+            log.warn("WebsiteService.createPromoCode — duplicate code={} org={}", req.getCode(), orgId);
             throw new AppException("Promo code already exists", HttpStatus.CONFLICT);
         }
         PromoCode promo = PromoCode.builder()
@@ -225,22 +264,29 @@ public class WebsiteService {
         if (req.getExpiresAt() != null) {
             try { promo.setExpiresAt(Instant.parse(req.getExpiresAt())); } catch (Exception ignored) {}
         }
-        return toPromoResponse(promoRepo.save(promo));
+        PromoCodeResponse result = toPromoResponse(promoRepo.save(promo));
+        log.info("WebsiteService.createPromoCode — created id={} code={}", result.getId(), result.getCode());
+        return result;
     }
 
     @Transactional
     public void deletePromoCode(UUID orgId, UUID codeId) {
+        log.info("WebsiteService.deletePromoCode — orgId={} codeId={}", orgId, codeId);
+        orgSecurity.requireOrgAccess(orgId);
         PromoCode promo = promoRepo.findById(codeId)
                 .orElseThrow(() -> new AppException("Promo code not found", HttpStatus.NOT_FOUND));
         if (!promo.getOrganizationId().equals(orgId)) {
+            log.warn("WebsiteService.deletePromoCode — access denied codeId={} org={}", codeId, orgId);
             throw new AppException("Access denied", HttpStatus.FORBIDDEN);
         }
         promoRepo.delete(promo);
+        log.info("WebsiteService.deletePromoCode — deleted");
     }
 
     // ── AI content generation ─────────────────────────────────────────────────
 
     public Map<String, String> generateAiContent(UUID orgId, String type, String context) {
+        log.info("WebsiteService.generateAiContent — orgId={} type={}", orgId, type);
         orgSecurity.requireOrgAccess(orgId);
         // Returns suggested starter content — clearly labelled as a template for the user to edit
         String label = "suggested_template";
@@ -260,6 +306,8 @@ public class WebsiteService {
 
     @Transactional
     public WebsiteConfigResponse applyTemplate(UUID orgId, String templateId) {
+        log.info("WebsiteService.applyTemplate — orgId={} template={}", orgId, templateId);
+        orgSecurity.requireOrgAccess(orgId);
         WebsiteConfig config = getOrCreateConfig(orgId);
 
         // Apply template branding

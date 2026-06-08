@@ -6,6 +6,7 @@ import com.smartlock.service.ActivityEventService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Events")
+@Slf4j
 public class EventController {
 
     private final ActivityEventService activityEventService;
@@ -27,7 +29,7 @@ public class EventController {
             @PathVariable UUID orgId,
             @RequestBody TrackRequest body,
             @AuthenticationPrincipal CustomUserDetails principal) {
-
+        log.info("EventController.track — orgId={}, eventType={}", orgId, body.eventType());
         String actorName = principal.getEmail();
         activityEventService.track(orgId, principal.getUserId(), actorName,
                 body.eventType(), body.metadata());

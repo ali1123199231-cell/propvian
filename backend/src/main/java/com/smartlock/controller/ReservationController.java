@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Reservations")
 @SecurityRequirement(name = "bearerAuth")
 public class ReservationController {
@@ -32,6 +34,7 @@ public class ReservationController {
             @PathVariable UUID propertyId,
             @Valid @RequestBody CreateReservationRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.debug("ReservationController.create — propertyId={} orgId={}", propertyId, userDetails.getActiveOrgId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(reservationService.createReservation(
                         propertyId, userDetails.getActiveOrgId(), request)));
@@ -42,6 +45,7 @@ public class ReservationController {
             @PathVariable UUID orgId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        log.debug("ReservationController.listByOrg — orgId={} page={}", orgId, page);
         var pageable = PageRequest.of(page, size, Sort.by("checkInDate").descending());
         return ResponseEntity.ok(ApiResponse.success(
                 PageResponse.from(reservationService.getReservationsByOrg(orgId, pageable))));
@@ -52,6 +56,7 @@ public class ReservationController {
             @PathVariable UUID propertyId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        log.debug("ReservationController.listByProperty — propertyId={} page={}", propertyId, page);
         var pageable = PageRequest.of(page, size, Sort.by("checkInDate").descending());
         return ResponseEntity.ok(ApiResponse.success(
                 PageResponse.from(reservationService.getReservationsByProperty(propertyId, pageable))));
@@ -59,6 +64,7 @@ public class ReservationController {
 
     @GetMapping("/api/v1/reservations/{reservationId}")
     public ResponseEntity<ApiResponse<ReservationResponse>> get(@PathVariable UUID reservationId) {
+        log.debug("ReservationController.get — reservationId={}", reservationId);
         return ResponseEntity.ok(ApiResponse.success(reservationService.getReservation(reservationId)));
     }
 
@@ -66,6 +72,7 @@ public class ReservationController {
     public ResponseEntity<ApiResponse<ReservationResponse>> cancel(
             @PathVariable UUID reservationId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("ReservationController.cancel — reservationId={}", reservationId);
         return ResponseEntity.ok(ApiResponse.success(
                 reservationService.cancelReservation(reservationId, userDetails.getActiveOrgId())));
     }
@@ -74,6 +81,7 @@ public class ReservationController {
     public ResponseEntity<ApiResponse<ReservationResponse>> checkout(
             @PathVariable UUID reservationId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("ReservationController.checkout — reservationId={}", reservationId);
         return ResponseEntity.ok(ApiResponse.success(
                 reservationService.checkOut(reservationId, userDetails.getActiveOrgId())));
     }

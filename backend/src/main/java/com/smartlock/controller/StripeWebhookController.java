@@ -18,6 +18,7 @@ public class StripeWebhookController {
     public ResponseEntity<Void> handleWebhook(
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String signature) {
+        log.info("StripeWebhookController.handleWebhook — payloadLength={}", payload.length());
         try {
             stripeService.handleWebhook(payload, signature);
             return ResponseEntity.ok().build();

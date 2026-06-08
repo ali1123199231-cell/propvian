@@ -38,7 +38,9 @@ public class CleanerTaskService {
 
     @Transactional
     public CleanerTask createCleanerTask(UUID reservationId, UUID organizationId) {
+        log.debug("CleanerTaskService.createCleanerTask — reservationId={} org={}", reservationId, organizationId);
         if (cleanerTaskRepository.findByReservationId(reservationId).isPresent()) {
+            log.debug("CleanerTaskService.createCleanerTask — task already exists for reservation={}", reservationId);
             return cleanerTaskRepository.findByReservationId(reservationId).get();
         }
 
@@ -65,6 +67,8 @@ public class CleanerTaskService {
                 .build();
 
         task = cleanerTaskRepository.save(task);
+        log.info("CleanerTaskService.createCleanerTask — created taskId={} reservation={} cleaner={}",
+                task.getId(), reservationId, property.getCleanerUserId());
 
         if (property.getCleanerUserId() != null) {
             notifyCleanerAsync(task, property, reservation);
@@ -75,7 +79,9 @@ public class CleanerTaskService {
 
     @Transactional
     public CleanerTask createCleanerTaskForDirectBooking(UUID directBookingId, UUID organizationId) {
+        log.debug("CleanerTaskService.createCleanerTaskForDirectBooking — bookingId={} org={}", directBookingId, organizationId);
         if (cleanerTaskRepository.findByDirectBookingId(directBookingId).isPresent()) {
+            log.debug("CleanerTaskService.createCleanerTaskForDirectBooking — task already exists for booking={}", directBookingId);
             return cleanerTaskRepository.findByDirectBookingId(directBookingId).get();
         }
 
@@ -101,29 +107,37 @@ public class CleanerTaskService {
                 ))
                 .build();
 
-        return cleanerTaskRepository.save(task);
+        CleanerTask saved = cleanerTaskRepository.save(task);
+        log.info("CleanerTaskService.createCleanerTaskForDirectBooking — created taskId={} booking={}", saved.getId(), directBookingId);
+        return saved;
     }
 
     @Transactional(readOnly = true)
     public Page<CleanerTask> listByOrg(UUID orgId, Pageable pageable) {
+        log.debug("CleanerTaskService.listByOrg — orgId={} page={}", orgId, pageable.getPageNumber());
         return cleanerTaskRepository.findByOrganizationIdOrderByScheduledAtDesc(orgId, pageable);
     }
 
     @Transactional
     public CleanerTask updateStatus(UUID taskId, CleanerTaskStatus status) {
+        log.info("CleanerTaskService.updateStatus — taskId={} status={}", taskId, status);
         CleanerTask task = cleanerTaskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("CleanerTask", taskId));
         task.setStatus(status);
         if (status == CleanerTaskStatus.COMPLETED) {
             task.setCompletedAt(Instant.now());
         }
-        return cleanerTaskRepository.save(task);
+        CleanerTask saved = cleanerTaskRepository.save(task);
+        log.info("CleanerTaskService.updateStatus — success taskId={}", taskId);
+        return saved;
     }
 
     @Async
     public void notifyCleanerAsync(CleanerTask task, Property property, Reservation reservation) {
         if (task.getAssignedUserId() == null) return;
         userRepository.findById(task.getAssignedUserId()).ifPresent(cleaner -> {
+            log.info("CleanerTaskService.notifyCleanerAsync — notifying cleaner={} for task={} property={}",
+                    task.getAssignedUserId(), task.getId(), property.getName());
             String checkOut = reservation.getCheckOutDate().toString();
             emailService.sendCleanerTaskEmail(
                     cleaner.getEmail(),
@@ -134,6 +148,7 @@ public class CleanerTaskService {
             );
             task.setNotifiedAt(Instant.now());
             cleanerTaskRepository.save(task);
+            log.info("CleanerTaskService.notifyCleanerAsync — email sent taskId={}", task.getId());
         });
     }
 }

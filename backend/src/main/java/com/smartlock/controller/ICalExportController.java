@@ -2,6 +2,7 @@ package com.smartlock.controller;
 
 import com.smartlock.service.ICalExportService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class ICalExportController {
 
     private final ICalExportService icalExportService;
@@ -20,6 +22,7 @@ public class ICalExportController {
      */
     @GetMapping("/api/public/calendar/{token}/calendar.ics")
     public ResponseEntity<String> exportIcal(@PathVariable String token) {
+        log.debug("ICalExportController.exportIcal — tokenPrefix={}", token.length() > 8 ? token.substring(0, 8) : token);
         String ics = icalExportService.exportByToken(token);
 
         return ResponseEntity.ok()

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Organization } from '@/types'
+import { logger, maskEmail, shortId } from '@/lib/logger'
 
 interface AuthState {
   user: User | null
@@ -15,6 +16,8 @@ interface AuthState {
   logout: () => void
 }
 
+const log = logger.child('STORE')
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -24,26 +27,40 @@ export const useAuthStore = create<AuthState>()(
       activeOrg: null,
       isAuthenticated: false,
 
-      setAuth: (user, accessToken, refreshToken) =>
-        set({ user, accessToken, refreshToken, isAuthenticated: true }),
+      setAuth: (user, accessToken, refreshToken) => {
+        log.info('setAuth — user authenticated', {
+          userId: shortId(user.id),
+          email: maskEmail(user.email),
+          role: user.role,
+        })
+        set({ user, accessToken, refreshToken, isAuthenticated: true })
+      },
 
-      setTokens: (accessToken, refreshToken) =>
-        set({ accessToken, refreshToken }),
+      setTokens: (accessToken, refreshToken) => {
+        log.debug('setTokens — tokens updated (hasAccess=%s, hasRefresh=%s)', !!accessToken, !!refreshToken)
+        set({ accessToken, refreshToken })
+      },
 
-      setActiveOrg: (org) =>
-        set({ activeOrg: org }),
+      setActiveOrg: (org) => {
+        log.info('setActiveOrg — org=%s name=%s', shortId(org.id), org.name)
+        set({ activeOrg: org })
+      },
 
-      updateUser: (updates) =>
-        set((state) => ({ user: state.user ? { ...state.user, ...updates } : state.user })),
+      updateUser: (updates) => {
+        log.debug('updateUser — fields: %s', Object.keys(updates).join(', '))
+        set((state) => ({ user: state.user ? { ...state.user, ...updates } : state.user }))
+      },
 
-      logout: () =>
+      logout: () => {
+        log.info('logout — clearing auth state')
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           activeOrg: null,
           isAuthenticated: false,
-        }),
+        })
+      },
     }),
     {
       name: 'propvian-auth',
@@ -54,6 +71,16 @@ export const useAuthStore = create<AuthState>()(
         activeOrg: state.activeOrg,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.isAuthenticated) {
+          log.info('Auth store rehydrated — user=%s org=%s',
+            maskEmail(state.user?.email),
+            shortId(state.activeOrg?.id),
+          )
+        } else {
+          log.debug('Auth store rehydrated — no active session')
+        }
+      },
     }
   )
 )

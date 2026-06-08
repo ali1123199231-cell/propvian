@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Messaging")
 @SecurityRequirement(name = "bearerAuth")
 public class MessageController {
@@ -28,6 +30,7 @@ public class MessageController {
     @GetMapping("/api/v1/organizations/{orgId}/conversations")
     public ResponseEntity<ApiResponse<List<ConversationResponse>>> listConversations(
             @PathVariable UUID orgId) {
+        log.debug("MessageController.listConversations — orgId={}", orgId);
         return ResponseEntity.ok(ApiResponse.success(messagingService.listConversations(orgId)));
     }
 
@@ -35,6 +38,7 @@ public class MessageController {
     public ResponseEntity<ApiResponse<ConversationResponse>> getConversation(
             @PathVariable UUID orgId,
             @PathVariable UUID convId) {
+        log.debug("MessageController.getConversation — convId={}", convId);
         return ResponseEntity.ok(ApiResponse.success(messagingService.getConversation(orgId, convId)));
     }
 
@@ -43,6 +47,7 @@ public class MessageController {
             @PathVariable UUID orgId,
             @PathVariable UUID convId,
             @Valid @RequestBody HostReplyRequest req) {
+        log.info("MessageController.hostReply — convId={}", convId);
         return ResponseEntity.ok(ApiResponse.success(messagingService.hostReply(orgId, convId, req.getBody())));
     }
 
@@ -50,6 +55,7 @@ public class MessageController {
     public ResponseEntity<ApiResponse<Void>> markRead(
             @PathVariable UUID orgId,
             @PathVariable UUID convId) {
+        log.debug("MessageController.markRead — convId={}", convId);
         messagingService.markConversationRead(orgId, convId);
         return ResponseEntity.ok(ApiResponse.success("Marked as read", null));
     }
@@ -59,6 +65,7 @@ public class MessageController {
     @GetMapping("/api/v1/organizations/{orgId}/support/tickets")
     public ResponseEntity<ApiResponse<List<SupportTicketResponse>>> listTickets(
             @PathVariable UUID orgId) {
+        log.debug("MessageController.listTickets — orgId={}", orgId);
         return ResponseEntity.ok(ApiResponse.success(messagingService.listTickets(orgId)));
     }
 
@@ -66,6 +73,7 @@ public class MessageController {
     public ResponseEntity<ApiResponse<SupportTicketResponse>> createTicket(
             @PathVariable UUID orgId,
             @Valid @RequestBody CreateSupportTicketRequest req) {
+        log.info("MessageController.createTicket — orgId={}", orgId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(messagingService.createTicket(orgId, req)));
     }
@@ -75,6 +83,7 @@ public class MessageController {
             @PathVariable UUID orgId,
             @PathVariable UUID ticketId,
             @Valid @RequestBody SupportReplyRequest req) {
+        log.info("MessageController.replyToTicket — ticketId={}", ticketId);
         return ResponseEntity.ok(ApiResponse.success(messagingService.hostReplyToTicket(orgId, ticketId, req.getBody())));
     }
 }

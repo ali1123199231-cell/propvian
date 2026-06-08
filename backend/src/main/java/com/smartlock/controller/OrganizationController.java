@@ -6,6 +6,7 @@ import com.smartlock.dto.response.automation.AutomationStatusResponse;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.dto.response.organization.OrganizationMemberResponse;
 import com.smartlock.dto.response.organization.OrganizationResponse;
+import com.smartlock.exception.AppException;
 import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.AutomationService;
 import com.smartlock.service.OrganizationService;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,6 +31,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Tag(name = "Organizations")
 @SecurityRequirement(name = "bearerAuth")
+@Slf4j
 public class OrganizationController {
 
     private final OrganizationService organizationService;
@@ -39,12 +42,14 @@ public class OrganizationController {
     public ResponseEntity<ApiResponse<OrganizationResponse>> create(
             @Valid @RequestBody CreateOrganizationRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("OrganizationController.create — userId={}", userDetails.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(organizationService.createOrganization(request, userDetails.getUserId())));
     }
 
     @GetMapping("/{orgId}")
     public ResponseEntity<ApiResponse<OrganizationResponse>> get(@PathVariable UUID orgId) {
+        log.debug("OrganizationController.get — orgId={}", orgId);
         return ResponseEntity.ok(ApiResponse.success(organizationService.getOrganization(orgId)));
     }
 
@@ -54,6 +59,7 @@ public class OrganizationController {
             @PathVariable UUID orgId,
             @Valid @RequestBody UpdateOrganizationRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("OrganizationController.update — orgId={}", orgId);
         return ResponseEntity.ok(ApiResponse.success(
                 organizationService.updateOrganization(orgId, request.getName(), request.getTimezone(),
                         request.getCountry(), request.getWebsite(), userDetails.getUserId())));
@@ -78,6 +84,7 @@ public class OrganizationController {
             @PathVariable UUID orgId,
             @RequestBody java.util.Map<String, String> body,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("OrganizationController.updateSlug — orgId={}", orgId);
         return ResponseEntity.ok(ApiResponse.success(
                 organizationService.updateSlug(orgId, body.get("slug"), userDetails.getUserId())));
     }
@@ -86,6 +93,7 @@ public class OrganizationController {
     @GetMapping("/public/check-slug/{slug}")
     @Operation(summary = "Check if a site slug is available")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> checkSlug(@PathVariable String slug) {
+        log.debug("OrganizationController.checkSlug — slug={}", slug);
         boolean available = organizationService.isSlugAvailable(slug);
         return ResponseEntity.ok(ApiResponse.success(java.util.Map.of("available", available, "slug", slug)));
     }
@@ -93,11 +101,17 @@ public class OrganizationController {
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<List<OrganizationResponse>>> getMyOrganizations(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.debug("OrganizationController.getMyOrganizations — userId={}", userDetails.getUserId());
         return ResponseEntity.ok(ApiResponse.success(organizationService.getUserOrganizations(userDetails.getUserId())));
     }
 
     @GetMapping("/{orgId}/members")
-    public ResponseEntity<ApiResponse<List<OrganizationMemberResponse>>> getMembers(@PathVariable UUID orgId) {
+    public ResponseEntity<ApiResponse<List<OrganizationMemberResponse>>> getMembers(
+            @PathVariable UUID orgId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.debug("OrganizationController.getMembers — orgId={}", orgId);
+        if (!orgId.equals(userDetails.getActiveOrgId()))
+            throw new AppException("Access denied", HttpStatus.FORBIDDEN);
         return ResponseEntity.ok(ApiResponse.success(organizationService.getMembers(orgId)));
     }
 
@@ -106,6 +120,7 @@ public class OrganizationController {
             @PathVariable UUID orgId,
             @Valid @RequestBody InviteMemberRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        log.info("OrganizationController.inviteMember — orgId={}", orgId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(organizationService.inviteMember(orgId, request, userDetails.getUserId())));
     }
@@ -114,6 +129,7 @@ public class OrganizationController {
     public ResponseEntity<ApiResponse<Void>> removeMember(
             @PathVariable UUID orgId,
             @PathVariable UUID userId) {
+        log.info("OrganizationController.removeMember — orgId={}, userId={}", orgId, userId);
         organizationService.removeMember(orgId, userId);
         return ResponseEntity.ok(ApiResponse.success("Member removed"));
     }
@@ -121,18 +137,21 @@ public class OrganizationController {
     @GetMapping("/{orgId}/automation")
     @Operation(summary = "Get automation status")
     public ResponseEntity<ApiResponse<AutomationStatusResponse>> getAutomationStatus(@PathVariable UUID orgId) {
+        log.debug("OrganizationController.getAutomationStatus — orgId={}", orgId);
         return ResponseEntity.ok(ApiResponse.success(automationService.getStatus(orgId)));
     }
 
     @PutMapping("/{orgId}/automation/enable")
     @Operation(summary = "Enable automation")
     public ResponseEntity<ApiResponse<AutomationStatusResponse>> enableAutomation(@PathVariable UUID orgId) {
+        log.info("OrganizationController.enableAutomation — orgId={}", orgId);
         return ResponseEntity.ok(ApiResponse.success(automationService.enableAutomation(orgId)));
     }
 
     @PutMapping("/{orgId}/automation/disable")
     @Operation(summary = "Disable automation")
     public ResponseEntity<ApiResponse<AutomationStatusResponse>> disableAutomation(@PathVariable UUID orgId) {
+        log.info("OrganizationController.disableAutomation — orgId={}", orgId);
         return ResponseEntity.ok(ApiResponse.success(automationService.disableAutomation(orgId)));
     }
 }

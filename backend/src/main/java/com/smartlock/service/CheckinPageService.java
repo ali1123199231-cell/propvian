@@ -33,9 +33,16 @@ public class CheckinPageService {
 
     @Transactional(readOnly = true)
     public CheckinPageResponse getCheckinPage(String code) {
+        log.debug("CheckinPageService.getCheckinPage — code={}...", code.length() > 6 ? code.substring(0, 6) : code);
         Reservation reservation = reservationRepository.findByCheckinCode(code)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Check-in page not found"));
+                .orElseThrow(() -> {
+                    log.warn("CheckinPageService.getCheckinPage — not found for code prefix={}",
+                            code.length() > 6 ? code.substring(0, 6) : code);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Check-in page not found");
+                });
 
+        log.debug("CheckinPageService.getCheckinPage — reservationId={} property={}",
+                reservation.getId(), reservation.getPropertyId());
         Property property = propertyRepository.findById(reservation.getPropertyId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
 
@@ -46,6 +53,7 @@ public class CheckinPageService {
                 .toList();
 
         if (activeCodes.isEmpty()) {
+            log.warn("CheckinPageService.getCheckinPage — no active access code reservationId={}", reservation.getId());
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No active access code found for this reservation");
         }
 
@@ -55,6 +63,8 @@ public class CheckinPageService {
                 .map(Lock::getNotes)
                 .orElse(null);
 
+        log.info("CheckinPageService.getCheckinPage — served property={} reservationId={}",
+                property.getName(), reservation.getId());
         return CheckinPageResponse.builder()
                 .propertyName(property.getName())
                 .guestName(reservation.getGuestName())
