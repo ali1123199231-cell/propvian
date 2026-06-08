@@ -137,13 +137,22 @@ public class StripeService {
         return session.getUrl();
     }
 
+    private String resolvedConnectWebhookSecret() {
+        return systemConfigService.getActiveStripeConnectWebhookSecret();
+    }
+
     @Transactional
     public void handleWebhook(String payload, String sigHeader) {
-        Event event;
-        try {
-            event = Webhook.constructEvent(payload, sigHeader, resolvedWebhookSecret());
-        } catch (SignatureVerificationException e) {
-            log.error("Stripe webhook signature verification failed: {}", e.getMessage());
+        Event event = null;
+        for (String secret : new String[]{ resolvedWebhookSecret(), resolvedConnectWebhookSecret() }) {
+            if (secret == null || secret.isBlank()) continue;
+            try {
+                event = Webhook.constructEvent(payload, sigHeader, secret);
+                break;
+            } catch (SignatureVerificationException ignored) {}
+        }
+        if (event == null) {
+            log.error("Stripe webhook signature verification failed against all known secrets");
             throw new SecurityException("Invalid Stripe webhook signature");
         }
 

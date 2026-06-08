@@ -59,7 +59,9 @@ public class SystemConfigService {
 
     private static final Set<String> SECRET_KEYS = Set.of(
             "stripe.secret_key", "stripe.webhook_secret",
+            "stripe.connect_webhook_secret",
             "stripe.sandbox.secret_key", "stripe.sandbox.webhook_secret",
+            "stripe.sandbox.connect_webhook_secret",
             "paypal.client_secret", "paypal.sandbox.client_secret", "ttlock.client_secret"
     );
 
@@ -148,6 +150,11 @@ public class SystemConfigService {
     public String getActiveStripeConnectClientId() {
         if (isStripeSandbox()) return get("stripe.sandbox.connect_client_id", "");
         return get("stripe.connect_client_id", "");
+    }
+
+    public String getActiveStripeConnectWebhookSecret() {
+        if (isStripeSandbox()) return get("stripe.sandbox.connect_webhook_secret", "");
+        return get("stripe.connect_webhook_secret", "");
     }
 
     public String getPaypalClientId() {
