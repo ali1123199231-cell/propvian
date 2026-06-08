@@ -115,9 +115,11 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`
     }
 
-    // FormData: browser must set Content-Type (includes boundary); delete any default
+    // FormData: browser must set Content-Type (includes boundary); remove any default.
+    // Must use AxiosHeaders.delete() — the JS `delete` operator silently fails on
+    // AxiosHeaders property descriptors (works in Chrome which auto-overrides, breaks Firefox).
     if (config.data instanceof FormData) {
-      delete config.headers['Content-Type']
+      config.headers.delete('Content-Type')
       log.debug('FormData upload — Content-Type header removed, browser will set boundary')
     }
 
