@@ -22,6 +22,7 @@ public class PromoValidationResponse {
     private String discountType;   // PERCENT | FIXED
     @JsonSerialize(using = PlainBigDecimalSerializer.class)
     private BigDecimal discountValue;
+    private Integer minNights;
     private String message;
 
     /** Serializes BigDecimal as a plain number with no trailing zeros (10.0 → 10, 19.5 → 19.5). */

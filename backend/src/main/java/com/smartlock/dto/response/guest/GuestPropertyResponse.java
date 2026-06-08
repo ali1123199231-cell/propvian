@@ -17,10 +17,12 @@ public class GuestPropertyResponse {
     private String orgSlug;
     private String name;
     private String description;
+    private String propertyType;
     private String imageUrl;
     private List<String> photoUrls;
     private String city;
     private String country;
+    private String currency;
     private Integer maxGuests;
     private Integer bedrooms;
     private Integer beds;

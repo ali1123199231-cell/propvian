@@ -21,6 +21,7 @@ interface PropertyInfo {
   id: string; orgSlug: string; name: string; description: string; imageUrl: string
   photoUrls: string[]
   city: string; country: string; maxGuests: number; bedrooms: number; beds?: number; bathrooms: number
+  propertyType?: string; currency?: string
   baseNightlyRate: number; cleaningFee: number; securityDeposit?: number; checkInTime: string; checkOutTime: string
   cancellationPolicy: string; minStayNights: number; maxStayNights?: number; instantBooking: boolean
   depositRequired?: boolean; depositPercent?: number
@@ -81,6 +82,14 @@ function calcTotal(prop: PropertyInfo, checkIn: string, checkOut: string) {
   const subtotal = nights * rate
   const cleaning = prop.cleaningFee ?? 0
   return { nights, rate, subtotal, cleaning, total: subtotal + cleaning }
+}
+function fmtPrice(amount: number, currency?: string): string {
+  const cur = currency && currency.length === 3 ? currency.toUpperCase() : 'USD'
+  try {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(amount)
+  } catch {
+    return `${cur} ${amount.toFixed(2)}`
+  }
 }
 
 // ── API ───────────────────────────────────────────────────────────────────────
@@ -256,7 +265,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
   const [guests, setGuests]         = useState(1)
   const [payProvider, setPayProvider] = useState<'stripe' | 'paypal'>('stripe')
   const [promoInput, setPromoInput]   = useState('')
-  const [promoApplied, setPromoApplied] = useState<{ code: string; discountType: string; discountValue: number; message: string } | null>(null)
+  const [promoApplied, setPromoApplied] = useState<{ code: string; discountType: string; discountValue: number; minNights?: number; message: string } | null>(null)
   const [promoLoading, setPromoLoading] = useState(false)
   const [promoError, setPromoError]     = useState<string | null>(null)
 
@@ -304,7 +313,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
       const res = await api.get(`/api/public/promo/${prop.orgSlug}/${encodeURIComponent(promoInput.trim())}`)
       const d = res.data.data
       if (d.valid) {
-        setPromoApplied({ code: d.code, discountType: d.discountType, discountValue: Number(d.discountValue), message: d.message })
+        setPromoApplied({ code: d.code, discountType: d.discountType, discountValue: Number(d.discountValue), minNights: d.minNights ?? undefined, message: d.message })
         setPromoError(null)
         toast.success(d.message)
       } else {
@@ -354,7 +363,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
           {pricing && (
             <div className="flex justify-between border-t border-gray-200 pt-2.5 mt-1">
               <span className="font-bold text-gray-700">Total paid</span>
-              <span className="font-extrabold text-lg" style={{ color: primary }}>${pricing.total.toFixed(2)}</span>
+              <span className="font-extrabold text-lg" style={{ color: primary }}>{fmtPrice(pricing.total, prop.currency)}</span>
             </div>
           )}
         </div>
@@ -485,6 +494,11 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 <Bath size={15} />{prop.bathrooms} bath{prop.bathrooms !== 1 ? 's' : ''}
               </span>
             )}
+            {prop.instantBooking && (
+              <span className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700">
+                ⚡ Instant Book
+              </span>
+            )}
           </div>
 
           {/* Description */}
@@ -567,7 +581,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
             <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-xl">
               <div className="flex items-baseline justify-between mb-1">
                 <h2 className="font-extrabold text-gray-900 text-xl">
-                  {prop.baseNightlyRate ? <>${prop.baseNightlyRate}<span className="text-sm font-normal text-gray-400"> / night</span></> : 'Select dates'}
+                  {prop.baseNightlyRate ? <>{fmtPrice(prop.baseNightlyRate, prop.currency)}<span className="text-sm font-normal text-gray-400"> / night</span></> : 'Select dates'}
                 </h2>
                 {prop.minStayNights > 1 && <span className="text-xs text-gray-400">{prop.minStayNights} night min</span>}
                 {prop.maxStayNights && prop.maxStayNights < 365 && <span className="text-xs text-gray-400">{prop.maxStayNights} night max</span>}
@@ -589,22 +603,22 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                       ) : (
                         <>
                           <div className="flex justify-between text-gray-600">
-                            <span>${pricing.rate} × {pricing.nights} night{pricing.nights !== 1 ? 's' : ''}</span>
-                            <span>${pricing.subtotal.toFixed(2)}</span>
+                            <span>{fmtPrice(pricing.rate, prop.currency)} × {pricing.nights} night{pricing.nights !== 1 ? 's' : ''}</span>
+                            <span>{fmtPrice(pricing.subtotal, prop.currency)}</span>
                           </div>
                           {pricing.cleaning > 0 && (
                             <div className="flex justify-between text-gray-600">
-                              <span>Cleaning fee</span><span>${pricing.cleaning.toFixed(2)}</span>
+                              <span>Cleaning fee</span><span>{fmtPrice(pricing.cleaning, prop.currency)}</span>
                             </div>
                           )}
                           {secDep && (
                             <div className="flex justify-between text-gray-500">
                               <span>Security deposit <span className="text-xs">(refundable)</span></span>
-                              <span>${Number(secDep).toFixed(2)}</span>
+                              <span>{fmtPrice(Number(secDep), prop.currency)}</span>
                             </div>
                           )}
                           <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100 text-base">
-                            <span>Total</span><span>${pricing.total.toFixed(2)}</span>
+                            <span>Total</span><span>{fmtPrice(pricing.total, prop.currency)}</span>
                           </div>
                         </>
                       )}
@@ -654,13 +668,13 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                     <>
                       <div className="flex justify-between text-emerald-600 font-medium">
                         <span>Promo ({promoApplied.code})</span>
-                        <span>-${discountAmt.toFixed(2)}</span>
+                        <span>-{fmtPrice(discountAmt, prop.currency)}</span>
                       </div>
-                      <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span>${discountedTotal.toFixed(2)}</span></div>
+                      <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span>{fmtPrice(discountedTotal, prop.currency)}</span></div>
                     </>
                   )
                 })()}
-                {!promoApplied && <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span>${pricing?.total.toFixed(2)}</span></div>}
+                {!promoApplied && <div className="flex justify-between font-bold text-gray-900"><span>Total</span><span>{fmtPrice(pricing?.total ?? 0, prop.currency)}</span></div>}
               </div>
 
               <div className="space-y-3">
@@ -711,6 +725,9 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                   )}
                 </div>
                 {promoApplied && <p className="text-xs text-emerald-600 font-medium mt-1.5">✓ {promoApplied.message}</p>}
+                {promoApplied?.minNights && promoApplied.minNights > 1 && (
+                  <p className="text-xs text-amber-600 mt-0.5">Requires a minimum stay of {promoApplied.minNights} nights</p>
+                )}
                 {promoError  && <p className="text-xs text-red-500 mt-1.5">{promoError}</p>}
               </div>}
 
@@ -769,7 +786,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
               <div className="rounded-2xl p-4 text-sm space-y-1.5" style={{ backgroundColor: `${primary}0d` }}>
                 <div className="flex justify-between text-gray-600"><span>{prop.name}</span><span>{pricing?.nights} nights</span></div>
-                <div className="flex justify-between font-bold text-gray-900 text-base"><span>Total</span><span>${pricing?.total.toFixed(2)}</span></div>
+                <div className="flex justify-between font-bold text-gray-900 text-base"><span>Total</span><span>{fmtPrice(pricing?.total ?? 0, prop.currency)}</span></div>
               </div>
 
               {payProvider === 'stripe' && initiated.stripeClientSecret && stripePromise && (
@@ -783,7 +800,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
               )}
 
               {payProvider === 'paypal' && prop.paypalClientId && (
-                <PayPalScriptProvider options={{ clientId: prop.paypalClientId, currency: 'USD' }}>
+                <PayPalScriptProvider options={{ clientId: prop.paypalClientId, currency: prop.currency ?? 'USD' }}>
                   <PayPalButtons
                     style={{ layout: 'vertical', shape: 'rect', label: 'pay' }}
                     createOrder={() => Promise.resolve(initiated.paypalOrderId!)}

@@ -33,6 +33,17 @@ public class PublicOrgSiteResponse {
     private String metaPixelId;
     private String tiktokPixelId;
 
+    // Conversion / UX features
+    private boolean stickyBookButton;
+    private boolean exitIntentEnabled;
+    private String exitIntentMessage;
+    private Integer exitIntentDiscount;
+
+    // Custom code injection
+    private String customCss;
+    private String customHeadJs;
+    private String customFooterJs;
+
     private List<PublicSectionDto> sections;
     private List<PublicPropertyCard> properties;
 
@@ -64,6 +75,7 @@ public class PublicOrgSiteResponse {
         private String city;
         private String country;
         private Integer bedrooms;
+        private Integer beds;
         private Integer bathrooms;
         private Integer maxGuests;
         private BigDecimal baseNightlyRate;

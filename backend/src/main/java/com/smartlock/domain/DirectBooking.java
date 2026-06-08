@@ -77,6 +77,12 @@ public class DirectBooking extends BaseEntity {
     @Column(name = "cancellation_reason", columnDefinition = "text")
     private String cancellationReason;
 
+    @Column(name = "promo_code_used", length = 100)
+    private String promoCodeUsed;
+
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    private java.math.BigDecimal discountAmount;
+
     @Column(columnDefinition = "text")
     private String notes;
 }

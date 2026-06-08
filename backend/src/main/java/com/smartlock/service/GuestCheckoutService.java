@@ -147,6 +147,7 @@ public class GuestCheckoutService {
                             .city(p.getCity())
                             .country(p.getCountry())
                             .bedrooms(p.getBedrooms())
+                            .beds(p.getBeds())
                             .bathrooms(p.getBathrooms())
                             .maxGuests(p.getMaxGuests())
                             .baseNightlyRate(p.getBaseNightlyRate())
@@ -192,6 +193,13 @@ public class GuestCheckoutService {
                 .gtmContainerId(config != null ? config.getGtmContainerId() : null)
                 .metaPixelId(config != null ? config.getMetaPixelId() : null)
                 .tiktokPixelId(config != null ? config.getTiktokPixelId() : null)
+                .stickyBookButton(config != null && config.isStickyBookButton())
+                .exitIntentEnabled(config != null && config.isExitIntentEnabled())
+                .exitIntentMessage(config != null ? config.getExitIntentMessage() : null)
+                .exitIntentDiscount(config != null ? config.getExitIntentDiscount() : null)
+                .customCss(config != null ? config.getCustomCss() : null)
+                .customHeadJs(config != null ? config.getCustomHeadJs() : null)
+                .customFooterJs(config != null ? config.getCustomFooterJs() : null)
                 .sections(sections)
                 .properties(cards)
                 .build();
@@ -272,6 +280,8 @@ public class GuestCheckoutService {
                 .orgSlug(orgSlug)
                 .name(property.getName())
                 .description(property.getDescription())
+                .propertyType(property.getPropertyType())
+                .currency(property.getCurrency() != null ? property.getCurrency() : "USD")
                 .imageUrl(primaryImageUrl)
                 .photoUrls(allPhotos)
                 .city(property.getCity())
@@ -348,7 +358,15 @@ public class GuestCheckoutService {
         }
 
         BigDecimal total = calculateTotal(property, req, promo);
-        String currency = "USD";
+        String currency = property.getCurrency() != null ? property.getCurrency().toUpperCase() : "USD";
+
+        BigDecimal discountAmt = BigDecimal.ZERO;
+        if (promo != null) {
+            BigDecimal gross = calculateGross(property, req);
+            discountAmt = "PERCENT".equalsIgnoreCase(promo.getDiscountType())
+                    ? gross.multiply(promo.getDiscountValue()).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP)
+                    : promo.getDiscountValue();
+        }
 
         DirectBooking booking = DirectBooking.builder()
                 .propertyId(property.getId())
@@ -362,6 +380,8 @@ public class GuestCheckoutService {
                 .totalAmount(total)
                 .currency(currency)
                 .paymentProvider(provider)
+                .promoCodeUsed(promo != null ? promo.getCode() : null)
+                .discountAmount(discountAmt.compareTo(BigDecimal.ZERO) > 0 ? discountAmt : null)
                 .build();
         booking = bookingRepository.save(booking);
         if (promo != null) {
@@ -515,6 +535,20 @@ public class GuestCheckoutService {
         return subtotal;
     }
 
+    /** Gross (pre-discount) total — used to compute the discount amount for audit. */
+    private BigDecimal calculateGross(Property property, GuestInitiateRequest req) {
+        long nights = req.getCheckInDate().until(req.getCheckOutDate(), ChronoUnit.DAYS);
+        BigDecimal nightlyRate = property.getBaseNightlyRate() != null ? property.getBaseNightlyRate() : BigDecimal.ZERO;
+        List<PropertyPricingRule> rules = pricingRepo.findByPropertyIdOrderByStartDateAsc(property.getId());
+        for (PropertyPricingRule rule : rules) {
+            if (!rule.getStartDate().isAfter(req.getCheckInDate()) && !rule.getEndDate().isBefore(req.getCheckOutDate())) {
+                nightlyRate = rule.getNightlyRate(); break;
+            }
+        }
+        BigDecimal cleaning = property.getCleaningFee() != null ? property.getCleaningFee() : BigDecimal.ZERO;
+        return nightlyRate.multiply(BigDecimal.valueOf(nights)).add(cleaning);
+    }
+
     // ── Public promo code validation ──────────────────────────────────────────
 
     @Transactional(readOnly = true)
@@ -533,6 +567,7 @@ public class GuestCheckoutService {
                         .code(p.getCode())
                         .discountType(p.getDiscountType())
                         .discountValue(p.getDiscountValue())
+                        .minNights(p.getMinNights())
                         .message(buildPromoMessage(p))
                         .build())
                 .orElse(PromoValidationResponse.builder()

@@ -40,6 +40,7 @@ export interface PublicPropertyCard {
   city: string
   country: string
   bedrooms: number
+  beds?: number
   bathrooms: number
   maxGuests: number
   baseNightlyRate: number
@@ -175,7 +176,8 @@ function PropertyCard({ prop, primary, buttonStyle, onBook }: {
           </div>
         )}
         <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
-          {prop.bedrooms != null && <span className="flex items-center gap-1"><BedDouble size={14} />{prop.bedrooms} bed{prop.bedrooms !== 1 ? 's' : ''}</span>}
+          {prop.bedrooms != null && <span className="flex items-center gap-1"><BedDouble size={14} />{prop.bedrooms} br</span>}
+          {prop.beds != null && <span className="flex items-center gap-1"><BedDouble size={14} />{prop.beds} bed{prop.beds !== 1 ? 's' : ''}</span>}
           {prop.bathrooms != null && <span className="flex items-center gap-1"><Bath size={14} />{prop.bathrooms} bath{prop.bathrooms !== 1 ? 's' : ''}</span>}
           {prop.maxGuests != null && <span className="flex items-center gap-1"><Users size={14} />{prop.maxGuests} guest{prop.maxGuests !== 1 ? 's' : ''}</span>}
         </div>

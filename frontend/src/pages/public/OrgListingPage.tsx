@@ -76,6 +76,9 @@ interface OrgSite {
   exitIntentEnabled?: boolean
   exitIntentMessage?: string
   exitIntentDiscount?: number
+  customCss?: string
+  customHeadJs?: string
+  customFooterJs?: string
   sections: PublicSection[]
   properties: PublicPropertyCard[]
 }
@@ -172,6 +175,34 @@ export function OrgListingPage({ orgSlug, getPropertyUrl }: {
       site.metaPixelId || null,
       site.tiktokPixelId || null,
     )
+  }, [site])
+
+  // Custom CSS / JS injection
+  useEffect(() => {
+    if (!site) return
+    const injected: HTMLElement[] = []
+    if (site.customCss) {
+      const el = document.createElement('style')
+      el.setAttribute('data-custom', 'css')
+      el.textContent = site.customCss
+      document.head.appendChild(el)
+      injected.push(el)
+    }
+    if (site.customHeadJs) {
+      const el = document.createElement('script')
+      el.setAttribute('data-custom', 'head-js')
+      el.textContent = site.customHeadJs
+      document.head.appendChild(el)
+      injected.push(el)
+    }
+    if (site.customFooterJs) {
+      const el = document.createElement('script')
+      el.setAttribute('data-custom', 'footer-js')
+      el.textContent = site.customFooterJs
+      document.body.appendChild(el)
+      injected.push(el)
+    }
+    return () => injected.forEach(el => el.remove())
   }, [site])
 
   if (isLoading) return (
