@@ -1,16 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
 import { GuestBookingPage } from '@/pages/public/GuestBookingPage'
 import { OrgListingPage } from '@/pages/public/OrgListingPage'
 
-// Hostname routing: beachvilla.propvian.com → subdomain, norblina.pl → custom domain
+// Subdomain detection: beachvilla.propvian.com → slug = "beachvilla"
 const hostname = window.location.hostname
 const PLATFORM_DOMAINS = ['propvian.com', 'www.propvian.com', 'localhost', '127.0.0.1']
-const isPlatform = PLATFORM_DOMAINS.includes(hostname) || hostname.match(/^(\d+\.){3}\d+$/)
-const isSubdomain = !isPlatform && hostname.endsWith('.propvian.com')
+const isSubdomain = !PLATFORM_DOMAINS.includes(hostname) && hostname.endsWith('.propvian.com')
 const subdomainSlug = isSubdomain ? hostname.replace(/\.propvian\.com$/, '') : null
-const isCustomDomain = !isPlatform && !isSubdomain
 
 function GuestBookingRoute() {
   const { slug } = useParams<{ slug: string }>()
@@ -30,40 +26,6 @@ function OrgPropertyRoute() {
 
 // Subdomain property route: myco.propvian.com/property/:propertySlug
 function SubdomainPropertyRoute() {
-  const { propertySlug } = useParams<{ propertySlug: string }>()
-  return <GuestBookingPage slug={propertySlug!} />
-}
-
-// Custom domain router: norblina.pl → look up org slug → render org listing
-function CustomDomainApp() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['resolve-domain', hostname],
-    queryFn: async () => {
-      const r = await axios.get(`/api/public/resolve-domain?domain=${encodeURIComponent(hostname)}`)
-      return r.data.data as { orgSlug: string }
-    },
-    retry: false,
-  })
-
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-screen"><div className="w-8 h-8 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" /></div>
-  }
-  if (isError || !data?.orgSlug) {
-    return <div className="flex items-center justify-center h-screen text-gray-500">Site not found.</div>
-  }
-  const slug = data.orgSlug
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<OrgListingPage orgSlug={slug} getPropertyUrl={(s) => `/property/${s}`} />} />
-        <Route path="/property/:propertySlug" element={<CustomDomainPropertyRoute orgSlug={slug} />} />
-        <Route path="*" element={<OrgListingPage orgSlug={slug} getPropertyUrl={(s) => `/property/${s}`} />} />
-      </Routes>
-    </BrowserRouter>
-  )
-}
-
-function CustomDomainPropertyRoute({ orgSlug }: { orgSlug: string }) {
   const { propertySlug } = useParams<{ propertySlug: string }>()
   return <GuestBookingPage slug={propertySlug!} />
 }
@@ -162,9 +124,6 @@ function AnalyticsRouter() {
 }
 
 export default function App() {
-  // Custom domain: norblina.pl → resolve to org slug, then show org listing
-  if (isCustomDomain) return <CustomDomainApp />
-
   // Subdomain: myco.propvian.com → org listing; /property/:slug → individual booking
   if (subdomainSlug) {
     return (
