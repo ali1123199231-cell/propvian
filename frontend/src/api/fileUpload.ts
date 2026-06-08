@@ -9,7 +9,7 @@ export const fileUploadApi = {
     const form = new FormData()
     form.append('file', file)
     const res = await apiClient.post<{ success: boolean; data: { path: string; url: string } }>(
-      '/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } }
+      '/upload', form, { headers: { 'Content-Type': undefined } }
     )
     log.info('fileUpload.upload — success path=%s', res.data.data.path)
     return res.data.data

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -143,6 +144,13 @@ public class GlobalExceptionHandler {
         log.debug("Upload size exceeded: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
                 .body(buildError(HttpStatus.PAYLOAD_TOO_LARGE, "File too large. Maximum upload size is 10 MB.", "FILE_TOO_LARGE", request, null));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipart(MultipartException ex, WebRequest request) {
+        log.warn("Multipart parse error: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildError(HttpStatus.BAD_REQUEST, "Invalid file upload request.", "INVALID_MULTIPART", request, null));
     }
 
     @ExceptionHandler(Exception.class)
