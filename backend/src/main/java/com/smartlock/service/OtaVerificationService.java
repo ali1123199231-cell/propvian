@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 public class OtaVerificationService {
 
     private final RestTemplate restTemplate;
+    private final SystemConfigService systemConfigService;
 
     private static final Pattern AIRBNB_URL  = Pattern.compile("https?://(www\\.)?airbnb\\.(com|[a-z]{2,3})/rooms/\\d+");
     private static final Pattern BOOKING_URL = Pattern.compile("https?://(www\\.)?booking\\.com/hotel/");
@@ -64,21 +65,16 @@ public class OtaVerificationService {
         log.info("OTA verify: url={} reviewCount={} hostName={} userFirstName={} nameMatches={}",
                 url, reviewCount, hostName, userFirstName, nameMatches);
 
-        if (reviewCount >= 3 && nameMatches) {
-            return new OtaVerificationResult(true, true, reviewCount, hostName, true, true,
+        int minReviews;
+        try { minReviews = Integer.parseInt(systemConfigService.get("verification.ota_min_reviews", "3")); }
+        catch (NumberFormatException e) { minReviews = 3; }
+        if (reviewCount >= minReviews) {
+            return new OtaVerificationResult(true, true, reviewCount, hostName, nameMatches, true,
                     "Verified");
         }
 
-        String note;
-        if (reviewCount >= 3 && !nameMatches) {
-            note = "Your listing has been submitted for review.";
-        } else if (reviewCount > 0) {
-            note = "Your listing has been submitted for review.";
-        } else {
-            note = "Your listing has been submitted for review.";
-        }
-
-        return new OtaVerificationResult(true, true, reviewCount, hostName, nameMatches, false, note);
+        return new OtaVerificationResult(true, true, reviewCount, hostName, nameMatches, false,
+                "Your listing has been submitted for review.");
     }
 
     private boolean matchesFirstName(String hostName, String userFirstName) {
