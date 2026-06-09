@@ -466,7 +466,7 @@ public class VerificationService {
 
     @Transactional(readOnly = true)
     public Page<VerificationStatusResponse> listPending(Pageable pageable) {
-        return verificationRepository.findByAdminStatus(VerificationStatus.PENDING, pageable)
+        return verificationRepository.findByAnyStepStatus(VerificationStatus.PENDING, pageable)
                 .map(this::toResponse);
     }
 

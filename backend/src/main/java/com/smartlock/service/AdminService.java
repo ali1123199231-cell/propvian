@@ -43,7 +43,7 @@ public class AdminService {
         log.debug("AdminService.getDashboard");
         long totalUsers = userRepository.count();
         long totalOrgs  = organizationRepository.count();
-        long pendingVerifs  = hostVerificationRepository.countByAdminStatus(VerificationStatus.PENDING);
+        long pendingVerifs  = hostVerificationRepository.countByAnyStepStatus(VerificationStatus.PENDING);
         long approvedVerifs = hostVerificationRepository.countByAdminStatus(VerificationStatus.APPROVED);
 
         long activeSubs   = subscriptionRepository.countByStatus(SubscriptionStatus.ACTIVE);
