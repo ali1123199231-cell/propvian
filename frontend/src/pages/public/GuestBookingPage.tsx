@@ -315,6 +315,36 @@ export function GuestBookingPage({ slug }: { slug: string }) {
     else if (prop?.paypalEnabled) setPayProvider('paypal')
   }, [prop])
 
+  // Update browser title and SEO meta from property data
+  useEffect(() => {
+    if (!prop) return
+    const title = prop.brandName ? `${prop.name} — ${prop.brandName}` : prop.name
+    document.title = title
+    const setMeta = (name: string, content: string, isProp = false) => {
+      const sel = isProp ? `meta[property="${name}"]` : `meta[name="${name}"]`
+      let el = document.querySelector(sel) as HTMLMetaElement | null
+      if (!el) {
+        el = document.createElement('meta')
+        isProp ? el.setAttribute('property', name) : el.setAttribute('name', name)
+        document.head.appendChild(el)
+      }
+      el.setAttribute('content', content)
+    }
+    const desc = prop.description || `Book ${prop.name} directly. ${prop.city ? `Located in ${prop.city}` : ''}`.trim()
+    setMeta('description', desc)
+    setMeta('og:title', title, true)
+    setMeta('twitter:title', title, true)
+    setMeta('og:description', desc, true)
+    setMeta('twitter:description', desc, true)
+    if (prop.brandName) setMeta('og:site_name', prop.brandName, true)
+    const image = prop.photoUrls?.[0] || prop.imageUrl
+    if (image) { setMeta('og:image', image, true); setMeta('twitter:image', image, true) }
+    const currentUrl = window.location.href
+    setMeta('og:url', currentUrl, true)
+    const canonical = document.querySelector('link[rel="canonical"]')
+    if (canonical) canonical.setAttribute('href', currentUrl)
+  }, [prop])
+
   const initMut = useMutation({
     mutationFn: () => initiateBooking(slug, {
       guestName, guestEmail, guestPhone,

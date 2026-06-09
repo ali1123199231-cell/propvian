@@ -21,10 +21,18 @@ function updateMeta(title: string, description: string, ogImage: string | null, 
     el.setAttribute('content', content)
   }
   if (description) setMeta('description', description)
-  if (title) { setMeta('og:title', title, true); setMeta('twitter:title', title, true) }
+  if (title) {
+    setMeta('og:title', title, true)
+    setMeta('twitter:title', title, true)
+    setMeta('og:site_name', title, true)
+  }
   if (description) { setMeta('og:description', description, true); setMeta('twitter:description', description, true) }
   if (ogImage) { setMeta('og:image', ogImage, true); setMeta('twitter:image', ogImage, true) }
   setMeta('theme-color', primary)
+  const currentUrl = window.location.href
+  setMeta('og:url', currentUrl, true)
+  const canonical = document.querySelector('link[rel="canonical"]')
+  if (canonical) canonical.setAttribute('href', currentUrl)
 }
 
 function injectAnalytics(gaId: string | null, gtmId: string | null, pixelId: string | null, tiktokId: string | null) {
