@@ -3,6 +3,7 @@ package com.smartlock.service;
 import com.smartlock.domain.DirectBooking;
 import com.smartlock.domain.HostVerification;
 import com.smartlock.domain.Organization;
+import com.smartlock.domain.User;
 import com.smartlock.domain.PromoCode;
 import com.smartlock.domain.Property;
 import com.smartlock.domain.PropertyPricingRule;
@@ -564,9 +565,14 @@ public class GuestCheckoutService {
             String checkIn = DATE_FMT.format(booking.getCheckInDate());
             String checkOut = DATE_FMT.format(booking.getCheckOutDate());
             String amount = booking.getTotalAmount() != null ? booking.getTotalAmount().toPlainString() : null;
+            String senderName = websiteConfigRepository.findByOrganizationId(booking.getOrganizationId())
+                    .map(wc -> wc.getBrandName()).filter(n -> n != null && !n.isBlank()).orElse(null);
+            String replyTo = organizationRepository.findById(booking.getOrganizationId())
+                    .flatMap(o -> userRepository.findById(o.getOwnerId()))
+                    .map(u -> u.getEmail()).orElse(null);
             emailService.sendGuestBookingConfirmationEmail(
                     booking.getGuestEmail(), booking.getGuestName(), propertyName,
-                    checkIn, checkOut, amount, booking.getCurrency());
+                    checkIn, checkOut, amount, booking.getCurrency(), senderName, replyTo);
         } catch (Exception e) {
             log.error("Failed to send confirmation to guest for booking {}: {}", booking.getId(), e.getMessage());
         }

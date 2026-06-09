@@ -18,6 +18,7 @@ import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
 import com.smartlock.repository.UserRepository;
+import com.smartlock.repository.WebsiteConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +48,7 @@ public class ReservationService {
     private final AccessCodeRepository accessCodeRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final WebsiteConfigRepository websiteConfigRepository;
     private final EmailService emailService;
     private final ApplicationEventPublisher eventPublisher;
     private final OrganizationSecurityService orgSecurity;
@@ -93,7 +95,7 @@ public class ReservationService {
             }
             notifyHostOfNewReservation(reservation, org);
         }
-        notifyGuestOfNewReservation(reservation);
+        notifyGuestOfNewReservation(reservation, orgId);
 
         return toResponse(reservation, null);
     }
@@ -180,7 +182,7 @@ public class ReservationService {
         }
     }
 
-    private void notifyGuestOfNewReservation(Reservation reservation) {
+    private void notifyGuestOfNewReservation(Reservation reservation, UUID orgId) {
         if (reservation.getGuestEmail() == null || reservation.getGuestEmail().isBlank()) return;
         try {
             Property property = propertyRepository.findById(reservation.getPropertyId()).orElse(null);
@@ -189,9 +191,14 @@ public class ReservationService {
             String checkIn = DATE_FMT.format(reservation.getCheckInDate().atZone(zone));
             String checkOut = DATE_FMT.format(reservation.getCheckOutDate().atZone(zone));
             String amount = reservation.getTotalAmount() != null ? reservation.getTotalAmount().toPlainString() : null;
+            String senderName = websiteConfigRepository.findByOrganizationId(orgId)
+                    .map(wc -> wc.getBrandName()).filter(n -> n != null && !n.isBlank()).orElse(null);
+            String replyTo = organizationRepository.findById(orgId)
+                    .flatMap(o -> userRepository.findById(o.getOwnerId()))
+                    .map(User::getEmail).orElse(null);
             emailService.sendGuestBookingConfirmationEmail(
                     reservation.getGuestEmail(), reservation.getGuestName(), propertyName,
-                    checkIn, checkOut, amount, reservation.getCurrency());
+                    checkIn, checkOut, amount, reservation.getCurrency(), senderName, replyTo);
         } catch (Exception e) {
             log.error("Failed to send confirmation to guest for reservation {}: {}", reservation.getId(), e.getMessage());
         }

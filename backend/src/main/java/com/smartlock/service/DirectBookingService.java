@@ -9,10 +9,12 @@ import com.smartlock.dto.request.directbooking.CreateDirectBookingRequest;
 import com.smartlock.dto.response.common.PageResponse;
 import com.smartlock.dto.response.directbooking.DirectBookingResponse;
 import com.smartlock.exception.AppException;
+import com.smartlock.domain.User;
 import com.smartlock.repository.DirectBookingRepository;
 import com.smartlock.repository.OrganizationRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.UserRepository;
+import com.smartlock.repository.WebsiteConfigRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +40,7 @@ public class DirectBookingService {
     private final PropertyRepository propertyRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final WebsiteConfigRepository websiteConfigRepository;
     private final EmailService emailService;
     private final OrganizationSecurityService orgSecurity;
     private final CalendarEngine calendarEngine;
@@ -161,9 +164,14 @@ public class DirectBookingService {
             String checkIn = DATE_FMT.format(booking.getCheckInDate());
             String checkOut = DATE_FMT.format(booking.getCheckOutDate());
             String amount = booking.getTotalAmount() != null ? booking.getTotalAmount().toPlainString() : null;
+            String senderName = websiteConfigRepository.findByOrganizationId(booking.getOrganizationId())
+                    .map(wc -> wc.getBrandName()).filter(n -> n != null && !n.isBlank()).orElse(null);
+            String replyTo = organizationRepository.findById(booking.getOrganizationId())
+                    .flatMap(o -> userRepository.findById(o.getOwnerId()))
+                    .map(User::getEmail).orElse(null);
             emailService.sendGuestBookingConfirmationEmail(
                     booking.getGuestEmail(), booking.getGuestName(), propertyName,
-                    checkIn, checkOut, amount, booking.getCurrency());
+                    checkIn, checkOut, amount, booking.getCurrency(), senderName, replyTo);
         } catch (Exception e) {
             log.error("Failed to send confirmation to guest for booking {}: {}", booking.getId(), e.getMessage());
         }

@@ -118,7 +118,8 @@ public class EmailService {
     @Async
     public void sendGuestBookingConfirmationEmail(String toEmail, String guestName, String propertyName,
                                                   String checkIn, String checkOut,
-                                                  String totalAmount, String currency) {
+                                                  String totalAmount, String currency,
+                                                  String senderName, String replyTo) {
         Context context = new Context();
         context.setVariable("guestName", guestName);
         context.setVariable("propertyName", propertyName);
@@ -126,7 +127,9 @@ public class EmailService {
         context.setVariable("checkOut", checkOut);
         context.setVariable("totalAmount", totalAmount);
         context.setVariable("currency", currency);
-        sendHtmlEmail(toEmail, "Your booking is confirmed — " + propertyName, "email/guest-booking-confirmation", context);
+        context.setVariable("senderName", senderName != null ? senderName : fromName);
+        sendHtmlEmail(toEmail, "Your booking is confirmed — " + propertyName,
+                "email/guest-booking-confirmation", context, senderName, replyTo);
     }
 
     @Async
@@ -137,31 +140,41 @@ public class EmailService {
     }
 
     private void sendHtmlEmail(String to, String subject, String templateName, Context context) {
-        log.info("Sending email | provider={} | to={} | subject={} | template={}",
-                resend != null ? "Resend" : "SMTP", to, subject, templateName);
+        sendHtmlEmail(to, subject, templateName, context, null, null);
+    }
+
+    private void sendHtmlEmail(String to, String subject, String templateName, Context context,
+                                String overrideFromName, String replyTo) {
+        String effectiveFromName = (overrideFromName != null && !overrideFromName.isBlank())
+                ? overrideFromName : fromName;
+        log.info("Sending email | provider={} | to={} | subject={} | template={} | fromName={}",
+                resend != null ? "Resend" : "SMTP", to, subject, templateName, effectiveFromName);
 
         String html = templateEngine.process(templateName, context);
 
         if (resend != null) {
-            sendViaResend(to, subject, html);
+            sendViaResend(to, subject, html, effectiveFromName, replyTo);
         } else {
-            sendViaSmtp(to, subject, html);
+            sendViaSmtp(to, subject, html, effectiveFromName, replyTo);
         }
     }
 
-    private void sendViaResend(String to, String subject, String html) {
+    private void sendViaResend(String to, String subject, String html,
+                                String effectiveFromName, String replyTo) {
         try {
-            String from = fromName + " <" + fromEmail + ">";
-            log.info("Resend API call | from={} | to={} | subject={}", from, to, subject);
+            String from = effectiveFromName + " <" + fromEmail + ">";
+            log.info("Resend API call | from={} | to={} | subject={} | replyTo={}", from, to, subject, replyTo);
 
-            CreateEmailOptions params = CreateEmailOptions.builder()
+            CreateEmailOptions.Builder builder = CreateEmailOptions.builder()
                     .from(from)
                     .to(to)
                     .subject(subject)
-                    .html(html)
-                    .build();
+                    .html(html);
+            if (replyTo != null && !replyTo.isBlank()) {
+                builder.replyTo(replyTo);
+            }
 
-            CreateEmailResponse response = resend.emails().send(params);
+            CreateEmailResponse response = resend.emails().send(builder.build());
             log.info("Resend success | to={} | subject={} | messageId={}", to, subject, response.getId());
 
         } catch (ResendException e) {
@@ -171,15 +184,19 @@ public class EmailService {
         }
     }
 
-    private void sendViaSmtp(String to, String subject, String html) {
+    private void sendViaSmtp(String to, String subject, String html,
+                              String effectiveFromName, String replyTo) {
         try {
-            log.info("SMTP send | to={} | subject={}", to, subject);
+            log.info("SMTP send | to={} | subject={} | replyTo={}", to, subject, replyTo);
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail, fromName);
+            helper.setFrom(fromEmail, effectiveFromName);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(html, true);
+            if (replyTo != null && !replyTo.isBlank()) {
+                helper.setReplyTo(replyTo);
+            }
             mailSender.send(message);
             log.info("SMTP success | to={} | subject={}", to, subject);
         } catch (MessagingException | java.io.UnsupportedEncodingException e) {
