@@ -57,6 +57,9 @@ public class GuestPropertyResponse {
     // Whether bookings are currently enabled for this property's org
     private boolean bookingsEnabled;
 
+    // Custom domain configured for this org (null if none / not yet verified)
+    private String customDomain;
+
     // Whether the org has at least one active promo code
     private boolean hasActivePromos;
 

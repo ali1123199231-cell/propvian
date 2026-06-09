@@ -159,7 +159,7 @@ export function CalendarPage() {
   // ── Day lookup sets ───────────────────────────────────────────────────────
 
   const bookedDays = new Set<string>()
-  ;(bookings?.content ?? []).filter(b => b.status !== 'CANCELLED').forEach(b => {
+  ;(bookings?.content ?? []).filter(b => b.status === 'CONFIRMED').forEach(b => {
     datesInRange(b.checkInDate, b.checkOutDate).forEach(d => bookedDays.add(d))
   })
 
@@ -525,7 +525,7 @@ export function CalendarPage() {
                 <Calendar size={13} className="text-primary-500" /> Reservations this month
               </h3>
               {(bookings?.content ?? [])
-                .filter(b => b.status !== 'CANCELLED' &&
+                .filter(b => b.status === 'CONFIRMED' &&
                   (b.checkInDate.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`) ||
                    b.checkOutDate.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)))
                 .length === 0 ? (
@@ -533,7 +533,7 @@ export function CalendarPage() {
               ) : (
                 <div className="space-y-2">
                   {(bookings?.content ?? [])
-                    .filter(b => b.status !== 'CANCELLED' &&
+                    .filter(b => b.status === 'CONFIRMED' &&
                       (b.checkInDate.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`) ||
                        b.checkOutDate.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)))
                     .map(b => (

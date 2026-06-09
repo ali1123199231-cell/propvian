@@ -95,6 +95,13 @@ export const verificationApi = {
     return res.data.data
   },
 
+  async confirmDomainRedirect(orgId: string): Promise<VerificationProgress> {
+    log.info('verification.confirmDomainRedirect — org=%s', shortId(orgId))
+    const res = await apiClient.post<Res<VerificationProgress>>(`/organizations/${orgId}/verification/domain/confirm-redirect`)
+    log.info('verification.confirmDomainRedirect — success')
+    return res.data.data
+  },
+
   async testIcal(url: string): Promise<{ success: boolean; message: string }> {
     log.info('verification.testIcal — testing iCal URL')
     const res = await apiClient.post<Res<{ success: boolean; message: string }>>('/verification/test-ical', { url })

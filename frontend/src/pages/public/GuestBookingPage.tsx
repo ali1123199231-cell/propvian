@@ -30,6 +30,7 @@ interface PropertyInfo {
   cancellationPolicy: string; minStayNights: number; maxStayNights?: number; instantBooking: boolean
   depositRequired?: boolean; depositPercent?: number
   bookingsEnabled: boolean
+  customDomain?: string
   stripeEnabled: boolean; paypalEnabled: boolean
   stripePublishableKey: string; stripeConnectedAccountId: string; paypalClientId: string
   hasActivePromos: boolean
@@ -42,6 +43,11 @@ interface PropertyInfo {
   pricingRules: PricingRule[]
   seasonalRules?: SeasonalRule[]
 }
+
+const _hostname = window.location.hostname
+const _isOnPropvianSubdomain = !['propvian.com', 'www.propvian.com', 'localhost', '127.0.0.1'].includes(_hostname)
+  && !_hostname.match(/^\d+\.\d+\.\d+\.\d+$/)
+  && _hostname.endsWith('.propvian.com')
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -786,8 +792,26 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                 {promoError  && <p className="text-xs text-red-500 mt-1.5">{promoError}</p>}
               </div>}
 
+              {/* Block booking on propvian subdomain when property has a verified custom domain */}
+              {_isOnPropvianSubdomain && prop.customDomain && (
+                <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                  <AlertCircle size={16} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-blue-900 mb-1">Booking not available on this link</p>
+                    <p className="text-sm text-blue-800 leading-snug mb-2">
+                      This property has a dedicated website. Please book through the official address:
+                    </p>
+                    <a
+                      href={`https://${prop.customDomain}`}
+                      className="text-sm font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-900 break-all">
+                      {prop.customDomain}
+                    </a>
+                  </div>
+                </div>
+              )}
+
               {/* Payment method selector */}
-              {!prop.bookingsEnabled ? (
+              {!(_isOnPropvianSubdomain && prop.customDomain) && (!prop.bookingsEnabled ? (
                 <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-2xl p-4">
                   <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-amber-800 leading-snug">
@@ -820,9 +844,9 @@ export function GuestBookingPage({ slug }: { slug: string }) {
                     Online booking is not available yet. Please contact the host directly to arrange your stay.
                   </p>
                 </div>
-              )}
+              ))}
 
-              {prop.bookingsEnabled && (prop.stripeEnabled || prop.paypalEnabled) && (
+              {!(_isOnPropvianSubdomain && prop.customDomain) && prop.bookingsEnabled && (prop.stripeEnabled || prop.paypalEnabled) && (
                 <button
                   onClick={() => initMut.mutate()}
                   disabled={!guestName.trim() || !guestEmail.trim() || initMut.isPending}

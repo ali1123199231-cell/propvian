@@ -315,19 +315,28 @@ public class VerificationService {
             return Map.of("verified", false, "message", "No domain configured");
         }
         boolean resolved = resolveCname(v.getCustomDomain());
-        if (resolved) {
-            v.setDomainStatus(VerificationStatus.APPROVED);
+        if (resolved && v.getDomainVerifiedAt() == null) {
+            // CNAME verified — mark step 1 done but keep PENDING until host confirms redirect (step 2)
             v.setDomainVerifiedAt(Instant.now());
-            recalculate(v);
             verificationRepository.save(v);
-            notifyHostDomainVerified(orgId);
         }
         return Map.of(
                 "verified", resolved,
                 "domain",   v.getCustomDomain(),
                 "cnameTarget", CNAME_TARGET,
-                "message",  resolved ? "DNS verified successfully" : "CNAME not yet pointing to " + CNAME_TARGET
+                "message",  resolved ? "CNAME verified — now confirm step 2 (root redirect)" : "CNAME not yet pointing to " + CNAME_TARGET
         );
+    }
+
+    @Transactional
+    public VerificationStatusResponse confirmDomainRedirect(UUID orgId) {
+        HostVerification v = getOrCreate(orgId);
+        v.setDomainStatus(VerificationStatus.APPROVED);
+        if (v.getDomainVerifiedAt() == null) v.setDomainVerifiedAt(Instant.now());
+        recalculate(v);
+        VerificationStatusResponse res = toResponse(verificationRepository.save(v));
+        notifyHostDomainVerified(orgId);
+        return res;
     }
 
     private boolean resolveCname(String domain) {
@@ -357,15 +366,13 @@ public class VerificationService {
     }
 
     private void checkDnsAsync(UUID orgId, String domain) {
-        // Non-blocking check — result will be visible on next poll
+        // Non-blocking check — marks step 1 (CNAME) done; step 2 (redirect) requires explicit host confirmation
         try {
             boolean resolved = resolveCname(domain);
             if (resolved) {
                 HostVerification v = verificationRepository.findByOrganizationId(orgId).orElse(null);
-                if (v != null) {
-                    v.setDomainStatus(VerificationStatus.APPROVED);
+                if (v != null && v.getDomainVerifiedAt() == null) {
                     v.setDomainVerifiedAt(Instant.now());
-                    recalculate(v);
                     verificationRepository.save(v);
                 }
             }
@@ -633,7 +640,7 @@ public class VerificationService {
                                 String.valueOf(v.isStripeGuestEnabled()), String.valueOf(v.isPaypalGuestEnabled()))))
                 .domainStep(buildStep("domain_setup", "Domain Connection", v.getDomainStatus(),
                         dEnabled, v.getDomainVerifiedAt(), null, null,
-                        List.of(safe(v.getCustomDomain()), safe(v.getDomainCnameTarget()), safe(v.getDomainVerificationToken()))))
+                        List.of(safe(v.getCustomDomain()), safe(v.getDomainCnameTarget()), safe(v.getDomainVerificationToken()), v.getDomainVerifiedAt() != null ? "true" : "false")))
                 .adminStep(buildStep("admin_approval", "Admin Approval", v.getAdminStatus(),
                         aEnabled, null, v.getAdminReviewedAt(), v.getAdminRejectionReason(),
                         v.getAdminNotes() != null ? List.of(v.getAdminNotes()) : null))

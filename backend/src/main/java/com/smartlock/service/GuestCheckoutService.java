@@ -361,6 +361,9 @@ public class GuestCheckoutService {
                 .stripeConnectedAccountId(stripeEnabled ? v.getStripeAccountId() : null)
                 .paypalClientId(paypalEnabled ? systemConfigService.getPaypalClientId() : null)
                 .bookingsEnabled(bookingsEnabled)
+                .customDomain(v != null && v.getDomainStatus() == com.smartlock.domain.enums.VerificationStatus.APPROVED
+                        && v.getCustomDomain() != null && !v.getCustomDomain().endsWith(".propvian.com")
+                        ? v.getCustomDomain() : null)
                 .hasActivePromos(hasActivePromos(property.getOrganizationId()))
                 .houseRules(houseRules)
                 .amenities(amenities)

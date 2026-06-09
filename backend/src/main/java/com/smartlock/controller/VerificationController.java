@@ -92,6 +92,12 @@ public class VerificationController {
         return ResponseEntity.ok(ApiResponse.success(verificationService.checkDomainDns(orgId)));
     }
 
+    @PostMapping("/organizations/{orgId}/verification/domain/confirm-redirect")
+    public ResponseEntity<ApiResponse<VerificationStatusResponse>> confirmDomainRedirect(@PathVariable UUID orgId) {
+        log.info("VerificationController.confirmDomainRedirect — orgId={}", orgId);
+        return ResponseEntity.ok(ApiResponse.success(verificationService.confirmDomainRedirect(orgId)));
+    }
+
     @DeleteMapping("/organizations/{orgId}/verification/domain")
     public ResponseEntity<ApiResponse<VerificationStatusResponse>> deleteDomain(@PathVariable UUID orgId) {
         log.info("VerificationController.deleteDomain — orgId={}", orgId);

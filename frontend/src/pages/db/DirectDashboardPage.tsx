@@ -197,8 +197,8 @@ export function DirectDashboardPage() {
         <KpiCard
           icon={Users}
           label="Total guests"
-          value={bookings?.totalElements ?? 0}
-          sub="All time"
+          value={confirmed}
+          sub="Confirmed bookings"
           color="bg-purple-50 text-purple-600"
         />
         <KpiCard

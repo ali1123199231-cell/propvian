@@ -1,10 +1,11 @@
 package com.smartlock.service;
 
+import com.smartlock.domain.DirectBooking;
 import com.smartlock.domain.Property;
-import com.smartlock.domain.Reservation;
+import com.smartlock.domain.enums.DirectBookingStatus;
 import com.smartlock.exception.AppException;
+import com.smartlock.repository.DirectBookingRepository;
 import com.smartlock.repository.PropertyRepository;
-import com.smartlock.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ import java.util.UUID;
 public class ICalExportService {
 
     private final PropertyRepository propertyRepository;
-    private final ReservationRepository reservationRepository;
+    private final DirectBookingRepository directBookingRepository;
 
     private static final DateTimeFormatter ICAL_DATE = DateTimeFormatter.ofPattern("yyyyMMdd");
     private static final DateTimeFormatter ICAL_DATETIME = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
@@ -81,9 +82,10 @@ public class ICalExportService {
     }
 
     private String generateIcs(Property property) {
-        List<Reservation> reservations = reservationRepository
-                .findByPropertyIdAndStatusNotCancelled(property.getId());
-        log.debug("ICalExportService.generateIcs — property={} reservations={}", property.getId(), reservations.size());
+        List<DirectBooking> bookings = directBookingRepository.findByPropertyId(property.getId()).stream()
+                .filter(b -> b.getStatus() == DirectBookingStatus.CONFIRMED)
+                .toList();
+        log.debug("ICalExportService.generateIcs — property={} confirmedBookings={}", property.getId(), bookings.size());
 
         StringBuilder sb = new StringBuilder();
         sb.append("BEGIN:VCALENDAR\r\n");
@@ -94,30 +96,22 @@ public class ICalExportService {
         sb.append("X-WR-CALNAME:").append(escapeText(property.getName())).append("\r\n");
         sb.append("X-WR-TIMEZONE:UTC\r\n");
 
-        for (Reservation r : reservations) {
+        for (DirectBooking b : bookings) {
             sb.append("BEGIN:VEVENT\r\n");
-            sb.append("UID:propvian-").append(r.getId()).append("@propvian.com\r\n");
+            sb.append("UID:propvian-").append(b.getId()).append("@propvian.com\r\n");
 
-            String dtstamp = java.time.Instant.now().atZone(ZoneOffset.UTC)
-                    .format(ICAL_DATETIME);
+            String dtstamp = java.time.Instant.now().atZone(ZoneOffset.UTC).format(ICAL_DATETIME);
             sb.append("DTSTAMP:").append(dtstamp).append("\r\n");
 
-            // All-day events use DATE format (no time)
-            String checkIn = r.getCheckInDate().atZone(ZoneOffset.UTC).toLocalDate()
-                    .format(ICAL_DATE);
-            String checkOut = r.getCheckOutDate().atZone(ZoneOffset.UTC).toLocalDate()
-                    .format(ICAL_DATE);
-            sb.append("DTSTART;VALUE=DATE:").append(checkIn).append("\r\n");
-            sb.append("DTEND;VALUE=DATE:").append(checkOut).append("\r\n");
+            sb.append("DTSTART;VALUE=DATE:").append(b.getCheckInDate().format(ICAL_DATE)).append("\r\n");
+            sb.append("DTEND;VALUE=DATE:").append(b.getCheckOutDate().format(ICAL_DATE)).append("\r\n");
 
-            String summary = r.getGuestName() != null
-                    ? "Reserved – " + r.getGuestName()
-                    : "Reserved";
+            String summary = b.getGuestName() != null ? "Reserved – " + b.getGuestName() : "Reserved";
             sb.append("SUMMARY:").append(escapeText(summary)).append("\r\n");
             sb.append("STATUS:CONFIRMED\r\n");
 
-            if (r.getGuestEmail() != null) {
-                sb.append("DESCRIPTION:Guest: ").append(escapeText(r.getGuestEmail())).append("\r\n");
+            if (b.getGuestEmail() != null) {
+                sb.append("DESCRIPTION:Guest: ").append(escapeText(b.getGuestEmail())).append("\r\n");
             }
 
             sb.append("TRANSP:OPAQUE\r\n");

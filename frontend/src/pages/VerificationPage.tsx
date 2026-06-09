@@ -1123,6 +1123,7 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
   const qc = useQueryClient()
   const data: string[] = stepData?.data ?? []
   const savedDomain = data[0] || ''
+  const cnameVerified = data[3] === 'true'
 
   const schema = z.object({
     domain: z.string().min(4, 'Enter a valid domain')
@@ -1149,11 +1150,22 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
       setDnsResult(res)
       if (res.verified) {
         qc.invalidateQueries({ queryKey: ['verification', orgId] })
-        toast.success('Domain verified!')
-        onDone()
+        toast.success('CNAME verified! Now confirm step 2 below.')
       }
     } catch { toast.error('DNS check failed') }
     finally { setChecking(false) }
+  }
+
+  const [confirmingRedirect, setConfirmingRedirect] = useState(false)
+  const confirmRedirect = async () => {
+    setConfirmingRedirect(true)
+    try {
+      await verificationApi.confirmDomainRedirect(orgId)
+      qc.invalidateQueries({ queryKey: ['verification', orgId] })
+      toast.success('Domain fully verified!')
+      onDone()
+    } catch { toast.error('Failed to confirm redirect') }
+    finally { setConfirmingRedirect(false) }
   }
 
   const onSubmit = async (formData: any) => {
@@ -1224,51 +1236,79 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
 
       {/* ── Pending DNS verification ── */}
       {status === 'PENDING' && savedDomain && (
-        <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <p className="text-sm font-medium text-amber-800 mb-3">
-            Pending DNS verification for <strong>{savedDomain}</strong>
+        <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-4">
+          <p className="text-sm font-medium text-amber-800">
+            Connecting <strong>{savedDomain}</strong>
           </p>
-          <p className="text-xs font-medium text-amber-900 mb-1.5">Step 1 — Add a CNAME record <span className="font-normal text-amber-700">(in DNS settings)</span></p>
-          <div className="rounded-xl border border-gray-200 overflow-hidden text-sm bg-white mb-3">
-            <div className="grid grid-cols-3 bg-gray-50 px-4 py-2.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
-              <span>Type</span><span>Host / Name</span><span>Value / Points to</span>
+
+          {/* Step 1 */}
+          <div className={`rounded-xl border p-3 ${cnameVerified ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center gap-2 mb-2">
+              {cnameVerified
+                ? <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
+                : <div className="w-3.5 h-3.5 rounded-full border-2 border-amber-400 flex-shrink-0" />}
+              <p className={`text-xs font-semibold ${cnameVerified ? 'text-green-800' : 'text-amber-900'}`}>
+                Step 1 — Add CNAME record {cnameVerified ? '✓ Done' : '(in DNS settings)'}
+              </p>
             </div>
-            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
-              <span className="font-bold text-blue-600 text-xs">CNAME</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
-              <div className="flex items-center gap-1">
-                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
-                <DomainCopyButton text={CNAME_TARGET} />
-              </div>
+            {!cnameVerified && (
+              <>
+                <div className="rounded-lg border border-gray-200 overflow-hidden text-sm bg-white mb-2">
+                  <div className="grid grid-cols-3 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 border-b border-gray-200">
+                    <span>Type</span><span>Host / Name</span><span>Value / Points to</span>
+                  </div>
+                  <div className="grid grid-cols-3 px-3 py-2 items-center gap-2">
+                    <span className="font-bold text-blue-600 text-xs">CNAME</span>
+                    <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
+                    <div className="flex items-center gap-1">
+                      <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
+                      <DomainCopyButton text={CNAME_TARGET} />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <button onClick={checkDns} disabled={checking}
+                    className="btn-primary text-sm py-2 flex items-center gap-2">
+                    {checking ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                    {checking ? 'Checking…' : 'Check CNAME now'}
+                  </button>
+                  <button onClick={() => setShowDnsHelp(true)}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                    <HelpCircle size={12} /> How do I do this?
+                  </button>
+                </div>
+                {dnsResult && !dnsResult.verified && (
+                  <p className="mt-2 text-xs text-red-500">{dnsResult.message}</p>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Step 2 */}
+          <div className={`rounded-xl border p-3 ${!cnameVerified ? 'opacity-50' : 'bg-white border-gray-200'}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-3.5 h-3.5 rounded-full border-2 border-amber-400 flex-shrink-0" />
+              <p className="text-xs font-semibold text-amber-900">Step 2 — Redirect root domain (in Forwarding / Redirect settings)</p>
             </div>
-          </div>
-          <p className="text-xs font-medium text-amber-900 mb-1.5">Step 2 — Redirect root domain <span className="font-normal text-amber-700">(in Domain Redirect / Forwarding settings)</span></p>
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs font-mono text-gray-800 space-y-1 mb-3">
-            <div><span className="text-gray-400 font-sans">From:</span> {savedDomain?.replace(/^www\./, '')}</div>
-            <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{savedDomain?.replace(/^www\./, '')}</span></div>
-            <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
-          </div>
-          <p className="text-xs text-gray-400 mb-3">DNS changes take 5–30 minutes to propagate.</p>
-          <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={checkDns} disabled={checking}
-              className="btn-primary text-sm py-2 flex items-center gap-2">
-              {checking ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
-              {checking ? 'Checking…' : 'Check DNS now'}
-            </button>
-            <button onClick={() => setShowDnsHelp(true)}
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
-              <HelpCircle size={12} /> How do I do this?
-            </button>
-            <button
-              onClick={() => { if (window.confirm(`Remove domain "${savedDomain}"?`)) deleteDomainMut.mutate() }}
-              disabled={deleteDomainMut.isPending}
-              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors ml-auto">
-              <Trash2 size={12} /> {deleteDomainMut.isPending ? 'Removing…' : 'Remove domain'}
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono text-gray-800 space-y-1 mb-3">
+              <div><span className="text-gray-400 font-sans">From:</span> {savedDomain?.replace(/^www\./, '')}</div>
+              <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{savedDomain?.replace(/^www\./, '')}</span></div>
+              <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 Permanent</span></div>
+            </div>
+            <p className="text-xs text-gray-400 mb-3">This ensures guests who type <em>{savedDomain?.replace(/^www\./, '')}</em> are forwarded to <em>www.{savedDomain?.replace(/^www\./, '')}</em>.</p>
+            <button onClick={confirmRedirect} disabled={!cnameVerified || confirmingRedirect}
+              className="btn-primary text-sm py-2 flex items-center gap-2 disabled:opacity-40">
+              {confirmingRedirect ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
+              {confirmingRedirect ? 'Confirming…' : "I've set up the redirect — verify domain"}
             </button>
           </div>
-          {dnsResult && !dnsResult.verified && (
-            <p className="mt-2 text-xs text-red-500">{dnsResult.message}</p>
-          )}
+
+          <button
+            onClick={() => { if (window.confirm(`Remove domain "${savedDomain}"?`)) deleteDomainMut.mutate() }}
+            disabled={deleteDomainMut.isPending}
+            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors">
+            <Trash2 size={12} /> {deleteDomainMut.isPending ? 'Removing…' : 'Remove domain'}
+          </button>
         </div>
       )}
 
