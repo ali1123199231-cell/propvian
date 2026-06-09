@@ -331,16 +331,27 @@ public class VerificationService {
     }
 
     private boolean resolveCname(String domain) {
+        // Check the domain itself, and also www.domain as a fallback
+        // (in case the host saved the root domain but added the CNAME on www)
+        List<String> candidates = new ArrayList<>();
+        candidates.add(domain);
+        if (!domain.startsWith("www.")) candidates.add("www." + domain);
         try {
-            InetAddress[] addresses = InetAddress.getAllByName(domain);
             InetAddress[] target = InetAddress.getAllByName(CNAME_TARGET);
             Set<String> targetIps = new HashSet<>();
             for (InetAddress a : target) targetIps.add(a.getHostAddress());
-            for (InetAddress a : addresses) {
-                if (targetIps.contains(a.getHostAddress())) return true;
+            for (String candidate : candidates) {
+                try {
+                    InetAddress[] addresses = InetAddress.getAllByName(candidate);
+                    for (InetAddress a : addresses) {
+                        if (targetIps.contains(a.getHostAddress())) return true;
+                    }
+                } catch (Exception e) {
+                    log.debug("DNS lookup failed for {}: {}", candidate, e.getMessage());
+                }
             }
         } catch (Exception e) {
-            log.debug("DNS lookup failed for {}: {}", domain, e.getMessage());
+            log.debug("DNS lookup failed for target {}: {}", CNAME_TARGET, e.getMessage());
         }
         return false;
     }
