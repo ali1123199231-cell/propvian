@@ -965,8 +965,6 @@ function CalendarStep({ orgId, onDone, status }: {
 // ── Domain shared helpers ─────────────────────────────────────────────────────
 
 const CNAME_TARGET = 'booking.propvian.com'
-const CF_IP_1 = '188.114.96.11'
-const CF_IP_2 = '188.114.97.11'
 
 function DomainCopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
@@ -1016,29 +1014,24 @@ function DnsHelpModal({ onClose }: { onClose: () => void }) {
           <div className="flex gap-4">
             <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">Add these DNS records</p>
-              <p className="text-xs text-gray-500 mt-1 mb-3">Create these 3 records in your DNS settings:</p>
+              <p className="font-semibold text-gray-900 text-sm">Add these 2 records</p>
+              <p className="text-xs text-gray-500 mt-1 mb-3">In your registrar's DNS settings, add the CNAME record, then set up the redirect:</p>
               <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden text-xs font-mono">
                 <div className="grid grid-cols-3 bg-gray-100 text-gray-500 font-sans font-semibold px-3 py-2">
                   <span>Type</span><span>Name / Host</span><span>Value / Points to</span>
                 </div>
                 <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2 border-b border-gray-100">
-                  <span className="font-bold text-orange-500">A</span>
-                  <span>@</span>
-                  <span className="text-green-700">{CF_IP_1}</span>
-                </div>
-                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2 border-b border-gray-100">
-                  <span className="font-bold text-orange-500">A</span>
-                  <span>@</span>
-                  <span className="text-green-700">{CF_IP_2}</span>
-                </div>
-                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2">
                   <span className="font-bold text-blue-600">CNAME</span>
                   <span>www</span>
                   <span className="text-green-700 break-all">{CNAME_TARGET}</span>
                 </div>
+                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2">
+                  <span className="font-bold text-purple-600">Redirect</span>
+                  <span>@</span>
+                  <span className="text-green-700 font-sans">www.yourdomain.com</span>
+                </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">💡 <strong>What is @?</strong> It means the root of your domain (e.g. <em>myvilla.com</em> itself). The <strong>www</strong> record lets guests use www.yourdomain.com too.</p>
+              <p className="text-xs text-gray-400 mt-2">💡 The <strong>Redirect</strong> is not a DNS record — it's a forwarding rule built into your registrar. In GoDaddy it's called <strong>Forwarding</strong>, in Namecheap it's <strong>URL Redirect</strong>. This makes <em>yourdomain.com</em> redirect to <em>www.yourdomain.com</em>.</p>
             </div>
           </div>
           <div className="flex gap-4">
@@ -1229,22 +1222,6 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
               <span>Type</span><span>Host / Name</span><span>Value / Points to</span>
             </div>
             <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
-              <span className="font-bold text-orange-500 text-xs">A</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
-              <div className="flex items-center gap-1">
-                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{CF_IP_1}</code>
-                <DomainCopyButton text={CF_IP_1} />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
-              <span className="font-bold text-orange-500 text-xs">A</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
-              <div className="flex items-center gap-1">
-                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{CF_IP_2}</code>
-                <DomainCopyButton text={CF_IP_2} />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
               <span className="font-bold text-blue-600 text-xs">CNAME</span>
               <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
               <div className="flex items-center gap-1">
@@ -1252,8 +1229,14 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
                 <DomainCopyButton text={CNAME_TARGET} />
               </div>
             </div>
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
+              <span className="font-bold text-purple-600 text-xs">Redirect</span>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{savedDomain}</code>
+            </div>
           </div>
-          <p className="text-xs text-gray-400 mb-3">DNS changes take 5–30 minutes to propagate.</p>
+          <p className="text-xs text-gray-400 mb-1">DNS changes take 5–30 minutes to propagate.</p>
+          <p className="text-xs text-gray-400 mb-3">The <strong>Redirect</strong> is a forwarding rule at your registrar — GoDaddy calls it <strong>Forwarding</strong>, Namecheap calls it <strong>URL Redirect</strong>.</p>
           <div className="flex items-center gap-3 flex-wrap">
             <button onClick={checkDns} disabled={checking}
               className="btn-primary text-sm py-2 flex items-center gap-2">
@@ -1319,22 +1302,6 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
               <span>Type</span><span>Host / Name</span><span>Value / Points to</span>
             </div>
             <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
-              <span className="font-bold text-orange-500 text-xs">A</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
-              <div className="flex items-center gap-1">
-                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{CF_IP_1}</code>
-                <DomainCopyButton text={CF_IP_1} />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
-              <span className="font-bold text-orange-500 text-xs">A</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
-              <div className="flex items-center gap-1">
-                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">{CF_IP_2}</code>
-                <DomainCopyButton text={CF_IP_2} />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
               <span className="font-bold text-blue-600 text-xs">CNAME</span>
               <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
               <div className="flex items-center gap-1">
@@ -1342,16 +1309,22 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
                 <DomainCopyButton text={CNAME_TARGET} />
               </div>
             </div>
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
+              <span className="font-bold text-purple-600 text-xs">Redirect</span>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
+              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www.yourdomain.com</code>
+            </div>
           </div>
           <p className="mt-2 text-xs text-gray-400">DNS propagation: 5–30 minutes. SSL issued automatically once confirmed.</p>
+          <p className="mt-1 text-xs text-gray-400">The <strong>Redirect</strong> is a forwarding rule at your registrar (not a DNS record) — GoDaddy calls it <strong>Forwarding</strong>, Namecheap calls it <strong>URL Redirect</strong>.</p>
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Your domain</label>
-          <input {...register('domain')} className="input-base" placeholder="myvilla.com" />
-          <p className="mt-1 text-xs text-gray-400">Don't include https:// or trailing slashes</p>
+          <input {...register('domain')} className="input-base" placeholder="www.myvilla.com" />
+          <p className="mt-1 text-xs text-gray-400">Use <strong>www.yourdomain.com</strong> — e.g. www.norblina.pl</p>
           {errors.domain && <p className="mt-1 text-xs text-red-500">{String(errors.domain.message)}</p>}
         </div>
         <button type="submit" disabled={isSubmitting} className="btn-primary justify-center py-2.5">
