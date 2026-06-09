@@ -8,6 +8,7 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STDOUT_ARCHIVE_DIR="$PROJECT_DIR/logs/stdout-archives"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
 COMPOSE_FILE="$PROJECT_DIR/docker-compose.prod.yml"
+ENV_FILE="$PROJECT_DIR/.env.prod"
 
 mkdir -p "$STDOUT_ARCHIVE_DIR"
 
@@ -39,7 +40,10 @@ find "$STDOUT_ARCHIVE_DIR" -name "*.log" -printf '%T@ %p\n' 2>/dev/null \
 echo ""
 echo "==> Deploying (build + restart)..."
 cd "$PROJECT_DIR"
-docker compose -f "$COMPOSE_FILE" up -d --build
+ENV_ARGS=""
+[[ -f "$ENV_FILE" ]] && ENV_ARGS="--env-file $ENV_FILE"
+# shellcheck disable=SC2086
+docker compose -f "$COMPOSE_FILE" $ENV_ARGS up -d --build
 
 echo ""
 echo "==> Deploy complete. Persistent log volumes:"
