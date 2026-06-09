@@ -84,5 +84,25 @@ public class PublicOrgSiteResponse {
         private int minStayNights;
         private String checkInTime;
         private String checkOutTime;
+        // Actual property data for website builder section fallbacks
+        private List<AmenityItem> amenities;
+        private List<HouseRuleItem> houseRules;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AmenityItem {
+        private String name;
+        private String icon;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HouseRuleItem {
+        private String ruleKey;
+        private boolean allowed;
+        private String notes;
     }
 }

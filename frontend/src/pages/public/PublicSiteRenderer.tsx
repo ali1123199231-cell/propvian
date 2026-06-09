@@ -6,7 +6,11 @@ import {
   TreePine, Flower, Utensils, ChevronDown, ChevronUp, Phone, Mail,
   Instagram, Facebook, Twitter, Home, ArrowRight, BedDouble, Bath, Users,
   X, ChevronLeft, ChevronRight, CheckCircle, Loader2,
+  Sun, Thermometer, WashingMachine, Dumbbell, PawPrint, ArrowUp,
 } from 'lucide-react'
+import { logger } from '../../lib/logger'
+
+const log = logger.child('WEBSITE')
 
 export interface PublicSection {
   id: string
@@ -30,6 +34,9 @@ export interface PublicSiteConfig {
   exitIntentDiscount?: number
 }
 
+export interface PublicAmenityItem { name: string; icon?: string }
+export interface PublicHouseRuleItem { ruleKey: string; allowed: boolean; notes?: string }
+
 export interface PublicPropertyCard {
   id: string
   slug: string
@@ -49,6 +56,8 @@ export interface PublicPropertyCard {
   minStayNights: number
   checkInTime: string
   checkOutTime: string
+  amenities?: PublicAmenityItem[]
+  houseRules?: PublicHouseRuleItem[]
 }
 
 function btnRadius(style: string) {
@@ -57,10 +66,19 @@ function btnRadius(style: string) {
   return '8px'
 }
 
+// Keys: both the preset key (wifi, kitchen…) and the icon value saved to DB (utensils, car…)
 const AMENITY_ICONS: Record<string, any> = {
-  wifi: Wifi, ac: Wind, pool: Waves, hot_tub: Flame, kitchen: Coffee,
-  parking: Car, workspace: Laptop, garden: TreePine, balcony: Flower,
-  bbq: Flame, washer: Utensils, tv: Tv,
+  // by preset key
+  wifi: Wifi, ac: Wind, pool: Waves, hot_tub: Thermometer, kitchen: Coffee,
+  parking: Car, workspace: Laptop, garden: TreePine, balcony: Sun,
+  bbq: Flame, washer: WashingMachine, tv: Tv, coffee: Coffee,
+  gym: Dumbbell, sauna: Flame, pets: PawPrint, elevator: ArrowUp, fireplace: Flame,
+  sea_view: Waves, dishwasher: CheckCircle,
+  // by icon value stored in DB (from AMENITY_PRESETS icon field)
+  utensils: Coffee, car: Car, waves: Waves, wind: Wind, laptop: Laptop,
+  sun: Sun, thermometer: Thermometer, trees: TreePine, flame: Flame,
+  'washing-machine': WashingMachine, 'check-circle': CheckCircle,
+  dumbbell: Dumbbell, 'paw-print': PawPrint, 'arrow-up': ArrowUp, flower: Flower,
 }
 
 // ── FAQ accordion ──────────────────────────────────────────────────────────────
@@ -234,10 +252,10 @@ function HeroSection({ cfg, primary, accent, font, btnStyle, buttonStyle, proper
         )}
         <div className="relative z-10 max-w-3xl">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-5 leading-tight drop-shadow-sm">
-            {cfg.headline || 'Welcome'}
+            {cfg.headline || properties[0]?.name || 'Welcome'}
           </h1>
           <p className="text-white/90 text-lg sm:text-xl mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-sm">
-            {cfg.subheadline || 'Book direct for the best rates and a personal experience'}
+            {cfg.subheadline || properties[0]?.description || 'Book direct for the best rates and a personal experience'}
           </p>
           {(cfg.ctaText || 'Check Availability') && properties[0] && (
             <button
@@ -339,13 +357,20 @@ function AboutSection({ cfg, primary, accent, font, properties }: SectionBasePro
   )
 }
 
-function AmenitiesSection({ cfg, primary, accent, font }: SectionBaseProps) {
-  const items: { key?: string; label: string }[] = cfg.items || [
-    { key: 'wifi', label: 'WiFi' }, { key: 'kitchen', label: 'Kitchen' },
-    { key: 'parking', label: 'Parking' }, { key: 'pool', label: 'Pool' },
-    { key: 'ac', label: 'A/C' }, { key: 'workspace', label: 'Workspace' },
-    { key: 'tv', label: 'TV' }, { key: 'balcony', label: 'Balcony' },
-  ]
+function AmenitiesSection({ cfg, primary, accent, font, properties }: SectionBaseProps) {
+  const propAmenities = properties[0]?.amenities
+  // Property admin data always wins — website-builder config is only a fallback
+  const items: { key?: string; label: string }[] =
+    propAmenities && propAmenities.length > 0
+      ? propAmenities.map(a => ({ key: a.icon, label: a.name }))
+      : cfg.items?.length > 0
+        ? cfg.items
+        : [
+            { key: 'wifi', label: 'WiFi' }, { key: 'kitchen', label: 'Kitchen' },
+            { key: 'parking', label: 'Parking' }, { key: 'pool', label: 'Pool' },
+            { key: 'ac', label: 'A/C' }, { key: 'workspace', label: 'Workspace' },
+            { key: 'tv', label: 'TV' }, { key: 'balcony', label: 'Balcony' },
+          ]
   const cols = cfg.columns || 4
   return (
     <section className="py-20 px-4 bg-gray-50" style={{ fontFamily: font }}>
@@ -511,11 +536,29 @@ function HostInfoSection({ cfg, primary, accent, font, btnStyle }: SectionBasePr
   )
 }
 
-function HouseRulesSection({ cfg, font }: SectionBaseProps) {
-  const rules: { icon: string; text: string }[] = cfg.rules || [
-    { icon: '🚫', text: 'No smoking' }, { icon: '🎉', text: 'No parties or events' },
-    { icon: '🌙', text: 'Quiet hours: 10 PM – 8 AM' }, { icon: '🐾', text: 'No pets without approval' },
-  ]
+const RULE_LABELS: Record<string, string> = {
+  SMOKING: 'Smoking', PARTIES: 'Parties / events', PETS: 'Pets',
+  QUIET_HOURS: 'Quiet hours', CHILDREN: 'Children',
+}
+const RULE_ICONS: Record<string, string> = {
+  SMOKING: '🚬', PARTIES: '🎉', PETS: '🐾', QUIET_HOURS: '🌙', CHILDREN: '👶',
+}
+
+function HouseRulesSection({ cfg, font, properties }: SectionBaseProps) {
+  const propRules = properties[0]?.houseRules
+  // Property admin data always wins — website-builder config is only a fallback
+  const rules: { icon: string; text: string }[] =
+    propRules && propRules.length > 0
+      ? propRules.map(r => ({
+          icon: r.allowed ? '✅' : (RULE_ICONS[r.ruleKey] ?? '🚫'),
+          text: `${RULE_LABELS[r.ruleKey] ?? r.ruleKey.replace(/_/g, ' ')}${r.allowed ? ' allowed' : ' not allowed'}${r.notes ? ` (${r.notes})` : ''}`,
+        }))
+      : cfg.rules?.length > 0
+        ? cfg.rules
+        : [
+            { icon: '🚫', text: 'No smoking' }, { icon: '🎉', text: 'No parties or events' },
+            { icon: '🌙', text: 'Quiet hours: 10 PM – 8 AM' }, { icon: '🐾', text: 'No pets without approval' },
+          ]
   return (
     <section className="py-16 px-4 bg-gray-50" style={{ fontFamily: font }}>
       <div className="max-w-4xl mx-auto">
@@ -905,6 +948,74 @@ export function PublicSiteRenderer({ sections, config, properties, getPropertyUr
   const [showExitIntent, setShowExitIntent] = useState(false)
   const exitShown = useRef(false)
   const enabledSections = sections.filter(s => s.enabled).sort((a, b) => a.position - b.position)
+
+  useEffect(() => {
+    const prop = properties[0]
+    log.info(`Site loaded: sections=${sections.length} enabled=${enabledSections.length} properties=${properties.length}`)
+    if (!prop) return
+
+    log.info(`Primary property: id='${prop.id}' name='${prop.name}'`)
+
+    // ── Per-section sync audit ──────────────────────────────────────────────
+    const src = (hasCustom: boolean, fallback: string) => hasCustom ? 'website-builder config' : fallback
+
+    for (const s of sections.filter(sec => sec.enabled)) {
+      const c = s.config || {}
+      switch (s.sectionType) {
+        case 'hero':
+          log.info(`[hero] headline: ${src(!!c.headline, prop.name ? `property.name='${prop.name}'` : 'hardcoded "Welcome"')} | subheadline: ${src(!!c.subheadline, prop.description ? `property.description (${prop.description.length} chars)` : 'hardcoded fallback')} | image: ${src(!!c.backgroundImageUrl, prop.photoUrls?.length ? `property.photoUrls[0]` : 'gradient only')}`)
+          break
+        case 'about':
+          log.info(`[about] description: ${src(!!c.description, prop.description ? `property.description (${prop.description.length} chars)` : 'hardcoded placeholder')} | image: ${src(!!c.imageUrl, prop.photoUrls?.length ? 'property.photoUrls' : 'none')}`)
+          break
+        case 'amenities': {
+          const propA = prop.amenities?.length ?? 0
+          const cfgItems = c.items?.length ?? 0
+          const source = propA > 0 ? `property.amenities (${propA} items) ✅ synced` : cfgItems > 0 ? `website-builder fallback (${cfgItems} items)` : 'hardcoded defaults (8 items)'
+          log.info(`[amenities] source: ${source}`)
+          if (propA > 0) log.debug(`[amenities] items: ${prop.amenities!.map(a => a.name).join(', ')}`)
+          if (propA === 0 && cfgItems > 0) log.warn(`[amenities] ⚠️ showing website-builder config — no amenities set in property admin`)
+          break
+        }
+        case 'house-rules': {
+          const propR = prop.houseRules?.length ?? 0
+          const cfgRules = c.rules?.length ?? 0
+          const source = propR > 0 ? `property.houseRules (${propR} rules) ✅ synced` : cfgRules > 0 ? `website-builder fallback (${cfgRules} rules)` : 'hardcoded defaults (4 rules)'
+          log.info(`[house-rules] source: ${source}`)
+          if (propR > 0) log.debug(`[house-rules] rules: ${prop.houseRules!.map(r => `${r.ruleKey}=${r.allowed}${r.notes ? ` (${r.notes})` : ''}`).join(', ')}`)
+          if (propR === 0 && cfgRules > 0) log.warn(`[house-rules] ⚠️ showing website-builder config — no rules set in property admin`)
+          break
+        }
+        case 'booking-widget':
+          log.info(`[booking-widget] checkIn: ${src(!!c.checkInNote, `property.checkInTime='${prop.checkInTime}'`)} | checkOut: ${src(!!c.checkOutNote, `property.checkOutTime='${prop.checkOutTime}'`)} | rate: $${prop.baseNightlyRate}/night`)
+          break
+        case 'gallery': {
+          const photoCount = (prop.photoUrls?.length ?? 0) + (prop.imageUrl ? 1 : 0)
+          log.info(`[gallery] source: property.photoUrls (${photoCount} photos available, showing up to ${c.maxPhotos ?? 9})`)
+          break
+        }
+        case 'reviews':
+          log.info(`[reviews] source: ${c.reviews?.length > 0 ? `website-builder (${c.reviews.length} reviews)` : 'hardcoded sample reviews'}`)
+          break
+        case 'faq':
+          log.info(`[faq] source: ${c.items?.length > 0 ? `website-builder (${c.items.length} Q&As)` : 'hardcoded sample FAQs'}`)
+          break
+        case 'location':
+          log.info(`[location] address: ${src(!!c.address, `property.city='${prop.city}' country='${prop.country}'`)} | map: ${c.mapEmbedUrl ? 'custom embed' : 'no map'}`)
+          break
+        default:
+          log.debug(`[${s.sectionType}] website-builder only (no property data sync needed)`)
+      }
+    }
+    // Warn about sections that exist in property but not in the site
+    const sectionTypes = new Set(sections.filter(s => s.enabled).map(s => s.sectionType))
+    if (!sectionTypes.has('amenities') && (prop.amenities?.length ?? 0) > 0)
+      log.warn(`Property has ${prop.amenities!.length} amenities but NO amenities section is enabled on this site`)
+    if (!sectionTypes.has('house-rules') && (prop.houseRules?.length ?? 0) > 0)
+      log.warn(`Property has ${prop.houseRules!.length} house rules but NO house-rules section is enabled on this site`)
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [properties.length, sections.length])
 
   useEffect(() => {
     if (!config.exitIntentEnabled) return

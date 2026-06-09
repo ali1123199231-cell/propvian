@@ -9,6 +9,9 @@ import {
   MapPin, Star, Users, BedDouble, Bath, ChevronLeft, ChevronRight,
   CheckCircle, Loader2, CreditCard, X, AlertCircle,
 } from 'lucide-react'
+import { logger } from '../../lib/logger'
+
+const log = logger.child('GUEST')
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -101,8 +104,24 @@ function fmtPrice(amount: number, currency?: string): string {
 const api = axios.create({ baseURL: '' })
 
 async function fetchProperty(slug: string): Promise<PropertyInfo> {
+  log.info(`Fetching property slug='${slug}'`)
   const r = await api.get(`/api/public/book/${slug}`)
-  return r.data.data
+  const p: PropertyInfo = r.data.data
+
+  // ── Booking page section sync audit ────────────────────────────────────
+  log.info(`[booking-page] ── Section data audit for '${p.name}' ──`)
+  log.info(`[hero]         photos=${p.photoUrls?.length ?? 0} | imageUrl=${p.imageUrl ? 'set' : 'null'}`)
+  log.info(`[name/title]   '${p.name}' | city='${p.city}' country='${p.country}'`)
+  log.info(`[specs]        guests=${p.maxGuests} beds=${p.bedrooms} bathrooms=${p.bathrooms} instantBook=${p.instantBooking}`)
+  log.info(`[description]  ${p.description ? `${p.description.length} chars: '${p.description.substring(0, 60)}…'` : '⚠️ EMPTY — section hidden'}`)
+  log.info(`[checkin]      checkIn='${p.checkInTime || '⚠️ not set'}' checkOut='${p.checkOutTime || '⚠️ not set'}'`)
+  log.info(`[cancellation] policy='${p.cancellationPolicy || '⚠️ not set'}'`)
+  log.info(`[amenities]    ${p.amenities?.length ? `${p.amenities.length} items: ${p.amenities.map(a => a.name).join(', ')}` : '⚠️ EMPTY — section hidden'}`)
+  log.info(`[house-rules]  ${p.houseRules?.length ? `${p.houseRules.length} rules: ${p.houseRules.map(r => `${r.ruleKey}=${r.allowed}`).join(', ')}` : '⚠️ EMPTY — section hidden'}`)
+  log.info(`[pricing]      rate=${p.baseNightlyRate ?? '⚠️ not set'} cleaning=${p.cleaningFee ?? 0} currency=${p.currency}`)
+  log.info(`[payments]     stripe=${p.stripeEnabled} paypal=${p.paypalEnabled} bookingsEnabled=${p.bookingsEnabled}`)
+
+  return p
 }
 async function initiateBooking(slug: string, body: object) {
   const r = await api.post(`/api/public/book/${slug}/initiate`, body)

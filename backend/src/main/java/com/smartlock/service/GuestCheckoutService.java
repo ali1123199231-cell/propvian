@@ -144,6 +144,24 @@ public class GuestCheckoutService {
                     List<String> allPhotos = photos.isEmpty() && p.getImageUrl() != null
                             ? List.of(fileUploadService.toPublicUrl(p.getImageUrl()))
                             : photos;
+                    List<PublicOrgSiteResponse.AmenityItem> propAmenities =
+                            amenityRepo.findByPropertyId(p.getId()).stream()
+                                    .map(a -> new PublicOrgSiteResponse.AmenityItem(a.getName(), a.getIcon()))
+                                    .toList();
+                    if (propAmenities.isEmpty()) {
+                        propAmenities = DEFAULT_AMENITIES.stream()
+                                .map(a -> new PublicOrgSiteResponse.AmenityItem(a.getName(), a.getIcon()))
+                                .toList();
+                    }
+                    List<PublicOrgSiteResponse.HouseRuleItem> propRules =
+                            houseRuleRepo.findByPropertyId(p.getId()).stream()
+                                    .map(r -> new PublicOrgSiteResponse.HouseRuleItem(r.getRuleKey(), r.isAllowed(), r.getNotes()))
+                                    .toList();
+                    if (propRules.isEmpty()) {
+                        propRules = DEFAULT_HOUSE_RULES.stream()
+                                .map(r -> new PublicOrgSiteResponse.HouseRuleItem(r.getRuleKey(), r.isAllowed(), r.getNotes()))
+                                .toList();
+                    }
                     return PublicOrgSiteResponse.PublicPropertyCard.builder()
                             .id(p.getId().toString())
                             .slug(p.getSlug() != null ? p.getSlug() : p.getId().toString())
@@ -163,6 +181,8 @@ public class GuestCheckoutService {
                             .minStayNights(p.getMinStayNights())
                             .checkInTime(p.getCheckInTime())
                             .checkOutTime(p.getCheckOutTime())
+                            .amenities(propAmenities)
+                            .houseRules(propRules)
                             .build();
                 })
                 .toList();
@@ -286,6 +306,10 @@ public class GuestCheckoutService {
                 houseRuleRepo.findByPropertyId(property.getId()).stream()
                         .map(r -> new GuestPropertyResponse.HouseRuleInfo(r.getRuleKey(), r.isAllowed(), r.getNotes()))
                         .toList();
+        if (houseRules.isEmpty()) {
+            log.info("[GUEST-PROPERTY] No house rules saved — using {} defaults", DEFAULT_HOUSE_RULES.size());
+            houseRules = DEFAULT_HOUSE_RULES;
+        }
 
         List<GuestPropertyResponse.AmenityInfo> amenities =
                 amenityRepo.findByPropertyId(property.getId()).stream()
@@ -358,6 +382,14 @@ public class GuestCheckoutService {
             new GuestPropertyResponse.AmenityInfo("workspace",  "Workspace",       "laptop"),
             new GuestPropertyResponse.AmenityInfo("entertainment", "TV",            "tv"),
             new GuestPropertyResponse.AmenityInfo("outdoor",    "Balcony",         "sun")
+    );
+
+    private static final List<GuestPropertyResponse.HouseRuleInfo> DEFAULT_HOUSE_RULES = List.of(
+            new GuestPropertyResponse.HouseRuleInfo("SMOKING",     false, null),
+            new GuestPropertyResponse.HouseRuleInfo("PARTIES",     false, null),
+            new GuestPropertyResponse.HouseRuleInfo("PETS",        false, null),
+            new GuestPropertyResponse.HouseRuleInfo("QUIET_HOURS", true,  "10 PM – 8 AM"),
+            new GuestPropertyResponse.HouseRuleInfo("CHILDREN",    true,  null)
     );
 
     // ── Initiate checkout (creates booking + payment intent / PayPal order) ───
