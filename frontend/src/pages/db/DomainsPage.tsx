@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Globe, CheckCircle, Clock, XCircle, Plus, ExternalLink, X,
-  ChevronRight, Search, Copy, RefreshCw, HelpCircle, Zap, Trash2, Pencil,
+  ChevronRight, Search, Copy, RefreshCw, HelpCircle, Zap, Trash2, Pencil, Loader2,
 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
@@ -230,7 +230,8 @@ export function DomainsPage() {
   const [showForm, setShowForm]         = useState(false)
   const [showDnsHelp, setShowDnsHelp]   = useState(false)
   const [showBuyDomain, setShowBuyDomain] = useState(false)
-  const [checkingDns, setCheckingDns]   = useState(false)
+  const [checkingDns, setCheckingDns]       = useState(false)
+  const [confirmingRedirect, setConfirmingRedirect] = useState(false)
 
   const { data: verification, isLoading } = useQuery({
     queryKey: ['verification', orgId],
@@ -271,7 +272,7 @@ export function DomainsPage() {
     try {
       const result = await verificationApi.checkDomainDns(orgId)
       if (result.verified) {
-        toast.success('DNS verified! SSL is being provisioned.')
+        toast.success('CNAME verified! Now confirm step 2 below.')
         qc.invalidateQueries({ queryKey: ['verification', orgId] })
       } else {
         toast.error(result.message || 'DNS not propagated yet — try again in a few hours')
@@ -283,9 +284,23 @@ export function DomainsPage() {
     }
   }
 
+  async function confirmRedirect() {
+    setConfirmingRedirect(true)
+    try {
+      await verificationApi.confirmDomainRedirect(orgId)
+      qc.invalidateQueries({ queryKey: ['verification', orgId] })
+      toast.success('Domain fully verified!')
+    } catch {
+      toast.error('Failed to confirm — please try again')
+    } finally {
+      setConfirmingRedirect(false)
+    }
+  }
+
   const domainStep    = verification?.domainStep
   const customDomain  = domainStep?.data?.[0] ?? null
   const domainStatus  = domainStep?.status
+  const cnameVerified = domainStep?.data?.[3] === 'true'
 
   const propvianSubdomain = orgSlug ? `${orgSlug}.propvian.com` : null
 
@@ -411,14 +426,28 @@ export function DomainsPage() {
             </div>
 
             {domainStatus !== 'APPROVED' && (
-              <button
-                onClick={checkDns}
-                disabled={checkingDns}
-                className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw size={12} className={checkingDns ? 'animate-spin' : ''} />
-                {checkingDns ? 'Checking…' : 'Check DNS status'}
-              </button>
+              <div className="flex items-center gap-3 flex-wrap">
+                {!cnameVerified && (
+                  <button
+                    onClick={checkDns}
+                    disabled={checkingDns}
+                    className="flex items-center gap-1.5 text-xs font-medium text-primary-600 hover:text-primary-700 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw size={12} className={checkingDns ? 'animate-spin' : ''} />
+                    {checkingDns ? 'Checking…' : 'Check DNS status'}
+                  </button>
+                )}
+                {cnameVerified && (
+                  <button
+                    onClick={confirmRedirect}
+                    disabled={confirmingRedirect}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {confirmingRedirect ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+                    {confirmingRedirect ? 'Confirming…' : "I've set up the redirect — activate domain"}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -471,33 +500,41 @@ export function DomainsPage() {
           </div>
 
           {/* Step 1: CNAME */}
-          <p className="text-xs font-medium text-gray-700 mb-2">Step 1 — Add a CNAME record <span className="text-gray-400 font-normal">(in DNS settings)</span></p>
-          <div className="rounded-xl border border-gray-200 overflow-hidden text-sm mb-4">
-            <div className="grid grid-cols-3 bg-gray-50 px-4 py-2.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
-              <span>Type</span>
-              <span>Host / Name</span>
-              <span>Value / Points to</span>
-            </div>
-            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
-              <span className="font-bold text-blue-600 text-xs">CNAME</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
-              <div className="flex items-center gap-1">
-                <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
-                <CopyButton text={CNAME_TARGET} />
+          <div className={`rounded-xl border p-3 mb-3 ${cnameVerified ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
+            <p className={`text-xs font-semibold mb-2 ${cnameVerified ? 'text-green-800' : 'text-gray-700'}`}>
+              {cnameVerified ? '✓ Step 1 — CNAME record verified' : 'Step 1 — Add a CNAME record (in DNS settings)'}
+            </p>
+            {!cnameVerified && (
+              <div className="rounded-xl border border-gray-200 overflow-hidden text-sm mb-3">
+                <div className="grid grid-cols-3 bg-gray-50 px-4 py-2.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
+                  <span>Type</span>
+                  <span>Host / Name</span>
+                  <span>Value / Points to</span>
+                </div>
+                <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
+                  <span className="font-bold text-blue-600 text-xs">CNAME</span>
+                  <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
+                  <div className="flex items-center gap-1">
+                    <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{CNAME_TARGET}</code>
+                    <CopyButton text={CNAME_TARGET} />
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Step 2: Redirect */}
-          <p className="text-xs font-medium text-gray-700 mb-2">Step 2 — Redirect root domain <span className="text-gray-400 font-normal">(in Domain Redirect / Forwarding settings)</span></p>
-          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-mono text-gray-800 space-y-1 mb-3">
-            <div><span className="text-gray-400 font-sans">From:</span> {customDomain?.replace(/^www\./, '')}</div>
-            <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{customDomain?.replace(/^www\./, '')}</span></div>
-            <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
+          <div className={`rounded-xl border p-3 mb-3 ${!cnameVerified ? 'opacity-50' : 'bg-white border-gray-200'}`}>
+            <p className="text-xs font-semibold text-gray-700 mb-2">Step 2 — Redirect root domain <span className="text-gray-400 font-normal">(in Domain Redirect / Forwarding settings)</span></p>
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-mono text-gray-800 space-y-1 mb-3">
+              <div><span className="text-gray-400 font-sans">From:</span> {customDomain?.replace(/^www\./, '')}</div>
+              <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{customDomain?.replace(/^www\./, '')}</span></div>
+              <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
+            </div>
+            <p className="text-xs text-gray-400">This ensures guests who type your domain without www are automatically redirected to the right address.</p>
           </div>
-          <p className="text-xs text-gray-400 mb-3">This ensures guests who type your domain without www are automatically redirected to the right address.</p>
 
-          <div className="flex items-start gap-2 text-xs text-gray-400">
+          <div className="flex items-start gap-2 text-xs text-gray-400 mb-3">
             <Clock size={12} className="flex-shrink-0 mt-0.5" />
             <span>DNS changes take up to 48 hours to take effect. SSL is issued automatically once confirmed.</span>
           </div>
