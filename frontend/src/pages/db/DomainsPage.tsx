@@ -492,7 +492,7 @@ export function DomainsPage() {
           <p className="text-xs font-medium text-gray-700 mb-2">Step 2 — Redirect root domain <span className="text-gray-400 font-normal">(in Domain Redirect / Forwarding settings)</span></p>
           <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-mono text-gray-800 space-y-1 mb-3">
             <div><span className="text-gray-400 font-sans">From:</span> {customDomain?.replace(/^www\./, '')}</div>
-            <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">{customDomain}</span></div>
+            <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{customDomain?.replace(/^www\./, '')}</span></div>
             <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
           </div>
           <p className="text-xs text-gray-400 mb-3">This ensures guests who type your domain without www are automatically redirected to the right address.</p>

@@ -1241,7 +1241,7 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
           <p className="text-xs font-medium text-amber-900 mb-1.5">Step 2 — Redirect root domain <span className="font-normal text-amber-700">(in Domain Redirect / Forwarding settings)</span></p>
           <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs font-mono text-gray-800 space-y-1 mb-3">
             <div><span className="text-gray-400 font-sans">From:</span> {savedDomain?.replace(/^www\./, '')}</div>
-            <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">{savedDomain}</span></div>
+            <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{savedDomain?.replace(/^www\./, '')}</span></div>
             <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
           </div>
           <p className="text-xs text-gray-400 mb-3">DNS changes take 5–30 minutes to propagate.</p>
