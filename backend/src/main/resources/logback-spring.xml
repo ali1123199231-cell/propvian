@@ -18,10 +18,24 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <immediateFlush>true</immediateFlush>
         <encoder>
-            <!-- Include requestId from MDC when present -->
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{30}%X{requestId:+[%X{requestId}]} - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
+    </appender>
+
+    <!-- ── File appender (prod only) — survives container rebuilds via volume ── -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/app/logs/smartlock.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{30}%X{requestId:+[%X{requestId}]} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- Daily rotation, gzip compressed, keep 60 days, cap at 2 GB total -->
+            <fileNamePattern>/app/logs/smartlock.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>60</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
     </appender>
 
     <!-- ── Spring profile: dev ────────────────────────────────────────────── -->
@@ -50,16 +64,19 @@
     <springProfile name="prod">
         <logger name="com.smartlock" level="INFO" additivity="false">
             <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
         </logger>
-        <!-- In prod, request filter only logs errors/warnings automatically -->
         <logger name="com.smartlock.filter.RequestLoggingFilter" level="WARN" additivity="false">
             <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
         </logger>
         <logger name="org.springframework.security" level="WARN" additivity="false">
             <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
         </logger>
         <logger name="org.hibernate.SQL" level="WARN" additivity="false">
             <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
         </logger>
     </springProfile>
 

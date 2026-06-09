@@ -80,6 +80,7 @@ services:
       APP_UPLOAD_DIR: /app/uploads
     volumes:
       - uploads_data:/app/uploads
+      - backend_logs:/app/logs
     expose:
       - "8080"
     depends_on:
@@ -102,6 +103,8 @@ services:
       dockerfile: Dockerfile
     container_name: smartlock-frontend
     restart: unless-stopped
+    volumes:
+      - frontend_logs:/var/log/nginx
     expose:
       - "80"
     depends_on:
@@ -115,6 +118,8 @@ volumes:
   caddy_data:
   caddy_config:
   uploads_data:
+  backend_logs:
+  frontend_logs:
 
 networks:
   smartlock-net:
