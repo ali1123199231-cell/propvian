@@ -6,6 +6,7 @@ import com.smartlock.exception.AppException;
 import com.smartlock.repository.SubscriptionRepository;
 import org.springframework.http.HttpStatus;
 import com.stripe.Stripe;
+import com.stripe.exception.InvalidRequestException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.*;
@@ -90,32 +91,21 @@ public class StripeService {
 
         String customerId = sub.getStripeCustomerId();
         if (customerId == null || customerId.isBlank()) {
-            Customer customer = Customer.create(CustomerCreateParams.builder()
-                    .setEmail(ownerEmail)
-                    .setName(orgName)
-                    .putMetadata("orgId", orgId.toString())
-                    .build());
-            customerId = customer.getId();
-            sub.setStripeCustomerId(customerId);
-            subscriptionRepository.save(sub);
+            customerId = createAndSaveStripeCustomer(orgId, ownerEmail, orgName, sub);
         }
 
-        Session session = Session.create(
-                com.stripe.param.checkout.SessionCreateParams.builder()
-                        .setMode(Mode.SUBSCRIPTION)
-                        .setCustomer(customerId)
-                        .addLineItem(LineItem.builder()
-                                .setPrice(resolvedPriceId())
-                                .setQuantity((long) quantity)
-                                .build())
-                        .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
-                        .setCancelUrl(cancelUrl)
-                        .putMetadata("orgId", orgId.toString())
-                        .putMetadata("quantity", String.valueOf(quantity))
-                        .build()
-        );
-
-        return session.getUrl();
+        try {
+            Session session = createCheckoutSession(customerId, quantity, successUrl, cancelUrl, orgId);
+            return session.getUrl();
+        } catch (InvalidRequestException e) {
+            if ("resource_missing".equals(e.getCode()) && e.getMessage() != null && e.getMessage().contains("No such customer")) {
+                log.warn("Stale Stripe customer {} for org {} — creating new customer and retrying", customerId, orgId);
+                customerId = createAndSaveStripeCustomer(orgId, ownerEmail, orgName, sub);
+                Session session = createCheckoutSession(customerId, quantity, successUrl, cancelUrl, orgId);
+                return session.getUrl();
+            }
+            throw e;
+        }
     }
 
     public String createCustomerPortalSession(UUID orgId, String returnUrl) throws StripeException {
@@ -135,6 +125,35 @@ public class StripeService {
                         .build()
         );
         return session.getUrl();
+    }
+
+    private String createAndSaveStripeCustomer(UUID orgId, String email, String name, Subscription sub) throws StripeException {
+        Customer customer = Customer.create(CustomerCreateParams.builder()
+                .setEmail(email)
+                .setName(name)
+                .putMetadata("orgId", orgId.toString())
+                .build());
+        sub.setStripeCustomerId(customer.getId());
+        subscriptionRepository.save(sub);
+        log.info("Created Stripe customer {} for org {}", customer.getId(), orgId);
+        return customer.getId();
+    }
+
+    private Session createCheckoutSession(String customerId, int quantity, String successUrl, String cancelUrl, UUID orgId) throws StripeException {
+        return Session.create(
+                com.stripe.param.checkout.SessionCreateParams.builder()
+                        .setMode(Mode.SUBSCRIPTION)
+                        .setCustomer(customerId)
+                        .addLineItem(LineItem.builder()
+                                .setPrice(resolvedPriceId())
+                                .setQuantity((long) quantity)
+                                .build())
+                        .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
+                        .setCancelUrl(cancelUrl)
+                        .putMetadata("orgId", orgId.toString())
+                        .putMetadata("quantity", String.valueOf(quantity))
+                        .build()
+        );
     }
 
     private String resolvedConnectWebhookSecret() {
