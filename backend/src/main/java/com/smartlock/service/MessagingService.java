@@ -11,6 +11,7 @@ import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -35,6 +37,10 @@ public class MessagingService {
     private final OrganizationMemberRepository memberRepository;
     private final NotificationService notificationService;
     private final OrganizationSecurityService orgSecurity;
+    private final EmailService emailService;
+
+    @Value("${app.frontend-url:https://propvian.com}")
+    private String frontendUrl;
 
     // ── Public: guest sends first message or reply ────────────────────────────
 
@@ -140,6 +146,9 @@ public class MessagingService {
 
         conv.setLastMessageAt(Instant.now());
         conv = conversationRepository.save(conv);
+
+        notifyGuestOfHostReply(conv, body.trim());
+
         return buildConversationResponse(conv);
     }
 
@@ -361,6 +370,28 @@ public class MessagingService {
                         .build()).toList())
                 .createdAt(ticket.getCreatedAt())
                 .build();
+    }
+
+    private void notifyGuestOfHostReply(Conversation conv, String replyBody) {
+        try {
+            String propertyName = propertyRepository.findById(conv.getPropertyId())
+                    .map(p -> p.getName()).orElse("your property");
+            String conversationUrl = frontendUrl + "/messages/" + conv.getGuestAccessToken();
+            emailService.sendEmail(
+                    conv.getGuestEmail(),
+                    "New reply from your host — " + propertyName,
+                    "email/guest-message-reply",
+                    Map.of(
+                            "guestName",       conv.getGuestName(),
+                            "propertyName",    propertyName,
+                            "replyBody",       replyBody,
+                            "conversationUrl", conversationUrl
+                    )
+            );
+            log.info("Sent host-reply email to guest {} for conv {}", conv.getGuestEmail(), conv.getId());
+        } catch (Exception e) {
+            log.warn("Failed to send host-reply email to guest for conv {}: {}", conv.getId(), e.getMessage());
+        }
     }
 
     private void notifyOrgOwners(UUID orgId, UUID convId, String title, String body) {
