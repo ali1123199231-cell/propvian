@@ -1324,7 +1324,7 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Your domain</label>
           <input {...register('domain')} className="input-base" placeholder="www.myvilla.com" />
-          <p className="mt-1 text-xs text-gray-400">Use <strong>www.yourdomain.com</strong> — e.g. www.norblina.pl</p>
+          <p className="mt-1 text-xs text-gray-400">Use <strong>www.yourdomain.com</strong> — e.g. www.beachvilla.com</p>
           {errors.domain && <p className="mt-1 text-xs text-red-500">{String(errors.domain.message)}</p>}
         </div>
         <button type="submit" disabled={isSubmitting} className="btn-primary justify-center py-2.5">

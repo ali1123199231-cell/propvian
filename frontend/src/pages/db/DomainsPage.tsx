@@ -427,7 +427,7 @@ export function DomainsPage() {
                 autoFocus
               />
               {errors.domain && <p className="mt-1 text-xs text-red-500">{String(errors.domain.message)}</p>}
-              <p className="mt-1 text-xs text-gray-400">Use <strong>www.yourdomain.com</strong> — e.g. www.norblina.pl</p>
+              <p className="mt-1 text-xs text-gray-400">Use <strong>www.yourdomain.com</strong> — e.g. www.beachvilla.com</p>
             </div>
             <div className="flex gap-2">
               <button
