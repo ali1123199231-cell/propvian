@@ -41,6 +41,10 @@ public class MessagingService {
     @Transactional
     public ConversationResponse guestSendMessage(String propertySlug, SendGuestMessageRequest req) {
         Property property = propertyRepository.findBySlug(propertySlug)
+                .or(() -> {
+                    try { return propertyRepository.findById(UUID.fromString(propertySlug)); }
+                    catch (IllegalArgumentException ignored) { return java.util.Optional.empty(); }
+                })
                 .orElseThrow(() -> new ResourceNotFoundException("Property not found"));
 
         UUID orgId = property.getOrganizationId();
