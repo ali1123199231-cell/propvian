@@ -137,9 +137,19 @@ public class PayPalService {
                 }
             }
             throw new IllegalStateException("No approval link returned from PayPal");
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            log.error("Failed to create PayPal subscription: {}", e.getMessage());
+            String body = e.getResponseBodyAsString();
+            if (e.getStatusCode().value() == 404 || body.contains("INVALID_RESOURCE_ID") || body.contains("RESOURCE_NOT_FOUND")) {
+                throw new AppException("PayPal billing plan is not configured correctly. Please contact support.", HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
+            }
+            if (e.getStatusCode().value() == 401 || body.contains("INVALID_CLIENT")) {
+                throw new AppException("PayPal authentication failed. Please contact support.", HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
+            }
+            throw new AppException("PayPal payment could not be started: " + e.getMessage(), HttpStatus.BAD_GATEWAY, "PAYMENT_ERROR");
         } catch (Exception e) {
             log.error("Failed to create PayPal subscription: {}", e.getMessage());
-            throw new RuntimeException("Failed to create PayPal subscription: " + e.getMessage(), e);
+            throw new AppException("PayPal payment could not be started. Please try again later.", HttpStatus.BAD_GATEWAY, "PAYMENT_ERROR");
         }
     }
 
