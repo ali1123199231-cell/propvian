@@ -131,6 +131,7 @@ public class DirectBookingService {
         bookingRepository.save(booking);
         log.info("confirmBooking — success bookingId={}", bookingId);
         notifyHostOfConfirmedBooking(orgId, booking);
+        notifyGuestOfBookingConfirmation(booking);
         return toResponse(booking);
     }
 
@@ -149,6 +150,22 @@ public class DirectBookingService {
             });
         } catch (Exception e) {
             log.error("Failed to notify host of confirmed booking {}: {}", booking.getId(), e.getMessage());
+        }
+    }
+
+    private void notifyGuestOfBookingConfirmation(DirectBooking booking) {
+        if (booking.getGuestEmail() == null || booking.getGuestEmail().isBlank()) return;
+        try {
+            Property property = propertyRepository.findById(booking.getPropertyId()).orElse(null);
+            String propertyName = property != null ? property.getName() : "your property";
+            String checkIn = DATE_FMT.format(booking.getCheckInDate());
+            String checkOut = DATE_FMT.format(booking.getCheckOutDate());
+            String amount = booking.getTotalAmount() != null ? booking.getTotalAmount().toPlainString() : null;
+            emailService.sendGuestBookingConfirmationEmail(
+                    booking.getGuestEmail(), booking.getGuestName(), propertyName,
+                    checkIn, checkOut, amount, booking.getCurrency());
+        } catch (Exception e) {
+            log.error("Failed to send confirmation to guest for booking {}: {}", booking.getId(), e.getMessage());
         }
     }
 

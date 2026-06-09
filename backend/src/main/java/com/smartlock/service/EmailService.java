@@ -116,6 +116,20 @@ public class EmailService {
     }
 
     @Async
+    public void sendGuestBookingConfirmationEmail(String toEmail, String guestName, String propertyName,
+                                                  String checkIn, String checkOut,
+                                                  String totalAmount, String currency) {
+        Context context = new Context();
+        context.setVariable("guestName", guestName);
+        context.setVariable("propertyName", propertyName);
+        context.setVariable("checkIn", checkIn);
+        context.setVariable("checkOut", checkOut);
+        context.setVariable("totalAmount", totalAmount);
+        context.setVariable("currency", currency);
+        sendHtmlEmail(toEmail, "Your booking is confirmed — " + propertyName, "email/guest-booking-confirmation", context);
+    }
+
+    @Async
     public void sendEmail(String to, String subject, String templateName, Map<String, Object> variables) {
         Context context = new Context();
         variables.forEach(context::setVariable);

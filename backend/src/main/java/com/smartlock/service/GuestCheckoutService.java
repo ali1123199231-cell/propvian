@@ -532,6 +532,7 @@ public class GuestCheckoutService {
                 booking.getId(), "GuestBooking: " + booking.getGuestEmail());
 
         notifyHostOfGuestPayment(booking);
+        notifyGuestOfBookingConfirmation(booking);
 
         log.info("Guest booking confirmed: id={} guest={} property={}",
                 booking.getId(), booking.getGuestEmail(), booking.getPropertyId());
@@ -552,6 +553,22 @@ public class GuestCheckoutService {
             });
         } catch (Exception e) {
             log.error("Failed to notify host of guest payment for booking {}: {}", booking.getId(), e.getMessage());
+        }
+    }
+
+    private void notifyGuestOfBookingConfirmation(DirectBooking booking) {
+        if (booking.getGuestEmail() == null || booking.getGuestEmail().isBlank()) return;
+        try {
+            Property property = propertyRepository.findById(booking.getPropertyId()).orElse(null);
+            String propertyName = property != null ? property.getName() : "your property";
+            String checkIn = DATE_FMT.format(booking.getCheckInDate());
+            String checkOut = DATE_FMT.format(booking.getCheckOutDate());
+            String amount = booking.getTotalAmount() != null ? booking.getTotalAmount().toPlainString() : null;
+            emailService.sendGuestBookingConfirmationEmail(
+                    booking.getGuestEmail(), booking.getGuestName(), propertyName,
+                    checkIn, checkOut, amount, booking.getCurrency());
+        } catch (Exception e) {
+            log.error("Failed to send confirmation to guest for booking {}: {}", booking.getId(), e.getMessage());
         }
     }
 

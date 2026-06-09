@@ -93,6 +93,7 @@ public class ReservationService {
             }
             notifyHostOfNewReservation(reservation, org);
         }
+        notifyGuestOfNewReservation(reservation);
 
         return toResponse(reservation, null);
     }
@@ -176,6 +177,23 @@ public class ReservationService {
             });
         } catch (Exception e) {
             log.error("Failed to notify host of new reservation {}: {}", reservation.getId(), e.getMessage());
+        }
+    }
+
+    private void notifyGuestOfNewReservation(Reservation reservation) {
+        if (reservation.getGuestEmail() == null || reservation.getGuestEmail().isBlank()) return;
+        try {
+            Property property = propertyRepository.findById(reservation.getPropertyId()).orElse(null);
+            String propertyName = property != null ? property.getName() : "your property";
+            ZoneId zone = ZoneId.of("UTC");
+            String checkIn = DATE_FMT.format(reservation.getCheckInDate().atZone(zone));
+            String checkOut = DATE_FMT.format(reservation.getCheckOutDate().atZone(zone));
+            String amount = reservation.getTotalAmount() != null ? reservation.getTotalAmount().toPlainString() : null;
+            emailService.sendGuestBookingConfirmationEmail(
+                    reservation.getGuestEmail(), reservation.getGuestName(), propertyName,
+                    checkIn, checkOut, amount, reservation.getCurrency());
+        } catch (Exception e) {
+            log.error("Failed to send confirmation to guest for reservation {}: {}", reservation.getId(), e.getMessage());
         }
     }
 
