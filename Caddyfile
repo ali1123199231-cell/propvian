@@ -53,3 +53,22 @@ propvian.com, www.propvian.com {
         encode gzip
     }
 }
+
+# Custom external domains (e.g. www.w-turcji.pl, www.norblina.pl)
+# Caddy issues on-demand TLS only for APPROVED domains (ask endpoint validates).
+:443 {
+    tls {
+        on_demand
+    }
+
+    reverse_proxy frontend:80
+
+    header {
+        -Server
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net https://analytics.tiktok.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.stripe.com https://www.paypal.com https://www.google-analytics.com https://region1.google-analytics.com https://www.google.com https://www.googletagmanager.com; frame-src https://js.stripe.com https://www.paypal.com; object-src 'none';"
+    }
+
+    encode gzip
+}

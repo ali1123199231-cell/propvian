@@ -48,18 +48,23 @@ public class GuestCheckoutController {
                     ? ResponseEntity.ok().build()
                     : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        // Custom domains: only issue certs for verified (APPROVED) domains
-        return hostVerificationRepository.existsByCustomDomainAndDomainStatus(domain, VerificationStatus.APPROVED)
-                ? ResponseEntity.ok().build()
-                : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        // Custom domains: check both exact domain and www-stripped variant
+        // (host may have saved "w-turcji.pl" but visitor hits "www.w-turcji.pl")
+        String bare = domain.startsWith("www.") ? domain.substring(4) : domain;
+        String withWww = domain.startsWith("www.") ? domain : "www." + domain;
+        boolean approved = hostVerificationRepository.existsByCustomDomainAndDomainStatus(bare, VerificationStatus.APPROVED)
+                || hostVerificationRepository.existsByCustomDomainAndDomainStatus(withWww, VerificationStatus.APPROVED);
+        return approved ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
     /** Resolve a custom domain to its org slug — used by the frontend on custom-domain hostnames */
     @GetMapping("/api/public/resolve-domain")
     public ResponseEntity<ApiResponse<Map<String, String>>> resolveDomain(@RequestParam String domain) {
         log.debug("GuestCheckoutController.resolveDomain — domain={}", domain);
-        return hostVerificationRepository
-                .findByCustomDomainAndDomainStatus(domain, VerificationStatus.APPROVED)
+        String bare = domain.startsWith("www.") ? domain.substring(4) : domain;
+        String withWww = domain.startsWith("www.") ? domain : "www." + domain;
+        return hostVerificationRepository.findByCustomDomainAndDomainStatus(bare, VerificationStatus.APPROVED)
+                .or(() -> hostVerificationRepository.findByCustomDomainAndDomainStatus(withWww, VerificationStatus.APPROVED))
                 .flatMap(hv -> organizationRepository.findById(hv.getOrganizationId()))
                 .map(org -> ResponseEntity.ok(ApiResponse.success(Map.of("orgSlug", org.getSlug()))))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
