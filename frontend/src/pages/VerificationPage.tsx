@@ -1259,6 +1259,12 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
               className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors">
               <HelpCircle size={12} /> How do I do this?
             </button>
+            <button
+              onClick={() => { if (window.confirm(`Remove domain "${savedDomain}"?`)) deleteDomainMut.mutate() }}
+              disabled={deleteDomainMut.isPending}
+              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 transition-colors ml-auto">
+              <Trash2 size={12} /> {deleteDomainMut.isPending ? 'Removing…' : 'Remove domain'}
+            </button>
           </div>
           {dnsResult && !dnsResult.verified && (
             <p className="mt-2 text-xs text-red-500">{dnsResult.message}</p>
@@ -1266,8 +1272,8 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
         </div>
       )}
 
-      {/* ── Free Propvian subdomain option ── */}
-      {!requireCustomDomain && (
+      {/* ── Free Propvian subdomain option + form — hidden when domain already saved ── */}
+      {!savedDomain && !requireCustomDomain && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-5">
           <p className="text-sm font-semibold text-green-800 mb-1">Quick option: Use a Propvian subdomain</p>
           <p className="text-xs text-green-600 mb-3">
@@ -1278,7 +1284,7 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
           </button>
         </div>
       )}
-      {requireCustomDomain && (
+      {!savedDomain && requireCustomDomain && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5 flex items-start gap-3">
           <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />
           <div>
@@ -1288,7 +1294,9 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
         </div>
       )}
 
-      {/* ── Custom domain form ── */}
+      {/* ── Custom domain form + DNS preview — hidden when domain already saved ── */}
+      {!savedDomain && (
+        <>
       <p className="text-sm font-medium text-gray-700 mb-1">
         {requireCustomDomain ? 'Connect your domain:' : 'Or connect your own domain:'}
       </p>
@@ -1344,6 +1352,8 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
           {isSubmitting ? 'Connecting…' : 'Connect domain'}
         </button>
       </form>
+      </>
+      )}
 
       {showDnsHelp   && <DnsHelpModal   onClose={() => setShowDnsHelp(false)} />}
       {showBuyDomain && <BuyDomainModal onClose={() => setShowBuyDomain(false)} />}
