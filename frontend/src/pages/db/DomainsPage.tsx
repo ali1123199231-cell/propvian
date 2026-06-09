@@ -64,32 +64,39 @@ function DnsHelpModal({ onClose }: { onClose: () => void }) {
           <div className="flex gap-4">
             <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">Add these 2 records</p>
-              <p className="text-xs text-gray-500 mt-1 mb-3">In your registrar's DNS settings, add the CNAME record, then set up the redirect:</p>
+              <p className="font-semibold text-gray-900 text-sm">Add a CNAME record <span className="font-normal text-gray-400">(in DNS settings)</span></p>
+              <p className="text-xs text-gray-500 mt-1 mb-3">Go to your registrar's <strong>DNS settings</strong> and add:</p>
               <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden text-xs font-mono">
                 <div className="grid grid-cols-3 bg-gray-100 text-gray-500 font-sans font-semibold px-3 py-2">
                   <span>Type</span><span>Name / Host</span><span>Value / Points to</span>
                 </div>
-                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2 border-b border-gray-100">
+                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2">
                   <span className="font-bold text-blue-600">CNAME</span>
                   <span>www</span>
                   <span className="text-green-700 break-all">{CNAME_TARGET}</span>
                 </div>
-                <div className="grid grid-cols-3 px-3 py-2.5 text-gray-800 gap-2">
-                  <span className="font-bold text-purple-600">Redirect</span>
-                  <span>@</span>
-                  <span className="text-green-700 font-sans">www.yourdomain.com</span>
-                </div>
               </div>
-              <p className="text-xs text-gray-400 mt-2">
-                💡 The <strong>Redirect</strong> is a forwarding rule at your registrar — GoDaddy calls it <strong>Forwarding</strong>, Namecheap calls it <strong>URL Redirect</strong>. This makes <em>yourdomain.com</em> redirect to <em>www.yourdomain.com</em>.
-              </p>
             </div>
           </div>
 
           {/* Step 4 */}
           <div className="flex gap-4">
             <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">4</div>
+            <div>
+              <p className="font-semibold text-gray-900 text-sm">Redirect your root domain <span className="font-normal text-gray-400">(in Domain settings)</span></p>
+              <p className="text-xs text-gray-500 mt-1">Go to your registrar's <strong>Domain Redirect</strong> (or Forwarding) section — separate from DNS. Set it up like this:</p>
+              <div className="mt-2 bg-gray-50 rounded-xl border border-gray-200 px-3 py-2.5 text-xs font-mono text-gray-800 space-y-1">
+                <div><span className="text-gray-400 font-sans">From:</span> yourdomain.com</div>
+                <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.yourdomain.com</span></div>
+                <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">This ensures guests who type <em>yourdomain.com</em> are automatically sent to <em>www.yourdomain.com</em>.</p>
+            </div>
+          </div>
+
+          {/* Step 5 */}
+          <div className="flex gap-4">
+            <div className="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-sm flex-shrink-0">5</div>
             <div>
               <p className="font-semibold text-gray-900 text-sm">Wait and verify</p>
               <p className="text-xs text-gray-500 mt-1">DNS changes can take anywhere from a few minutes to 48 hours to spread across the internet. Once done, come back and click <strong>Check DNS</strong> — we'll confirm automatically and issue your SSL certificate.</p>
@@ -463,18 +470,15 @@ export function DomainsPage() {
             </button>
           </div>
 
-          <p className="text-xs text-gray-500 mb-4">
-            Add these 2 records at your domain registrar (GoDaddy, Namecheap, etc.) to activate your domain.
-          </p>
-
-          {/* DNS record table */}
-          <div className="rounded-xl border border-gray-200 overflow-hidden text-sm">
+          {/* Step 1: CNAME */}
+          <p className="text-xs font-medium text-gray-700 mb-2">Step 1 — Add a CNAME record <span className="text-gray-400 font-normal">(in DNS settings)</span></p>
+          <div className="rounded-xl border border-gray-200 overflow-hidden text-sm mb-4">
             <div className="grid grid-cols-3 bg-gray-50 px-4 py-2.5 text-xs font-semibold text-gray-500 border-b border-gray-200">
               <span>Type</span>
               <span>Host / Name</span>
               <span>Value / Points to</span>
             </div>
-            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2 border-b border-gray-100">
+            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
               <span className="font-bold text-blue-600 text-xs">CNAME</span>
               <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">www</code>
               <div className="flex items-center gap-1">
@@ -482,16 +486,20 @@ export function DomainsPage() {
                 <CopyButton text={CNAME_TARGET} />
               </div>
             </div>
-            <div className="grid grid-cols-3 px-4 py-2.5 items-center gap-2">
-              <span className="font-bold text-purple-600 text-xs">Redirect</span>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">@</code>
-              <code className="text-xs font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 break-all">{customDomain}</code>
-            </div>
           </div>
 
-          <div className="mt-3 flex items-start gap-2 text-xs text-gray-400">
+          {/* Step 2: Redirect */}
+          <p className="text-xs font-medium text-gray-700 mb-2">Step 2 — Redirect root domain <span className="text-gray-400 font-normal">(in Domain Redirect / Forwarding settings)</span></p>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-mono text-gray-800 space-y-1 mb-3">
+            <div><span className="text-gray-400 font-sans">From:</span> {customDomain?.replace(/^www\./, '')}</div>
+            <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">{customDomain}</span></div>
+            <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
+          </div>
+          <p className="text-xs text-gray-400 mb-3">This ensures guests who type your domain without www are automatically redirected to the right address.</p>
+
+          <div className="flex items-start gap-2 text-xs text-gray-400">
             <Clock size={12} className="flex-shrink-0 mt-0.5" />
-            <span>DNS changes take up to 48 hours. The <strong>Redirect</strong> is a forwarding rule, not a DNS record — GoDaddy calls it <strong>Forwarding</strong>, Namecheap calls it <strong>URL Redirect</strong>.</span>
+            <span>DNS changes take up to 48 hours to take effect. SSL is issued automatically once confirmed.</span>
           </div>
 
           <button
