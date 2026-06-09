@@ -255,7 +255,7 @@ function HeroSection({ cfg, primary, accent, font, btnStyle, buttonStyle, proper
             {cfg.headline || properties[0]?.name || 'Welcome'}
           </h1>
           <p className="text-white/90 text-lg sm:text-xl mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-sm">
-            {cfg.subheadline || properties[0]?.description || 'Book direct for the best rates and a personal experience'}
+            {properties[0]?.description || cfg.subheadline || 'Book direct for the best rates and a personal experience'}
           </p>
           {(cfg.ctaText || 'Check Availability') && properties[0] && (
             <button
@@ -343,7 +343,7 @@ function AboutSection({ cfg, primary, accent, font, properties }: SectionBasePro
             <div className="w-10 h-1 rounded-full mb-5" style={{ backgroundColor: accent }} />
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-5 leading-tight">{cfg.title || 'About This Property'}</h2>
             <p className="text-gray-600 leading-relaxed text-base whitespace-pre-line text-lg">
-              {cfg.description || properties[0]?.description || 'A beautiful and thoughtfully designed space for your perfect getaway.'}
+              {properties[0]?.description || cfg.description || 'A beautiful and thoughtfully designed space for your perfect getaway.'}
             </p>
           </div>
           {aboutImg && (
@@ -430,8 +430,8 @@ function BookingWidgetSection({ cfg, primary, accent, font, btnStyle, properties
         <div className="bg-white border border-gray-100 rounded-3xl shadow-xl overflow-hidden max-w-md mx-auto mt-8">
           <div className="grid grid-cols-2 divide-x divide-gray-100 border-b border-gray-100">
             {[
-              { label: 'Check-in', val: cfg.checkInNote || (prop.checkInTime ? `From ${prop.checkInTime}` : 'Flexible') },
-              { label: 'Check-out', val: cfg.checkOutNote || (prop.checkOutTime ? `By ${prop.checkOutTime}` : 'Flexible') },
+              { label: 'Check-in', val: prop.checkInTime ? `From ${prop.checkInTime}` : cfg.checkInNote || 'Flexible' },
+              { label: 'Check-out', val: prop.checkOutTime ? `By ${prop.checkOutTime}` : cfg.checkOutNote || 'Flexible' },
             ].map(({ label, val }) => (
               <div key={label} className="p-5">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{label}</p>
