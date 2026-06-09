@@ -1160,8 +1160,12 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
     try {
       await verificationApi.connectDomain(orgId, { domain: formData.domain })
       qc.invalidateQueries({ queryKey: ['verification', orgId] })
-      toast.success(formData.domain.endsWith('.propvian.com') ? `Using ${formData.domain}` : 'Domain saved — add the CNAME record to activate it')
-      onDone()
+      if (formData.domain.endsWith('.propvian.com')) {
+        toast.success(`Using ${formData.domain}`)
+        onDone()
+      } else {
+        toast.success('Domain saved — follow the steps below to activate it')
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Connection failed')
     }
