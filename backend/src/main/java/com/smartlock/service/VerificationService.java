@@ -38,6 +38,7 @@ public class VerificationService {
     private final EmailService                  emailService;
     private final NotificationService           notificationService;
     private final OrganizationRepository        organizationRepository;
+    private final CloudflareService             cloudflareService;
     private final UserRepository                userRepository;
     private final OrganizationSecurityService   orgSecurity;
     private final PropertyRepository            propertyRepository;
@@ -272,6 +273,8 @@ public class VerificationService {
             v.setDomainVerifiedAt(Instant.now());
         } else {
             v.setDomainStatus(VerificationStatus.PENDING);
+            // Register with Cloudflare Custom Hostnames so SSL is issued
+            cloudflareService.addCustomHostname(req.getDomain());
             // Try DNS check now (best effort)
             checkDnsAsync(orgId, req.getDomain());
         }
@@ -283,6 +286,9 @@ public class VerificationService {
     public VerificationStatusResponse deleteDomain(UUID orgId) {
         log.info("VerificationService.deleteDomain — orgId={}", orgId);
         HostVerification v = getOrCreate(orgId);
+        if (v.getCustomDomain() != null && !v.getCustomDomain().endsWith(".propvian.com")) {
+            cloudflareService.deleteCustomHostname(v.getCustomDomain());
+        }
         v.setCustomDomain(null);
         v.setDomainStatus(VerificationStatus.NOT_STARTED);
         v.setDomainVerificationToken(null);
@@ -330,10 +336,17 @@ public class VerificationService {
         );
     }
 
+    // Cloudflare anycast IPs for the propvian.com zone — permanent
+    private static final Set<String> CLOUDFLARE_IPS = Set.of("188.114.96.11", "188.114.97.11");
+
     private boolean resolveCname(String domain) {
         try {
             InetAddress[] addresses = InetAddress.getAllByName(domain);
-            // Check if any resolved address matches booking.propvian.com
+            // Accept if domain resolves to our Cloudflare IPs (A record approach)
+            for (InetAddress a : addresses) {
+                if (CLOUDFLARE_IPS.contains(a.getHostAddress())) return true;
+            }
+            // Also accept if domain resolves to same IPs as booking.propvian.com (CNAME approach)
             InetAddress[] target = InetAddress.getAllByName(CNAME_TARGET);
             Set<String> targetIps = new HashSet<>();
             for (InetAddress a : target) targetIps.add(a.getHostAddress());
