@@ -272,7 +272,7 @@ export function DomainsPage() {
     try {
       const result = await verificationApi.checkDomainDns(orgId)
       if (result.verified) {
-        toast.success('CNAME verified! Now confirm step 2 below.')
+        toast.success(result.redirectVerified ? 'Domain fully verified!' : 'CNAME verified! Click "Activate domain" to go live.')
         qc.invalidateQueries({ queryKey: ['verification', orgId] })
       } else {
         toast.error(result.message || 'DNS not propagated yet — try again in a few hours')
@@ -313,6 +313,11 @@ export function DomainsPage() {
     if (status === 'REJECTED') return (
       <span className="flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
         <XCircle size={11} /> Rejected
+      </span>
+    )
+    if (cnameVerified) return (
+      <span className="flex items-center gap-1 text-xs font-medium text-primary-700 bg-primary-50 border border-primary-200 px-2 py-0.5 rounded-full">
+        <CheckCircle size={11} /> CNAME ready
       </span>
     )
     return (
@@ -427,7 +432,7 @@ export function DomainsPage() {
 
             {domainStatus !== 'APPROVED' && (
               <div className="flex items-center gap-3 flex-wrap">
-                {!cnameVerified && (
+                {!cnameVerified ? (
                   <button
                     onClick={checkDns}
                     disabled={checkingDns}
@@ -436,16 +441,25 @@ export function DomainsPage() {
                     <RefreshCw size={12} className={checkingDns ? 'animate-spin' : ''} />
                     {checkingDns ? 'Checking…' : 'Check DNS status'}
                   </button>
-                )}
-                {cnameVerified && (
-                  <button
-                    onClick={confirmRedirect}
-                    disabled={confirmingRedirect}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    {confirmingRedirect ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
-                    {confirmingRedirect ? 'Confirming…' : "I've set up the redirect — activate domain"}
-                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={confirmRedirect}
+                      disabled={confirmingRedirect}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {confirmingRedirect ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+                      {confirmingRedirect ? 'Activating…' : 'Activate domain'}
+                    </button>
+                    <button
+                      onClick={checkDns}
+                      disabled={checkingDns}
+                      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+                    >
+                      <RefreshCw size={11} className={checkingDns ? 'animate-spin' : ''} />
+                      {checkingDns ? 'Checking…' : 'Re-check DNS'}
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -523,20 +537,32 @@ export function DomainsPage() {
             )}
           </div>
 
-          {/* Step 2: Redirect */}
+          {/* Step 2 — Activate */}
           <div className={`rounded-xl border p-3 mb-3 ${!cnameVerified ? 'opacity-50' : 'bg-white border-gray-200'}`}>
-            <p className="text-xs font-semibold text-gray-700 mb-2">Step 2 — Redirect root domain <span className="text-gray-400 font-normal">(in Domain Redirect / Forwarding settings)</span></p>
-            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-mono text-gray-800 space-y-1 mb-3">
-              <div><span className="text-gray-400 font-sans">From:</span> {customDomain?.replace(/^www\./, '')}</div>
-              <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{customDomain?.replace(/^www\./, '')}</span></div>
-              <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-3 h-3 rounded-full border-2 border-primary-400 flex-shrink-0" />
+              <p className="text-xs font-semibold text-gray-800">Step 2 — Activate domain</p>
             </div>
-            <p className="text-xs text-gray-400">This ensures guests who type your domain without www are automatically redirected to the right address.</p>
-          </div>
 
-          <div className="flex items-start gap-2 text-xs text-gray-400 mb-3">
-            <Clock size={12} className="flex-shrink-0 mt-0.5" />
-            <span>DNS changes take up to 48 hours to take effect. SSL is issued automatically once confirmed.</span>
+            {/* Optional redirect info */}
+            <div className="border-b border-gray-100 pb-3 mb-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">
+                Optional: Set up a root redirect <span className="font-normal text-gray-400">(recommended for SEO)</span>
+              </p>
+              <p className="text-xs text-gray-400 mb-2">
+                Forward <em>{customDomain?.replace(/^www\./, '')}</em> → <em>www.{customDomain?.replace(/^www\./, '')}</em> so guests reach your site even without typing "www". We'll detect it automatically on the next DNS check.
+              </p>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-mono text-gray-800 space-y-1">
+                <div><span className="text-gray-400 font-sans">From:</span> {customDomain?.replace(/^www\./, '')}</div>
+                <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{customDomain?.replace(/^www\./, '')}</span></div>
+                <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 (Permanent)</span></div>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 text-xs text-gray-400 mb-3">
+              <Clock size={12} className="flex-shrink-0 mt-0.5" />
+              <span>DNS changes take up to 48 hours to take effect.</span>
+            </div>
           </div>
 
           <button

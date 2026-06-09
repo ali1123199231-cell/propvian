@@ -21,7 +21,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URL;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
@@ -314,17 +316,30 @@ public class VerificationService {
         if (v.getCustomDomain() == null) {
             return Map.of("verified", false, "message", "No domain configured");
         }
-        boolean resolved = resolveCname(v.getCustomDomain());
-        if (resolved && v.getDomainVerifiedAt() == null) {
-            // CNAME verified — mark step 1 done but keep PENDING until host confirms redirect (step 2)
-            v.setDomainVerifiedAt(Instant.now());
+        boolean cnameOk = resolveCname(v.getCustomDomain());
+        if (cnameOk) {
+            if (v.getDomainVerifiedAt() == null) v.setDomainVerifiedAt(Instant.now());
+            // Auto-detect redirect — if already configured, approve immediately
+            boolean redirectOk = checkHttpRedirect(v.getCustomDomain());
+            if (redirectOk && v.getDomainStatus() != VerificationStatus.APPROVED) {
+                v.setDomainStatus(VerificationStatus.APPROVED);
+                recalculate(v);
+                verificationRepository.save(v);
+                notifyHostDomainVerified(orgId);
+                return Map.of("verified", true, "redirectVerified", true,
+                        "domain", v.getCustomDomain(), "cnameTarget", CNAME_TARGET,
+                        "message", "Domain fully verified!");
+            }
             verificationRepository.save(v);
         }
         return Map.of(
-                "verified", resolved,
-                "domain",   v.getCustomDomain(),
+                "verified", cnameOk,
+                "redirectVerified", false,
+                "domain",      v.getCustomDomain() != null ? v.getCustomDomain() : "",
                 "cnameTarget", CNAME_TARGET,
-                "message",  resolved ? "CNAME verified — now confirm step 2 (root redirect)" : "CNAME not yet pointing to " + CNAME_TARGET
+                "message",     cnameOk
+                        ? "CNAME verified — activate your domain below (redirect is optional)"
+                        : "CNAME not yet pointing to " + CNAME_TARGET
         );
     }
 
@@ -337,6 +352,28 @@ public class VerificationService {
         VerificationStatusResponse res = toResponse(verificationRepository.save(v));
         notifyHostDomainVerified(orgId);
         return res;
+    }
+
+    private boolean checkHttpRedirect(String domain) {
+        String bareDomain = domain.startsWith("www.") ? domain.substring(4) : domain;
+        String wwwDomain  = "www." + bareDomain;
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new URL("http://" + bareDomain).openConnection();
+            conn.setInstanceFollowRedirects(false);
+            conn.setConnectTimeout(4000);
+            conn.setReadTimeout(4000);
+            conn.setRequestMethod("HEAD");
+            conn.setRequestProperty("User-Agent", "Propvian-DomainVerifier/1.0");
+            int code = conn.getResponseCode();
+            if (code >= 300 && code < 400) {
+                String location = conn.getHeaderField("Location");
+                return location != null && location.contains(wwwDomain);
+            }
+            return false;
+        } catch (Exception e) {
+            log.debug("Redirect check failed for {}: {}", bareDomain, e.getMessage());
+            return false;
+        }
     }
 
     private boolean resolveCname(String domain) {
@@ -366,14 +403,19 @@ public class VerificationService {
     }
 
     private void checkDnsAsync(UUID orgId, String domain) {
-        // Non-blocking check — marks step 1 (CNAME) done; step 2 (redirect) requires explicit host confirmation
         try {
-            boolean resolved = resolveCname(domain);
-            if (resolved) {
+            boolean cnameOk = resolveCname(domain);
+            if (cnameOk) {
                 HostVerification v = verificationRepository.findByOrganizationId(orgId).orElse(null);
-                if (v != null && v.getDomainVerifiedAt() == null) {
-                    v.setDomainVerifiedAt(Instant.now());
-                    verificationRepository.save(v);
+                if (v != null) {
+                    boolean changed = false;
+                    if (v.getDomainVerifiedAt() == null) { v.setDomainVerifiedAt(Instant.now()); changed = true; }
+                    if (v.getDomainStatus() != VerificationStatus.APPROVED && checkHttpRedirect(domain)) {
+                        v.setDomainStatus(VerificationStatus.APPROVED);
+                        recalculate(v);
+                        changed = true;
+                    }
+                    if (changed) verificationRepository.save(v);
                 }
             }
         } catch (Exception e) {

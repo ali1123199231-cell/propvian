@@ -80,9 +80,9 @@ export const verificationApi = {
     return res.data.data
   },
 
-  async checkDomainDns(orgId: string): Promise<{ verified: boolean; message: string; domain: string; cnameTarget: string }> {
+  async checkDomainDns(orgId: string): Promise<{ verified: boolean; redirectVerified?: boolean; message: string; domain: string; cnameTarget: string }> {
     log.info('verification.checkDomainDns — org=%s', shortId(orgId))
-    const res = await apiClient.post<Res<{ verified: boolean; message: string; domain: string; cnameTarget: string }>>(
+    const res = await apiClient.post<Res<{ verified: boolean; redirectVerified?: boolean; message: string; domain: string; cnameTarget: string }>>(
       `/organizations/${orgId}/verification/domain/check-dns`)
     log.info('verification.checkDomainDns — verified=%s domain=%s', res.data.data.verified, res.data.data.domain)
     return res.data.data

@@ -1150,7 +1150,7 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
       setDnsResult(res)
       if (res.verified) {
         qc.invalidateQueries({ queryKey: ['verification', orgId] })
-        toast.success('CNAME verified! Now confirm step 2 below.')
+        toast.success(res.redirectVerified ? 'Domain fully verified!' : 'CNAME verified! Click "Activate domain" below.')
       }
     } catch { toast.error('DNS check failed') }
     finally { setChecking(false) }
@@ -1162,7 +1162,7 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
     try {
       await verificationApi.confirmDomainRedirect(orgId)
       qc.invalidateQueries({ queryKey: ['verification', orgId] })
-      toast.success('Domain fully verified!')
+      toast.success('Domain activated!')
       onDone()
     } catch { toast.error('Failed to confirm redirect') }
     finally { setConfirmingRedirect(false) }
@@ -1241,7 +1241,7 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
             Connecting <strong>{savedDomain}</strong>
           </p>
 
-          {/* Step 1 */}
+          {/* Step 1 — CNAME */}
           <div className={`rounded-xl border p-3 ${cnameVerified ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
             <div className="flex items-center gap-2 mb-2">
               {cnameVerified
@@ -1284,23 +1284,32 @@ function DomainStep({ orgId, onDone, status, stepData, orgSlug, requireCustomDom
             )}
           </div>
 
-          {/* Step 2 */}
+          {/* Step 2 — Activate (available once CNAME done) */}
           <div className={`rounded-xl border p-3 ${!cnameVerified ? 'opacity-50' : 'bg-white border-gray-200'}`}>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3.5 h-3.5 rounded-full border-2 border-amber-400 flex-shrink-0" />
-              <p className="text-xs font-semibold text-amber-900">Step 2 — Redirect root domain (in Forwarding / Redirect settings)</p>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-3.5 h-3.5 rounded-full border-2 border-primary-400 flex-shrink-0" />
+              <p className="text-xs font-semibold text-gray-800">Step 2 — Activate domain</p>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono text-gray-800 space-y-1 mb-3">
-              <div><span className="text-gray-400 font-sans">From:</span> {savedDomain?.replace(/^www\./, '')}</div>
-              <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{savedDomain?.replace(/^www\./, '')}</span></div>
-              <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 Permanent</span></div>
-            </div>
-            <p className="text-xs text-gray-400 mb-3">This ensures guests who type <em>{savedDomain?.replace(/^www\./, '')}</em> are forwarded to <em>www.{savedDomain?.replace(/^www\./, '')}</em>.</p>
             <button onClick={confirmRedirect} disabled={!cnameVerified || confirmingRedirect}
-              className="btn-primary text-sm py-2 flex items-center gap-2 disabled:opacity-40">
+              className="btn-primary text-sm py-2 flex items-center gap-2 disabled:opacity-40 mb-4">
               {confirmingRedirect ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
-              {confirmingRedirect ? 'Confirming…' : "I've set up the redirect — verify domain"}
+              {confirmingRedirect ? 'Activating…' : 'Activate domain'}
             </button>
+
+            {/* Optional redirect section */}
+            <div className="border-t border-gray-100 pt-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">
+                Optional: Set up a root redirect <span className="font-normal text-gray-400">(recommended for SEO)</span>
+              </p>
+              <p className="text-xs text-gray-400 mb-2">
+                Forward <em>{savedDomain?.replace(/^www\./, '')}</em> → <em>www.{savedDomain?.replace(/^www\./, '')}</em> so guests reach your site even without typing "www". We'll detect it automatically on the next DNS check.
+              </p>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-mono text-gray-700 space-y-1">
+                <div><span className="text-gray-400 font-sans">From:</span> {savedDomain?.replace(/^www\./, '')}</div>
+                <div><span className="text-gray-400 font-sans">To:</span> <span className="text-green-700">www.{savedDomain?.replace(/^www\./, '')}</span></div>
+                <div><span className="text-gray-400 font-sans">Type:</span> <span className="text-blue-600">301 Permanent</span></div>
+              </div>
+            </div>
           </div>
 
           <button
