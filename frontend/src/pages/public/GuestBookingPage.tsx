@@ -326,7 +326,23 @@ export function GuestBookingPage({ slug }: { slug: string }) {
       })
       setStep('payment')
     },
-    onError: (e: any) => toast.error(e.response?.data?.message || 'Could not start checkout'),
+    onError: (e: any) => {
+      const data = e.response?.data
+      const fieldErrors: Record<string, string> | undefined = data?.fieldErrors
+      if (fieldErrors && Object.keys(fieldErrors).length > 0) {
+        const labels: Record<string, string> = {
+          guestName: 'Name', guestEmail: 'Email', guestPhone: 'Phone',
+          checkInDate: 'Check-in date', checkOutDate: 'Check-out date',
+          numberOfGuests: 'Number of guests', paymentProvider: 'Payment method',
+        }
+        const msg = Object.entries(fieldErrors)
+          .map(([f, m]) => `${labels[f] ?? f}: ${m}`)
+          .join('\n')
+        toast.error(msg, { duration: 6000 })
+      } else {
+        toast.error(data?.message || 'Could not start checkout')
+      }
+    },
   })
 
   async function applyPromo() {
