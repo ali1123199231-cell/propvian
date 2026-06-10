@@ -468,10 +468,12 @@ public class GuestCheckoutService {
                     promo.getCode(), discountAmt, currency, promo.getUsesCount());
         }
 
+        String descriptor = resolveStatementDescriptor(v);
+
         if ("stripe".equals(provider)) {
             try {
                 String clientSecret = stripeService.createGuestPaymentIntent(
-                        booking.getId(), total, currency, v.getStripeAccountId());
+                        booking.getId(), total, currency, v.getStripeAccountId(), descriptor);
                 return GuestInitiateResponse.builder()
                         .bookingId(booking.getId().toString())
                         .provider("stripe")
@@ -485,7 +487,7 @@ public class GuestCheckoutService {
             }
         } else {
             String orderId = paypalService.createGuestOrder(
-                    booking.getId(), total, currency, v.getPaypalAccountId());
+                    booking.getId(), total, currency, v.getPaypalAccountId(), descriptor);
             return GuestInitiateResponse.builder()
                     .bookingId(booking.getId().toString())
                     .provider("paypal")
@@ -576,6 +578,21 @@ public class GuestCheckoutService {
         } catch (Exception e) {
             log.error("Failed to send confirmation to guest for booking {}: {}", booking.getId(), e.getMessage());
         }
+    }
+
+    private String resolveStatementDescriptor(HostVerification v) {
+        if (v != null
+                && v.getDomainStatus() == com.smartlock.domain.enums.VerificationStatus.APPROVED
+                && v.getCustomDomain() != null
+                && !v.getCustomDomain().isBlank()
+                && !v.getCustomDomain().endsWith(".propvian.com")) {
+            String domain = v.getCustomDomain()
+                    .replaceFirst("(?i)^https?://", "")
+                    .replaceFirst("(?i)^www\\.", "")
+                    .replaceAll("[<>\"'*;()]", "");
+            return domain.length() > 22 ? domain.substring(0, 22) : domain;
+        }
+        return "Direct Booking";
     }
 
     private void validateProvider(String provider, HostVerification v) {

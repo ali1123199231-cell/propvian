@@ -26,7 +26,7 @@ export function TermsPage() {
           <div className="mb-10">
             <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-2">Legal</p>
             <h1 className="text-3xl font-extrabold text-gray-900 mb-3">Terms of Service</h1>
-            <p className="text-sm text-gray-400">Last updated: June 2026 · Version 2.0</p>
+            <p className="text-sm text-gray-400">Last updated: June 2026 · Version 2.1</p>
           </div>
 
           <Section title="1. Acceptance of Terms">
@@ -52,6 +52,7 @@ export function TermsPage() {
           <Section title="3. Propvian Is Not the Merchant of Record">
             <p>Propvian is not the merchant of record for any transaction that occurs through your direct booking website. All payments from guests are processed directly between the guest and the host via third-party payment processors (currently Stripe and/or PayPal). Propvian does not receive, hold, transmit, or process guest funds at any point.</p>
             <p>You, as the host, are solely responsible for all financial aspects of bookings made through your website, including but not limited to: collecting payment, issuing refunds, handling chargebacks and disputes, and complying with applicable tax obligations.</p>
+            <p><strong>Payment processing fees:</strong> All fees charged by Stripe, PayPal, card networks, banks, or any other payment provider you choose to use — including but not limited to transaction fees, percentage-based processing fees, chargeback fees, currency conversion fees, banking fees, and payout fees — are solely your responsibility as the Host. Propvian does not control, set, collect, or receive any such fees. These fees are entirely separate from Propvian's subscription fee, are set exclusively by the applicable payment provider, and may be modified by that provider at any time without notice to Propvian. Propvian is not responsible for any changes to fee schedules or policies imposed by third-party payment providers.</p>
             <p>Propvian is not a payment service provider, money services business, or payment facilitator under any applicable law.</p>
           </Section>
 
@@ -64,7 +65,8 @@ export function TermsPage() {
               <li><strong>Guest relationships:</strong> Managing all communications, agreements, disputes, damage claims, and interactions with guests</li>
               <li><strong>Guest contracts:</strong> Providing guests with any required rental agreements, house rules, or disclosures required by law or your own policies</li>
               <li><strong>Refunds and cancellations:</strong> Establishing and enforcing your own cancellation and refund policies with guests</li>
-              <li><strong>Chargebacks:</strong> Responding to and bearing the financial responsibility for any payment chargebacks or disputes initiated by guests</li>
+              <li><strong>Chargebacks and payment disputes:</strong> Responding to, managing, and bearing the full financial responsibility for any payment chargebacks, reversals, or disputes initiated by guests, including any associated fees or penalties imposed by payment providers in connection with those chargebacks</li>
+              <li><strong>Payment processing fees:</strong> Paying all transaction fees, processing fees, chargeback fees, currency conversion fees, banking fees, payout fees, and any other charges imposed by Stripe, PayPal, card networks, banks, or any other payment provider you use in connection with your booking website — regardless of whether those fees increase, change, or are newly introduced after you begin using the Service</li>
               <li><strong>Insurance:</strong> Maintaining adequate property and liability insurance coverage for your rental activity</li>
               <li><strong>Safety and property standards:</strong> Ensuring your property meets all applicable health, safety, and habitability standards</li>
               <li><strong>Data protection:</strong> Complying with applicable data protection laws in your dealings with guests, including under GDPR if applicable</li>
@@ -90,6 +92,7 @@ export function TermsPage() {
             <p>Payment is processed through Stripe. By providing payment information, you represent that you are authorized to use the payment method and authorize charges to it.</p>
             <p>If a payment fails, we will notify you and attempt to reprocess the charge. Access to subscription features may be suspended if payment remains outstanding after reasonable collection attempts. You are responsible for ensuring your payment information remains current.</p>
             <p>All fees are stated in USD unless otherwise specified and are exclusive of applicable taxes. You are responsible for all applicable taxes related to your use of the Service.</p>
+            <p>Propvian's subscription fee covers access to the platform only and is entirely separate from any payment processing fees, transaction fees, chargeback fees, or other charges imposed by third-party payment providers such as Stripe or PayPal. Those fees are not collected or retained by Propvian in any form.</p>
           </Section>
 
           <Section title="8. Cancellation">
@@ -129,7 +132,7 @@ export function TermsPage() {
 
           <Section title="12. Third-Party Services">
             <p>The Service integrates with and relies on third-party services including Stripe, PayPal, and email delivery providers. These integrations are subject to the terms and availability of those third-party services. Propvian is not responsible for any disruptions or changes to third-party services.</p>
-            <p>Your use of payment processors is subject to their own terms of service. We are not affiliated with, endorsed by, or responsible for these third-party providers.</p>
+            <p>Your use of payment processors is subject to their own terms of service. We are not affiliated with, endorsed by, or responsible for these third-party providers. Payment processors may change their fee schedules, introduce new charges, modify their payout structures, or alter their services at any time without notice to Propvian. Propvian is not responsible for any such changes and has no obligation to notify you of updates to third-party fee schedules. Any references to payment processing fees, transaction costs, potential savings, or fee estimates that appear anywhere on Propvian's website or within the Service are informational only, reflect publicly available information at a point in time, and do not constitute a guarantee, representation, or warranty that any specific fee rates will apply to your account or transactions.</p>
           </Section>
 
           <Section title="13. Disclaimer of Warranties">
@@ -140,7 +143,7 @@ export function TermsPage() {
           <Section title="14. Limitation of Liability">
             <p>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, PROPVIAN SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, REVENUE, DATA, GOODWILL, BOOKINGS, GUEST RELATIONSHIPS, OR BUSINESS OPPORTUNITIES, ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF OR INABILITY TO USE THE SERVICE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
             <p><strong>Liability cap:</strong> Propvian's total cumulative liability to you for any and all claims arising under or related to these Terms shall not exceed the total subscription fees you actually paid to Propvian in the 12 months immediately preceding the claim giving rise to liability.</p>
-            <p>Propvian is not liable for: (a) any dispute, claim, loss, or damage arising between you and any guest; (b) your failure to comply with applicable laws; (c) any tax obligations; (d) any chargeback or payment dispute; (e) any third-party service failure.</p>
+            <p>Propvian is not liable for: (a) any dispute, claim, loss, or damage arising between you and any guest; (b) your failure to comply with applicable laws; (c) any tax obligations; (d) any chargeback, payment dispute, refund obligation, or the fees and penalties associated with them; (e) any payment processing fees, transaction fees, currency conversion fees, chargeback fees, payout fees, or other charges imposed by Stripe, PayPal, card networks, banks, or any other third-party payment provider, including any losses arising from increases or changes to those fees; (f) any third-party service failure, change in third-party terms, or change in third-party pricing.</p>
             <p>Some jurisdictions do not allow limitations of liability — in such cases our liability is limited to the fullest extent permitted by law.</p>
           </Section>
 

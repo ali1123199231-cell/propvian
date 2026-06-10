@@ -12,6 +12,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.*;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
+import com.stripe.param.AccountUpdateParams;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
@@ -324,20 +325,25 @@ public class StripeService {
 
     /** Creates a Stripe PaymentIntent that transfers funds to the host's connected account. */
     public String createGuestPaymentIntent(UUID bookingId, BigDecimal amount, String currency,
-                                           String hostStripeAccountId) throws StripeException {
+                                           String hostStripeAccountId, String statementDescriptor) throws StripeException {
         initStripe();
         if (resolvedSecretKey().isBlank()) {
             throw new AppException("Stripe is not configured", HttpStatus.SERVICE_UNAVAILABLE);
         }
         long amountCents = amount.multiply(BigDecimal.valueOf(100)).longValue();
 
-        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+        PaymentIntentCreateParams.Builder builder = PaymentIntentCreateParams.builder()
                 .setAmount(amountCents)
                 .setCurrency(currency.toLowerCase())
                 .addPaymentMethodType("card")
                 .putMetadata("bookingId", bookingId.toString())
-                .putMetadata("type", "guest_booking")
-                .build();
+                .putMetadata("type", "guest_booking");
+
+        if (statementDescriptor != null && !statementDescriptor.isBlank()) {
+            builder.setStatementDescriptor(statementDescriptor);
+        }
+
+        PaymentIntentCreateParams params = builder.build();
 
         if (hostStripeAccountId != null && !hostStripeAccountId.isBlank()) {
             RequestOptions options = RequestOptions.builder()
@@ -347,6 +353,30 @@ public class StripeService {
         }
 
         return PaymentIntent.create(params).getClientSecret();
+    }
+
+    /**
+     * Updates the default statement descriptor on a connected Stripe account.
+     * Called when the account is first connected (default) and again when the host's domain is verified (custom domain).
+     * Failures are logged but not propagated — the per-transaction descriptor set on each PaymentIntent is the fallback.
+     */
+    public void updateConnectedAccountStatementDescriptor(String accountId, String descriptor) {
+        initStripe();
+        if (resolvedSecretKey().isBlank() || accountId == null || accountId.isBlank()) return;
+        try {
+            Account account = Account.retrieve(accountId);
+            AccountUpdateParams params = AccountUpdateParams.builder()
+                    .setSettings(AccountUpdateParams.Settings.builder()
+                            .setPayments(AccountUpdateParams.Settings.Payments.builder()
+                                    .setStatementDescriptor(descriptor)
+                                    .build())
+                            .build())
+                    .build();
+            account.update(params);
+            log.info("Updated statement descriptor for Stripe account {}: '{}'", accountId, descriptor);
+        } catch (StripeException e) {
+            log.warn("Could not update statement descriptor for Stripe account {}: {}", accountId, e.getMessage());
+        }
     }
 
     private void handleGuestPaymentIntentSucceeded(Event event) {

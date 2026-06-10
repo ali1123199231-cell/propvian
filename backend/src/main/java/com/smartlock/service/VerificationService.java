@@ -8,6 +8,7 @@ import com.smartlock.exception.AppException;
 import com.smartlock.integration.ical.ICalFetcher;
 import com.smartlock.domain.CalendarIntegration;
 import com.smartlock.repository.CalendarIntegrationRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import com.smartlock.repository.HostVerificationRepository;
 import com.smartlock.repository.OrganizationRepository;
@@ -45,6 +46,9 @@ public class VerificationService {
     private final PropertyRepository            propertyRepository;
     private final CalendarIntegrationRepository calendarIntegrationRepository;
     private final CalendarIntegrationService    calendarIntegrationService;
+
+    @Lazy @Autowired
+    private StripeService stripeService;
 
     private static final String CNAME_TARGET = "booking.propvian.com";
 
@@ -248,6 +252,10 @@ public class VerificationService {
         if (v.getPaymentStatus() == VerificationStatus.APPROVED) {
             notifyHostPaymentConnected(orgId);
         }
+        if (req.getStripeAccountId() != null && !req.getStripeAccountId().isBlank()) {
+            stripeService.updateConnectedAccountStatementDescriptor(
+                    req.getStripeAccountId(), buildStatementDescriptor(v));
+        }
         return res;
     }
 
@@ -326,6 +334,10 @@ public class VerificationService {
                 recalculate(v);
                 verificationRepository.save(v);
                 notifyHostDomainVerified(orgId);
+                if (v.getStripeAccountId() != null) {
+                    stripeService.updateConnectedAccountStatementDescriptor(
+                            v.getStripeAccountId(), buildStatementDescriptor(v));
+                }
                 return Map.of("verified", true, "redirectVerified", true,
                         "domain", v.getCustomDomain(), "cnameTarget", CNAME_TARGET,
                         "message", "Domain fully verified!");
@@ -351,6 +363,10 @@ public class VerificationService {
         recalculate(v);
         VerificationStatusResponse res = toResponse(verificationRepository.save(v));
         notifyHostDomainVerified(orgId);
+        if (v.getStripeAccountId() != null) {
+            stripeService.updateConnectedAccountStatementDescriptor(
+                    v.getStripeAccountId(), buildStatementDescriptor(v));
+        }
         return res;
     }
 
@@ -691,6 +707,20 @@ public class VerificationService {
     }
 
     private String safe(String s) { return s != null ? s : ""; }
+
+    private String buildStatementDescriptor(HostVerification v) {
+        if (v.getCustomDomain() != null
+                && !v.getCustomDomain().isBlank()
+                && v.getDomainStatus() == VerificationStatus.APPROVED
+                && !v.getCustomDomain().endsWith(".propvian.com")) {
+            String domain = v.getCustomDomain()
+                    .replaceFirst("(?i)^https?://", "")
+                    .replaceFirst("(?i)^www\\.", "")
+                    .replaceAll("[<>\"'*;()]", "");
+            return domain.length() > 22 ? domain.substring(0, 22) : domain;
+        }
+        return "Direct Booking";
+    }
 
     private VerificationStatusResponse.StepStatus buildStep(String key, String label,
             VerificationStatus status, boolean enabled,

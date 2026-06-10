@@ -236,7 +236,8 @@ public class PayPalService {
     // ── Guest booking payments ────────────────────────────────────────────────
 
     /** Creates a PayPal order that pays the host's PayPal account directly. */
-    public String createGuestOrder(UUID bookingId, BigDecimal amount, String currency, String hostPaypalEmail) {
+    public String createGuestOrder(UUID bookingId, BigDecimal amount, String currency,
+                                   String hostPaypalEmail, String softDescriptor) {
         try {
             String token = getAccessToken();
             RestTemplate rest = new RestTemplate();
@@ -252,6 +253,9 @@ public class PayPalService {
             Map<String, Object> purchaseUnit = new HashMap<>();
             purchaseUnit.put("amount", unitAmount);
             purchaseUnit.put("custom_id", bookingId.toString());
+            if (softDescriptor != null && !softDescriptor.isBlank()) {
+                purchaseUnit.put("soft_descriptor", softDescriptor);
+            }
             if (hostPaypalEmail != null && !hostPaypalEmail.isBlank()) {
                 purchaseUnit.put("payee", Map.of("email_address", hostPaypalEmail));
             }
