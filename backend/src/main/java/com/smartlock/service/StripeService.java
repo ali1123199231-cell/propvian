@@ -340,7 +340,7 @@ public class StripeService {
                 .putMetadata("type", "guest_booking");
 
         if (statementDescriptor != null && !statementDescriptor.isBlank()) {
-            builder.setStatementDescriptor(statementDescriptor);
+            builder.setStatementDescriptorSuffix(statementDescriptor);
         }
 
         PaymentIntentCreateParams params = builder.build();
