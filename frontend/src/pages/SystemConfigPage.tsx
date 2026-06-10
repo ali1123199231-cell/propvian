@@ -357,7 +357,7 @@ function PaymentsTab({
   const [stripeWebhook,   setStripeWebhook]   = useState(cfg['stripe.webhook_secret'] ?? '')
   const [paypalClientId,  setPaypalClientId]  = useState(cfg['paypal.client_id'] ?? '')
   const [paypalSecret,    setPaypalSecret]    = useState(cfg['paypal.client_secret'] ?? '')
-  const [paypalMode,      setPaypalMode]      = useState(cfg['paypal.mode'] ?? 'sandbox')
+  const [paypalSandbox,   setPaypalSandbox]   = useState(cfg['paypal.sandbox'] !== 'false')
 
   return (
     <div className="space-y-6">
@@ -405,16 +405,15 @@ function PaymentsTab({
           </Field>
           <Field label="Mode">
             <div className="flex gap-4 mt-1">
-              {['sandbox', 'live'].map((m) => (
-                <label key={m} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-colors ${paypalMode === m ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
+              {[{ label: 'Sandbox', value: true }, { label: 'Live', value: false }].map(({ label, value }) => (
+                <label key={label} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-colors ${paypalSandbox === value ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
                   <input
                     type="radio"
-                    value={m}
-                    checked={paypalMode === m}
-                    onChange={() => setPaypalMode(m)}
+                    checked={paypalSandbox === value}
+                    onChange={() => setPaypalSandbox(value)}
                     className="accent-primary-600"
                   />
-                  <span className="text-sm font-medium text-gray-700 capitalize">{m}</span>
+                  <span className="text-sm font-medium text-gray-700">{label}</span>
                 </label>
               ))}
             </div>
@@ -430,7 +429,7 @@ function PaymentsTab({
             'stripe.webhook_secret':  stripeWebhook,
             'paypal.client_id':       paypalClientId,
             'paypal.client_secret':   paypalSecret,
-            'paypal.mode':            paypalMode,
+            'paypal.sandbox':          String(paypalSandbox),
           })}
           disabled={saving}
           className="btn-primary py-2 px-5 text-sm flex items-center gap-2"
