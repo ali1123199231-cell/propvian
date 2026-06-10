@@ -4,7 +4,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js'
 import axios from 'axios'
-import toast from 'react-hot-toast'
+import toast, { Toaster } from 'react-hot-toast'
 import {
   MapPin, Star, Users, BedDouble, Bath, ChevronLeft, ChevronRight,
   CheckCircle, Loader2, CreditCard, X, AlertCircle,
@@ -298,6 +298,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
   const [promoLoading, setPromoLoading] = useState(false)
   const [promoError, setPromoError]     = useState<string | null>(null)
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [initiated, setInitiated] = useState<{ bookingId: string; stripeClientSecret?: string; paypalOrderId?: string; paypalClientId?: string } | null>(null)
   const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null)
 
@@ -345,6 +346,24 @@ export function GuestBookingPage({ slug }: { slug: string }) {
     if (canonical) canonical.setAttribute('href', currentUrl)
   }, [prop])
 
+  const fieldLabels: Record<string, string> = {
+    guestName: 'Full name', guestEmail: 'Email', guestPhone: 'Phone',
+    checkInDate: 'Check-in date', checkOutDate: 'Check-out date',
+    numberOfGuests: 'Number of guests', paymentProvider: 'Payment method',
+  }
+
+  function validateForm(): boolean {
+    const errors: Record<string, string> = {}
+    if (!guestName.trim()) errors.guestName = 'Full name is required'
+    if (!guestEmail.trim()) {
+      errors.guestEmail = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim())) {
+      errors.guestEmail = 'Please enter a valid email address'
+    }
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
   const initMut = useMutation({
     mutationFn: () => initiateBooking(slug, {
       guestName, guestEmail, guestPhone,
@@ -354,6 +373,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
       promoCode: promoApplied?.code ?? undefined,
     }),
     onSuccess: (data) => {
+      setFormErrors({})
       setInitiated({
         bookingId: data.bookingId,
         stripeClientSecret: data.stripeClientSecret,
@@ -364,19 +384,15 @@ export function GuestBookingPage({ slug }: { slug: string }) {
     },
     onError: (e: any) => {
       const data = e.response?.data
-      const fieldErrors: Record<string, string> | undefined = data?.fieldErrors
-      if (fieldErrors && Object.keys(fieldErrors).length > 0) {
-        const labels: Record<string, string> = {
-          guestName: 'Name', guestEmail: 'Email', guestPhone: 'Phone',
-          checkInDate: 'Check-in date', checkOutDate: 'Check-out date',
-          numberOfGuests: 'Number of guests', paymentProvider: 'Payment method',
-        }
-        const msg = Object.entries(fieldErrors)
-          .map(([f, m]) => `${labels[f] ?? f}: ${m}`)
+      const serverFieldErrors: Record<string, string> | undefined = data?.fieldErrors
+      if (serverFieldErrors && Object.keys(serverFieldErrors).length > 0) {
+        setFormErrors(serverFieldErrors)
+        const msg = Object.entries(serverFieldErrors)
+          .map(([f, m]) => `${fieldLabels[f] ?? f}: ${m}`)
           .join('\n')
         toast.error(msg, { duration: 6000 })
       } else {
-        toast.error(data?.message || 'Could not start checkout')
+        toast.error(data?.message || 'Could not start checkout', { duration: 6000 })
       }
     },
   })
@@ -456,6 +472,7 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: font }}>
+      <Toaster position="top-center" toastOptions={{ duration: 6000 }} />
 
       {/* ── Branded navbar ──────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
@@ -770,15 +787,24 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
               <div className="space-y-3">
                 {[
-                  { label: 'Full name *', value: guestName, setter: setGuestName, type: 'text', placeholder: 'Jane Smith' },
-                  { label: 'Email *',     value: guestEmail, setter: setGuestEmail, type: 'email', placeholder: 'jane@example.com' },
-                  { label: 'Phone',       value: guestPhone, setter: setGuestPhone, type: 'tel', placeholder: '+1 555 000 0000' },
-                ].map(({ label, value, setter, type, placeholder }) => (
-                  <div key={label}>
+                  { label: 'Full name *', value: guestName, setter: setGuestName, type: 'text', placeholder: 'Jane Smith',           fieldKey: 'guestName' },
+                  { label: 'Email *',     value: guestEmail, setter: setGuestEmail, type: 'email', placeholder: 'jane@example.com', fieldKey: 'guestEmail' },
+                  { label: 'Phone',       value: guestPhone, setter: setGuestPhone, type: 'tel', placeholder: '+1 555 000 0000',     fieldKey: 'guestPhone' },
+                ].map(({ label, value, setter, type, placeholder, fieldKey }) => (
+                  <div key={fieldKey}>
                     <label className="block text-xs font-semibold text-gray-500 mb-1.5">{label}</label>
-                    <input value={value} onChange={e => setter(e.target.value)} type={type}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-400 transition-colors"
-                      placeholder={placeholder} />
+                    <input
+                      value={value}
+                      onChange={e => { setter(e.target.value); setFormErrors(prev => { const n = { ...prev }; delete n[fieldKey]; return n }) }}
+                      type={type}
+                      className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none transition-colors ${formErrors[fieldKey] ? 'border-red-400 focus:border-red-500 bg-red-50' : 'border-gray-200 focus:border-gray-400'}`}
+                      placeholder={placeholder}
+                    />
+                    {formErrors[fieldKey] && (
+                      <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                        <AlertCircle size={11} className="flex-shrink-0" />{formErrors[fieldKey]}
+                      </p>
+                    )}
                   </div>
                 ))}
                 <div>
@@ -878,8 +904,8 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
               {!(_isOnPropvianSubdomain && prop.customDomain) && prop.bookingsEnabled && (prop.stripeEnabled || prop.paypalEnabled) && (
                 <button
-                  onClick={() => initMut.mutate()}
-                  disabled={!guestName.trim() || !guestEmail.trim() || initMut.isPending}
+                  onClick={() => { if (validateForm()) initMut.mutate() }}
+                  disabled={initMut.isPending}
                   className="w-full py-3.5 text-white text-base font-bold shadow-sm hover:opacity-90 transition-all disabled:opacity-40 flex items-center justify-center gap-2"
                   style={btnStyle}>
                   {initMut.isPending && <Loader2 size={18} className="animate-spin" />}
