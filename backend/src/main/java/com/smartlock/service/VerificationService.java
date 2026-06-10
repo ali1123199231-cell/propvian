@@ -506,6 +506,15 @@ public class VerificationService {
                 if (approved) notifyHostOtaApproved(orgId);
                 stepLabel = "OTA Listing";
             }
+            case "admin" -> {
+                v.setAdminStatus(status);
+                v.setAdminReviewedAt(now);
+                v.setAdminReviewedBy(adminUserId);
+                if (!approved) v.setAdminRejectionReason(reason);
+                if (approved) notifyHostApproved(orgId);
+                else          notifyHostRejected(orgId, reason);
+                stepLabel = "Admin Approval";
+            }
             default -> throw new AppException("Unknown step: " + step, HttpStatus.BAD_REQUEST);
         }
         recalculate(v);
