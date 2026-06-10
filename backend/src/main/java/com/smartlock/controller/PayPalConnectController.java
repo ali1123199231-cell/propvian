@@ -71,7 +71,7 @@ public class PayPalConnectController {
                 .queryParam("redirect_uri", callbackUrl)
                 .queryParam("response_type", "code")
                 .queryParam("state", orgId)
-                .build().toUriString();
+                .build().encode().toUriString();
 
         return ResponseEntity.ok(ApiResponse.success(Map.of("url", url)));
     }
