@@ -220,8 +220,8 @@ const COPY: Record<BusinessModel, {
   direct_booking: {
     seoTitle:  'Propvian — Direct Booking Software for Short-Term Rental Hosts',
     seoDesc:   'Launch your own direct booking website in minutes. $10/month per property. No OTA commissions. Keep 100% of your revenue.',
-    headline:  'Your own direct booking website.\nZero OTA commissions.',
-    sub:       'Launch a branded booking site for your rental property. Guests book directly with you — 0% booking commissions. Payments go straight to your Stripe or PayPal account.',
+    headline:  'Your own direct booking website.\n0% booking commissions.',
+    sub:       'Launch a branded booking site for your rental property. Guests book directly with you — Zero OTA commissions. Payments go straight to your Stripe or PayPal account.',
     bullets:   [
       'Live booking website in under 5 minutes',
       '$10 / month per property — flat fee, no surprises',
