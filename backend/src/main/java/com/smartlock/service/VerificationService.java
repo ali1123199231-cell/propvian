@@ -264,6 +264,14 @@ public class VerificationService {
         log.info("VerificationService.connectDomain — orgId={} domain={}", orgId, req.getDomain());
         assertStepEnabled("domain_setup");
         HostVerification v = getOrCreate(orgId);
+
+        boolean alreadyApproved = verificationRepository.existsByCustomDomainAndDomainStatusAndOrganizationIdNot(
+                req.getDomain(), VerificationStatus.APPROVED, orgId);
+        if (alreadyApproved) {
+            throw new AppException(
+                    "This domain is already verified by another account. If you believe this is an error, please contact support.",
+                    HttpStatus.CONFLICT);
+        }
         v.setCustomDomain(req.getDomain());
         v.setDomainCnameTarget(CNAME_TARGET);
         String token = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
@@ -330,6 +338,8 @@ public class VerificationService {
             // Auto-detect redirect — if already configured, approve immediately
             boolean redirectOk = checkHttpRedirect(v.getCustomDomain());
             if (redirectOk && v.getDomainStatus() != VerificationStatus.APPROVED) {
+                guardDomainApproval(v);
+                revokeCompetingPendingClaims(v);
                 v.setDomainStatus(VerificationStatus.APPROVED);
                 recalculate(v);
                 verificationRepository.save(v);
@@ -358,6 +368,8 @@ public class VerificationService {
     @Transactional
     public VerificationStatusResponse confirmDomainRedirect(UUID orgId) {
         HostVerification v = getOrCreate(orgId);
+        guardDomainApproval(v);
+        revokeCompetingPendingClaims(v);
         v.setDomainStatus(VerificationStatus.APPROVED);
         if (v.getDomainVerifiedAt() == null) v.setDomainVerifiedAt(Instant.now());
         recalculate(v);
@@ -707,6 +719,34 @@ public class VerificationService {
     }
 
     private String safe(String s) { return s != null ? s : ""; }
+
+    private void guardDomainApproval(HostVerification v) {
+        if (v.getCustomDomain() == null) return;
+        boolean conflict = verificationRepository.existsByCustomDomainAndDomainStatusAndOrganizationIdNot(
+                v.getCustomDomain(), VerificationStatus.APPROVED, v.getOrganizationId());
+        if (conflict) {
+            log.warn("Domain approval blocked for org={}: '{}' is already APPROVED by another org",
+                    v.getOrganizationId(), v.getCustomDomain());
+            throw new AppException(
+                    "This domain is already verified by another account. If you believe this is an error, please contact support.",
+                    HttpStatus.CONFLICT);
+        }
+    }
+
+    private void revokeCompetingPendingClaims(HostVerification v) {
+        if (v.getCustomDomain() == null) return;
+        List<HostVerification> competitors = verificationRepository
+                .findAllByCustomDomainAndDomainStatusAndOrganizationIdNot(
+                        v.getCustomDomain(), VerificationStatus.PENDING, v.getOrganizationId());
+        for (HostVerification competitor : competitors) {
+            competitor.setDomainStatus(VerificationStatus.NOT_STARTED);
+            competitor.setDomainVerifiedAt(null);
+            recalculate(competitor);
+            verificationRepository.save(competitor);
+            log.info("Revoked PENDING domain claim for org={}: domain '{}' was claimed by org={}",
+                    competitor.getOrganizationId(), v.getCustomDomain(), v.getOrganizationId());
+        }
+    }
 
     private String buildStatementDescriptor(HostVerification v) {
         if (v.getCustomDomain() != null

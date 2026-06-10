@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,6 +19,10 @@ public interface HostVerificationRepository extends JpaRepository<HostVerificati
     Optional<HostVerification> findByCustomDomainAndDomainStatus(String customDomain, VerificationStatus domainStatus);
 
     boolean existsByCustomDomainAndDomainStatus(String customDomain, VerificationStatus domainStatus);
+
+    boolean existsByCustomDomainAndDomainStatusAndOrganizationIdNot(String customDomain, VerificationStatus domainStatus, UUID organizationId);
+
+    List<HostVerification> findAllByCustomDomainAndDomainStatusAndOrganizationIdNot(String customDomain, VerificationStatus domainStatus, UUID organizationId);
 
     Page<HostVerification> findByAdminStatus(VerificationStatus adminStatus, Pageable pageable);
 
