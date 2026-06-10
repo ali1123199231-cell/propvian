@@ -635,6 +635,15 @@ public class VerificationService {
     }
 
     private void recalculate(HostVerification v) {
+        // Auto-advance adminStatus to PENDING when all prerequisite steps are approved
+        if (systemConfigService.isVerificationStepEnabled("admin_approval")
+                && v.getAdminStatus() == VerificationStatus.NOT_STARTED) {
+            List<VerificationStatus> prereqs = getEnabledPrerequisiteStepStatuses(v);
+            if (!prereqs.isEmpty() && prereqs.stream().allMatch(s -> s == VerificationStatus.APPROVED)) {
+                v.setAdminStatus(VerificationStatus.PENDING);
+            }
+        }
+
         List<VerificationStatus> steps = getEnabledStepStatuses(v);
         long approved = steps.stream().filter(s -> s == VerificationStatus.APPROVED).count();
         v.setCompletedSteps((int) approved);
@@ -643,7 +652,7 @@ public class VerificationService {
         v.setBookingsEnabled(allApproved);
     }
 
-    private List<VerificationStatus> getEnabledStepStatuses(HostVerification v) {
+    private List<VerificationStatus> getEnabledPrerequisiteStepStatuses(HostVerification v) {
         List<VerificationStatus> statuses = new ArrayList<>();
         if (systemConfigService.isVerificationStepEnabled("identity_check"))
             statuses.add(v.getIdentityStatus());
@@ -657,6 +666,11 @@ public class VerificationService {
             statuses.add(v.getPaymentStatus());
         if (systemConfigService.isVerificationStepEnabled("domain_setup"))
             statuses.add(v.getDomainStatus());
+        return statuses;
+    }
+
+    private List<VerificationStatus> getEnabledStepStatuses(HostVerification v) {
+        List<VerificationStatus> statuses = getEnabledPrerequisiteStepStatuses(v);
         if (systemConfigService.isVerificationStepEnabled("admin_approval"))
             statuses.add(v.getAdminStatus());
         return statuses;
