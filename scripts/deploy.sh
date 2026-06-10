@@ -47,6 +47,27 @@ ENV_ARGS=""
 # shellcheck disable=SC2086
 docker compose -f "$COMPOSE_FILE" $ENV_ARGS up -d --build
 
+# ── Step 3: wait for backend health, then reload Caddy ────────────────────────
+# When backend/frontend containers restart, Caddy's Docker DNS cache goes stale
+# and returns "server misbehaving" for ~2 minutes, causing real 502s. Reloading
+# Caddy after the containers are healthy re-resolves all upstreams cleanly.
+echo ""
+echo "==> Waiting for backend to become healthy..."
+DEADLINE=$(( $(date +%s) + 120 ))
+until [ "$(docker inspect --format='{{.State.Health.Status}}' smartlock-backend 2>/dev/null)" = "healthy" ]; do
+    if (( $(date +%s) > DEADLINE )); then
+        echo "    WARNING: backend did not become healthy within 120s — skipping Caddy reload"
+        break
+    fi
+    sleep 3
+done
+if [ "$(docker inspect --format='{{.State.Health.Status}}' smartlock-backend 2>/dev/null)" = "healthy" ]; then
+    echo "    Backend healthy. Reloading Caddy to refresh DNS..."
+    docker exec smartlock-caddy caddy reload --config /etc/caddy/Caddyfile 2>/dev/null \
+        && echo "    Caddy reloaded." \
+        || echo "    WARNING: Caddy reload failed — Caddy may still serve stale DNS briefly"
+fi
+
 echo ""
 echo "==> Deploy complete. Persistent log volumes:"
 echo "    Backend app logs : docker exec smartlock-backend ls /app/logs/"
