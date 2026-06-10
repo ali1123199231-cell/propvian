@@ -30,11 +30,13 @@ for CONTAINER in smartlock-backend smartlock-frontend smartlock-caddy smartlock-
   fi
 done
 
-# Keep only the 30 most recent archives per container to avoid unbounded disk use
-find "$STDOUT_ARCHIVE_DIR" -name "*.log" -printf '%T@ %p\n' 2>/dev/null \
-  | sort -rn \
-  | awk 'BEGIN{c=""} {split($2,a,"_"); key=a[1]"_"a[2]; if(++count[key]>30) print $2}' \
-  | xargs -r rm -f
+# Keep only the 30 most recent archives per container (across all dates)
+for CONTAINER in smartlock-backend smartlock-frontend smartlock-caddy smartlock-postgres; do
+  find "$STDOUT_ARCHIVE_DIR" -name "${CONTAINER}_*.log" -printf '%T@ %p\n' 2>/dev/null \
+    | sort -rn \
+    | awk 'NR>30 {print $2}' \
+    | xargs -r rm -f
+done
 
 # ── Step 2: deploy ────────────────────────────────────────────────────────────
 echo ""
