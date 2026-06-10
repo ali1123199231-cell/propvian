@@ -963,6 +963,12 @@ export function GuestBookingPage({ slug }: { slug: string }) {
       <footer className="mt-16 py-8 px-4 bg-gray-900 text-white text-center" style={{ fontFamily: font }}>
         <p className="font-bold text-sm" style={{ color: accent }}>{brandName}</p>
         <p className="text-xs text-gray-400 mt-1">© {new Date().getFullYear()} All rights reserved</p>
+        <p className="text-xs text-gray-600 mt-3">
+          Booking powered by{' '}
+          <a href="https://propvian.com" target="_blank" rel="noopener noreferrer" className="hover:text-gray-400 transition-colors">Propvian</a>
+          {' · '}
+          <a href="/legal/privacy" className="hover:text-gray-400 transition-colors">Privacy Policy</a>
+        </p>
       </footer>
     </div>
   )

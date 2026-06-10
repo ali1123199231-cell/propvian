@@ -123,6 +123,14 @@ export default function GuestConversationPage() {
           <p className="text-xs text-gray-600 mt-2 text-center">Press Enter to send · Shift+Enter for new line</p>
         </div>
       </div>
+      <div className="py-3 text-center border-t border-gray-800">
+        <p className="text-xs text-gray-600">
+          Powered by{' '}
+          <a href="https://propvian.com" target="_blank" rel="noopener noreferrer" className="hover:text-gray-400 transition-colors">Propvian</a>
+          {' · '}
+          <a href="/legal/privacy" className="hover:text-gray-400 transition-colors">Privacy Policy</a>
+        </p>
+      </div>
     </div>
   )
 }

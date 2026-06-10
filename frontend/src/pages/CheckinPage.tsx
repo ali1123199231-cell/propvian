@@ -120,7 +120,12 @@ export function CheckinPage() {
           <br />Do not share this code with others.
         </p>
 
-        <p className="text-center text-xs text-gray-300 mt-6">Powered by Propvian</p>
+        <p className="text-center text-xs text-gray-500 mt-6">
+          Powered by{' '}
+          <a href="https://propvian.com" target="_blank" rel="noopener noreferrer" className="hover:text-gray-300 transition-colors">Propvian</a>
+          {' · '}
+          <a href="/legal/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</a>
+        </p>
       </div>
     </div>
   )

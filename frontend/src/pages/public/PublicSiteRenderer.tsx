@@ -804,6 +804,14 @@ function FooterSection({ cfg, accent, font, config }: SectionBaseProps & { confi
             {cfg.twitter && <a href={cfg.twitter} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all"><Twitter size={15} /></a>}
           </div>
         </div>
+        <div className="mt-8 pt-6 border-t border-gray-800 text-center">
+          <p className="text-xs text-gray-600">
+            Powered by{' '}
+            <a href="https://propvian.com" target="_blank" rel="noopener noreferrer" className="hover:text-gray-400 transition-colors">Propvian</a>
+            {' · '}
+            <a href="https://propvian.com/legal/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-gray-400 transition-colors">Privacy Policy</a>
+          </p>
+        </div>
       </div>
     </footer>
   )
