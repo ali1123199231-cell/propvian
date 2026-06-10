@@ -155,6 +155,7 @@ function SignUpFormDirect() {
         } catch {}
       }
 
+      window.gtag?.('event', 'conversion', { send_to: 'AW-18015500784/SVoYCIqh57McEPDzuo5D' })
       navigate('/onboarding-direct')
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Registration failed')
