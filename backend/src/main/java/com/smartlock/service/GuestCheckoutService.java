@@ -470,6 +470,30 @@ public class GuestCheckoutService {
 
         String descriptor = resolveStatementDescriptor(v);
 
+        // Log the exact account that will receive this payment — visible in prod logs for auditing.
+        // A null/blank account here is a configuration bug: validateProvider() should have blocked it.
+        if ("stripe".equals(provider)) {
+            if (v.getStripeAccountId() == null || v.getStripeAccountId().isBlank()) {
+                log.error("[PAYMENT-ROUTING] bookingId={} provider=stripe MISSING stripeAccountId for org={} — aborting",
+                        booking.getId(), property.getOrganizationId());
+                bookingRepository.delete(booking);
+                throw new AppException("Payment configuration error: no Stripe account linked", HttpStatus.SERVICE_UNAVAILABLE);
+            }
+            log.info("[PAYMENT-ROUTING] bookingId={} provider=stripe stripeAccount={} amount={} {} property={} org={}",
+                    booking.getId(), v.getStripeAccountId(), total, currency,
+                    property.getId(), property.getOrganizationId());
+        } else {
+            if (v.getPaypalAccountId() == null || v.getPaypalAccountId().isBlank()) {
+                log.error("[PAYMENT-ROUTING] bookingId={} provider=paypal MISSING paypalAccountId for org={} — aborting",
+                        booking.getId(), property.getOrganizationId());
+                bookingRepository.delete(booking);
+                throw new AppException("Payment configuration error: no PayPal account linked", HttpStatus.SERVICE_UNAVAILABLE);
+            }
+            log.info("[PAYMENT-ROUTING] bookingId={} provider=paypal paypalAccount={} amount={} {} property={} org={}",
+                    booking.getId(), v.getPaypalAccountId(), total, currency,
+                    property.getId(), property.getOrganizationId());
+        }
+
         if ("stripe".equals(provider)) {
             try {
                 String clientSecret = stripeService.createGuestPaymentIntent(
