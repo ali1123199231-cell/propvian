@@ -17,7 +17,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -64,14 +63,13 @@ public class PayPalConnectController {
 
         String callbackUrl = frontendUrl.replace("5173", "8080") + "/api/v1/paypal/connect-callback";
 
-        String url = UriComponentsBuilder.fromHttpUrl(authBase() + "/connect")
-                .queryParam("flowEntry", "static")
-                .queryParam("client_id", clientId)
-                .queryParam("scope", "openid email profile https://uri.paypal.com/services/paypalattributes")
-                .queryParam("redirect_uri", callbackUrl)
-                .queryParam("response_type", "code")
-                .queryParam("state", orgId)
-                .build().encode().toUriString();
+        String url = authBase() + "/connect?" +
+                "flowEntry=static" +
+                "&client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8) +
+                "&scope=" + URLEncoder.encode("openid email profile https://uri.paypal.com/services/paypalattributes", StandardCharsets.UTF_8) +
+                "&redirect_uri=" + URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8) +
+                "&response_type=code" +
+                "&state=" + URLEncoder.encode(orgId, StandardCharsets.UTF_8);
 
         return ResponseEntity.ok(ApiResponse.success(Map.of("url", url)));
     }
