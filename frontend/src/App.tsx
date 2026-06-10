@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { GuestBookingPage } from '@/pages/public/GuestBookingPage'
 import { OrgListingPage } from '@/pages/public/OrgListingPage'
+import GuestConversationPage from '@/pages/GuestConversationPage'
 
 // Hostname routing: beachvilla.propvian.com → subdomain, norblina.pl → custom domain
 const hostname = window.location.hostname
@@ -187,6 +188,9 @@ export default function App() {
       <Routes>
         {/* Public guest booking by path — works without subdomain DNS */}
         <Route path="/book/:slug" element={<GuestBookingRoute />} />
+
+        {/* Guest conversation — no auth, token-based */}
+        <Route path="/messages/:token" element={<GuestConversationPage />} />
 
         {/* Org listing site — path-based fallback for /sites/:orgSlug */}
         <Route path="/sites/:orgSlug" element={<OrgListingRoute />} />
