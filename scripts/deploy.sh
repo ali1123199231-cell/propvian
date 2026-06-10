@@ -34,7 +34,7 @@ done
 for CONTAINER in smartlock-backend smartlock-frontend smartlock-caddy smartlock-postgres; do
   find "$STDOUT_ARCHIVE_DIR" -name "${CONTAINER}_*.log" -printf '%T@ %p\n' 2>/dev/null \
     | sort -rn \
-    | awk 'NR>30 {print $2}' \
+    | awk 'NR>300 {print $2}' \
     | xargs -r rm -f
 done
 
