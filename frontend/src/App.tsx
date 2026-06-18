@@ -135,6 +135,9 @@ import { VacationRentalBuilderPage } from '@/pages/marketing/seo/VacationRentalB
 import { AirbnbAlternativePage } from '@/pages/marketing/seo/AirbnbAlternativePage'
 import { DirectBookingSoftwarePage } from '@/pages/marketing/seo/DirectBookingSoftwarePage'
 import { BookingEnginePage } from '@/pages/marketing/seo/BookingEnginePage'
+import { LodgifyAlternativePage } from '@/pages/marketing/seo/LodgifyAlternativePage'
+import { HostawayAlternativePage } from '@/pages/marketing/seo/HostawayAlternativePage'
+import { GuestyAlternativePage } from '@/pages/marketing/seo/GuestyAlternativePage'
 
 // Smart routers — wait for config fetch before committing to a business model
 import { useSystemStore } from '@/store/systemStore'
@@ -240,6 +243,9 @@ export default function App() {
         <Route path="/airbnb-alternative"              element={<AirbnbAlternativePage />} />
         <Route path="/direct-booking-software"         element={<DirectBookingSoftwarePage />} />
         <Route path="/booking-engine"                  element={<BookingEnginePage />} />
+        <Route path="/lodgify-alternative"             element={<LodgifyAlternativePage />} />
+        <Route path="/hostaway-alternative"            element={<HostawayAlternativePage />} />
+        <Route path="/guesty-alternative"              element={<GuestyAlternativePage />} />
 
         {/* App (authenticated) — shared + model-aware routes */}
         <Route element={<AppLayout />}>

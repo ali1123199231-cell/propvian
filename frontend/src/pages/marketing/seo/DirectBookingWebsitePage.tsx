@@ -152,6 +152,8 @@ export function DirectBookingWebsitePage() {
               { to: '/airbnb-alternative', label: 'Airbnb Alternative' },
               { to: '/direct-booking-software', label: 'Direct Booking Software' },
               { to: '/booking-engine', label: 'Booking Engine' },
+              { to: '/blog/how-to-increase-direct-bookings', label: 'How to Increase Direct Bookings' },
+              { to: '/blog/direct-booking-vs-ota', label: 'Direct Booking vs OTA' },
               { to: '/pricing', label: 'Pricing' },
             ].map(({ to, label }) => (
               <Link key={to} to={to} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:border-primary-300 hover:text-primary-600 transition-colors">

@@ -49,6 +49,26 @@
     <lastmod>2026-06-01</lastmod>
   </url>
 
+  <!-- Competitor alternative / comparison pages -->
+  <url>
+    <loc>https://propvian.com/lodgify-alternative</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-18</lastmod>
+  </url>
+  <url>
+    <loc>https://propvian.com/hostaway-alternative</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-18</lastmod>
+  </url>
+  <url>
+    <loc>https://propvian.com/guesty-alternative</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-18</lastmod>
+  </url>
+
   <!-- Integration pages -->
   <url>
     <loc>https://propvian.com/integrations/airbnb</loc>
@@ -62,10 +82,22 @@
     <priority>0.8</priority>
     <lastmod>2026-06-01</lastmod>
   </url>
+  <url>
+    <loc>https://propvian.com/integrations/ttlock</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-01</lastmod>
+  </url>
 
   <!-- Feature pages -->
   <url>
     <loc>https://propvian.com/features/self-checkin</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-06-01</lastmod>
+  </url>
+  <url>
+    <loc>https://propvian.com/features/guest-code-automation</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
     <lastmod>2026-06-01</lastmod>
@@ -77,6 +109,26 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <lastmod>2026-06-01</lastmod>
+  </url>
+
+  <!-- Blog posts — direct booking content cluster -->
+  <url>
+    <loc>https://propvian.com/blog/how-to-increase-direct-bookings</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-06-18</lastmod>
+  </url>
+  <url>
+    <loc>https://propvian.com/blog/direct-booking-vs-ota</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-06-18</lastmod>
+  </url>
+  <url>
+    <loc>https://propvian.com/blog/best-direct-booking-software-independent-hotels</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2026-06-18</lastmod>
   </url>
 
   <!-- Legal pages -->

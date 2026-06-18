@@ -192,6 +192,11 @@ export function DirectBookingSoftwarePage() {
               { to: '/vacation-rental-website-builder', label: 'Website Builder' },
               { to: '/airbnb-alternative', label: 'Airbnb Alternative' },
               { to: '/booking-engine', label: 'Booking Engine' },
+              { to: '/blog/best-direct-booking-software-independent-hotels', label: 'Best Direct Booking Software' },
+              { to: '/blog/how-to-increase-direct-bookings', label: 'How to Increase Direct Bookings' },
+              { to: '/lodgify-alternative', label: 'Lodgify Alternative' },
+              { to: '/hostaway-alternative', label: 'Hostaway Alternative' },
+              { to: '/guesty-alternative', label: 'Guesty Alternative' },
               { to: '/pricing', label: 'Pricing' },
             ].map(({ to, label }) => (
               <Link key={to} to={to} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:border-primary-300 hover:text-primary-600 transition-colors">

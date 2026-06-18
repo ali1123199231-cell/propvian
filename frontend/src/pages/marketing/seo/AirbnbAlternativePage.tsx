@@ -32,7 +32,7 @@ export function AirbnbAlternativePage() {
           <div className="max-w-3xl mx-auto text-center">
             <p className="text-xs text-primary-600 uppercase tracking-widest font-semibold mb-3">Airbnb Alternative</p>
             <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
-              Stop Paying Airbnb.<br />Own Your Direct Bookings.
+              Stop Paying Airbnb. <br />Own Your Direct Bookings.
             </h1>
             <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
               Propvian is the direct booking platform built for vacation rental hosts who are ready to reduce their dependency on Airbnb and OTAs. Get your own booking website, keep 100% of your revenue, and build a direct relationship with your guests.
@@ -174,6 +174,9 @@ export function AirbnbAlternativePage() {
               { to: '/booking-engine', label: 'Booking Engine' },
               { to: '/direct-booking-software', label: 'Direct Booking Software' },
               { to: '/integrations/airbnb', label: 'Airbnb Integration' },
+              { to: '/lodgify-alternative', label: 'Lodgify Alternative' },
+              { to: '/hostaway-alternative', label: 'Hostaway Alternative' },
+              { to: '/guesty-alternative', label: 'Guesty Alternative' },
             ].map(({ to, label }) => (
               <Link key={to} to={to} className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-600 hover:border-primary-300 hover:text-primary-600 transition-colors">
                 {label}

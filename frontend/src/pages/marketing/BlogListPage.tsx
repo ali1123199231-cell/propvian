@@ -13,6 +13,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Guest Experience': 'bg-emerald-100 text-emerald-700',
   'Automation': 'bg-primary-100 text-primary-700',
   'Guides': 'bg-purple-100 text-purple-700',
+  'Direct Bookings': 'bg-teal-100 text-teal-700',
 }
 
 const blogSchema = {

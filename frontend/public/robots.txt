@@ -13,6 +13,9 @@ Allow: /vacation-rental-website-builder
 Allow: /airbnb-alternative
 Allow: /direct-booking-software
 Allow: /booking-engine
+Allow: /lodgify-alternative
+Allow: /hostaway-alternative
+Allow: /guesty-alternative
 
 # Disallow authenticated app routes
 Disallow: /dashboard
