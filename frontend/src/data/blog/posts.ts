@@ -1359,4 +1359,266 @@ export const blogPosts: BlogPost[] = [
       }
     ]
   },
+  {
+    slug: 'how-much-does-airbnb-take-from-hosts',
+    title: 'How Much Does Airbnb Take From Hosts? The Real 2026 Fee Breakdown',
+    description: 'A clear, honest breakdown of how much Airbnb actually takes from hosts in 2026 — the host service fee, the guest fee that inflates your price, and what the total really costs you per booking.',
+    publishedAt: '2026-07-01',
+    author: 'Propvian Team',
+    category: 'Direct Bookings',
+    tags: ['Airbnb', 'OTA fees', 'host fees', 'direct bookings', 'vacation rentals'],
+    readingTime: 8,
+    featured: true,
+    sections: [
+      {
+        type: 'p',
+        content: "If you host on Airbnb, you have probably squinted at a payout and wondered where the rest of the money went. The short answer is that Airbnb takes a cut from two directions at once — a fee from you and a larger fee from your guest — and the combined number is bigger than most hosts realize. This is a plain-English breakdown of what you actually pay in 2026, and why the guest-side fee matters even though it never shows up on your statement."
+      },
+      {
+        type: 'h2',
+        content: 'The two fee structures Airbnb uses'
+      },
+      {
+        type: 'p',
+        content: "Airbnb runs two different pricing models, and which one you are on changes how the math looks. Understanding which you use is the first step to knowing your real cost."
+      },
+      {
+        type: 'h3',
+        content: 'The split-fee model (most common)'
+      },
+      {
+        type: 'p',
+        content: "Under the standard split-fee model, Airbnb charges the host a service fee of around 3 percent of the booking subtotal, and charges the guest a separate service fee that typically lands somewhere between 12 and 16 percent of the subtotal. You only see the 3 percent come out of your payout, so it feels cheap — but the guest fee is money added on top of your nightly rate, which raises the total price your guest pays to stay in your property."
+      },
+      {
+        type: 'h3',
+        content: 'The host-only fee model'
+      },
+      {
+        type: 'p',
+        content: "Some hosts — and nearly all software-connected or professional listings — are on a host-only fee model, where Airbnb charges the host a single, larger fee (commonly 14 to 16 percent) and the guest pays no separate service fee. This looks scarier on your payout because the whole cut is visible, but the total taken is roughly comparable. The platform gets paid either way; the only question is whose line item it sits on."
+      },
+      {
+        type: 'h2',
+        content: 'Why the guest fee is your problem too'
+      },
+      {
+        type: 'p',
+        content: "Here is the part hosts on the split model miss. Just because the guest service fee does not come out of your payout does not mean it is free to you. That fee inflates the total price a guest sees at checkout. A $200 night can show as $230-plus once the service fee and taxes are stacked on. That higher number is what your listing competes against, and it is the number a guest compares to booking you directly. In other words, the guest fee is a tax on your competitiveness even when it is not a tax on your payout."
+      },
+      {
+        type: 'p',
+        content: "Add the two sides together and the platform is extracting roughly 15 to 20 percent of the true value of each stay. That is the honest all-in figure worth anchoring on — not the comforting 3 percent on your statement."
+      },
+      {
+        type: 'h2',
+        content: 'A concrete example'
+      },
+      {
+        type: 'p',
+        content: "Say your nightly rate is $200 and a guest books five nights, for a $1,000 subtotal. On the split-fee model:"
+      },
+      {
+        type: 'ul',
+        items: [
+          "You pay a host service fee of about 3 percent, or roughly $30, so your payout is around $970.",
+          "Your guest pays a service fee of, say, 14 percent — about $140 — on top of the $1,000, plus taxes.",
+          "The guest's total is around $1,140-plus, but you only received $970. The gap of roughly $170 went to the platform, not to you.",
+          "That is about 17 percent of the real value of the stay leaving the transaction."
+        ]
+      },
+      {
+        type: 'p',
+        content: "Now imagine that same guest loved the place and comes back next summer. If they rebook through Airbnb, you pay that spread all over again — on a guest you already earned. That is the single most expensive habit in short-term rental hosting, and it is the one a direct booking channel is built to fix."
+      },
+      {
+        type: 'tip',
+        content: "Do not fight the OTA fee on cold, first-time guests — that visibility is often worth it. Fight it on repeat guests and referrals, where you have already done the work of earning them. That is where the commission is pure waste."
+      },
+      {
+        type: 'h2',
+        content: 'What about the other OTAs?'
+      },
+      {
+        type: 'p',
+        content: "Airbnb is not uniquely expensive. Vrbo runs a comparable split, with a host payment processing fee plus a guest service fee that together land in a similar 15-plus percent range. Booking.com typically charges hosts a commission of 15 percent or more with no guest-side fee, so the whole cut is visible to you. The common thread across all of them: somewhere between 14 and 20 percent of each booking's real value leaves the transaction, and it scales up automatically every time you raise your rates."
+      },
+      {
+        type: 'h2',
+        content: 'The alternative: keep the platforms, own the repeats'
+      },
+      {
+        type: 'p',
+        content: "The goal is not to quit the OTAs — they are the best discovery engine travel has ever had, and they will keep filling your slow weeks. The goal is to stop paying commission on guests you have already earned. That means having your own booking channel: a branded website where a repeat or referred guest can see real availability, pick dates, and pay you directly, at a price that does not include a 15 percent tax."
+      },
+      {
+        type: 'p',
+        content: "The economics of a direct channel are the mirror image of a commission. Instead of a percentage that grows with every rate increase and every extra booking, you pay a flat fee that stays put. Propvian, for example, is a flat $10 per active property per month with zero booking commission — guests pay through your own Stripe or PayPal account, so the money lands with you, not with a platform holding it. Move even a third of your nights to direct and the flat fee is recovered many times over in the very first month."
+      },
+      {
+        type: 'p',
+        content: "The math is unforgiving in the best way: the more successful you get, the more a commission costs you and the more a flat fee saves you. Every rate increase widens the gap in your favor."
+      },
+      {
+        type: 'h2',
+        content: 'Frequently asked questions'
+      },
+      {
+        type: 'faq',
+        faqs: [
+          {
+            q: "How much does Airbnb take from hosts in total?",
+            a: "It depends on your fee model, but the all-in figure — combining the host service fee and the guest service fee — is typically 15 to 20 percent of the real value of each booking. On the common split-fee model you only see about 3 percent come out of your payout, while the guest pays a separate 12 to 16 percent that inflates their total price. On the host-only model you pay a single visible fee of roughly 14 to 16 percent instead."
+          },
+          {
+            q: "Why does the guest service fee matter if it does not come out of my payout?",
+            a: "Because it raises the total price your guest pays, which is the number your listing competes on and the number a guest compares against booking you directly. A higher checkout total costs you conversions and gives guests a reason to look for a cheaper direct option. It is a real cost to your business even though it never appears on your statement."
+          },
+          {
+            q: "Is Vrbo or Booking.com cheaper than Airbnb?",
+            a: "Not meaningfully. Vrbo's combined host and guest fees land in a similar 15-plus percent range, and Booking.com typically charges hosts 15 percent or more as a single visible commission. Across the major OTAs, expect somewhere between 14 and 20 percent of each booking's real value to leave the transaction."
+          },
+          {
+            q: "How can I reduce what Airbnb takes without breaking the rules?",
+            a: "Keep your OTA listings for discovery, but build a direct booking channel for repeat and referral guests. It is entirely within the rules to invite past guests, after their stay is complete, to book directly next time through your own site. What you cannot do is solicit a guest to cancel a current, active reservation and rebook off-platform."
+          },
+          {
+            q: "Does a flat monthly fee really beat commission?",
+            a: "For direct bookings, almost always. A commission grows with your revenue, so success costs you more; a flat fee stays the same whether you take one booking or fifty. At $10 per property per month with no commission, a single direct booking usually pays for the month several times over."
+          }
+        ]
+      },
+      {
+        type: 'cta',
+        content: "Stop paying commission on repeat guests — build your direct booking site with Propvian."
+      }
+    ]
+  },
+  {
+    slug: 'how-to-accept-direct-booking-payments',
+    title: 'How to Accept Payments for Direct Bookings (Safely, Without a Developer)',
+    description: 'A practical guide to accepting direct booking payments as a vacation rental host: Stripe vs PayPal, avoiding chargebacks and scams, deposits, and setting it up without code.',
+    publishedAt: '2026-07-01',
+    author: 'Propvian Team',
+    category: 'Guides',
+    tags: ['direct bookings', 'payments', 'Stripe', 'PayPal', 'vacation rentals'],
+    readingTime: 8,
+    sections: [
+      {
+        type: 'p',
+        content: "The moment a host decides to take direct bookings, the same anxious question comes up: how do I actually get paid, safely, without building software or getting scammed? On an OTA the payment just happens — the platform collects the money and pays you out. Taking it yourself feels like stepping off a ledge. It is not as risky as it feels, but doing it right matters. This guide walks through how to accept direct booking payments the way a real business does it, without touching code."
+      },
+      {
+        type: 'h2',
+        content: 'The two payment rails worth using'
+      },
+      {
+        type: 'p',
+        content: "For a short-term rental host, you want two things from a payment method: guests trust it, and the money lands in an account you control. Two options meet both bars for the vast majority of hosts."
+      },
+      {
+        type: 'h3',
+        content: 'Stripe'
+      },
+      {
+        type: 'p',
+        content: "Stripe is the default choice for taking cards online. Guests enter their card on a checkout page and the funds settle into your bank account on a rolling schedule, typically a couple of days. It handles the security and compliance heavy lifting, supports most countries and currencies, and its fees are transparent — usually around 2.9 percent plus a small fixed amount per transaction. That processing fee is not a commission on your booking; it is the unavoidable cost of moving a card payment, and every channel including the OTAs pays some version of it."
+      },
+      {
+        type: 'h3',
+        content: 'PayPal'
+      },
+      {
+        type: 'p',
+        content: "PayPal is worth offering alongside Stripe because some guests simply trust it more, especially internationally or for larger amounts. Fees are broadly comparable to card processing. Offering both Stripe and PayPal at checkout tends to lift conversion, because you are letting the guest pay the way they already prefer rather than forcing a single method."
+      },
+      {
+        type: 'p',
+        content: "The critical detail with both: the money goes to your own Stripe or PayPal account, not to a platform that holds it and pays you out later. That is the whole point of going direct. A good direct booking tool connects to your accounts rather than sitting in the middle of the money."
+      },
+      {
+        type: 'h2',
+        content: 'Do not build a payment form yourself'
+      },
+      {
+        type: 'p',
+        content: "It is tempting to think you need a developer to wire up Stripe. You do not, and you should not try to hand-roll a checkout that stores card details — handling raw card data yourself drags you into serious PCI compliance obligations you do not want. The right approach is to use booking software that already integrates Stripe and PayPal properly, so the sensitive parts happen on their secure infrastructure and you just connect your account with a few clicks."
+      },
+      {
+        type: 'p',
+        content: "This is exactly what a direct booking platform is for. With Propvian, for instance, you connect your own Stripe and PayPal accounts to your booking site, and when a guest reserves dates, the payment flows straight to you. There is no commission on the booking and no code to write — the checkout, the availability calendar, and the confirmation emails are all handled for you."
+      },
+      {
+        type: 'h2',
+        content: 'Protecting yourself from chargebacks and scams'
+      },
+      {
+        type: 'p',
+        content: "The real fear behind direct payments is not the mechanics, it is getting burned. A guest disputes a charge, or a fraudulent booking slips through. These risks are manageable with a few habits that professional hosts follow."
+      },
+      {
+        type: 'ul',
+        items: [
+          "Take payment through a real processor, never bank transfer or gift cards. Stripe and PayPal give the guest recourse, which builds trust, and give you a paper trail if a dispute arises.",
+          "Have a clear, written cancellation and refund policy on your booking page, and make the guest agree to it. Chargebacks are far easier to contest when your terms were visible and accepted at checkout.",
+          "Keep your records. Booking confirmation, dates, the guest's agreement to your terms, and your messaging history are your evidence if a card dispute is filed.",
+          "Use a security deposit or damage hold for higher-value stays. A pre-authorization on the guest's card covers you without charging them unless something goes wrong.",
+          "Be wary of classic red flags: bookings with urgent pressure, requests to pay outside your normal checkout, or offers to overpay and refund the difference. Legitimate guests pay the normal way."
+        ]
+      },
+      {
+        type: 'tip',
+        content: "A custom domain and an HTTPS padlock do more for payment conversion than hosts expect. A guest is about to type their card number into a page — yourcabin.com with a lock icon reassures them far more than a generic subdomain. It signals you are a real business, not a fly-by-night listing."
+      },
+      {
+        type: 'h2',
+        content: 'Deposits, balances, and timing'
+      },
+      {
+        type: 'p',
+        content: "You do not have to collect everything up front. Common, guest-friendly patterns include taking the full amount at booking for short lead times, or a deposit now with the balance due before check-in for bookings made months ahead. Whatever you choose, state it plainly at checkout. Predictability is what makes a guest comfortable paying you directly instead of retreating to the platform they already know."
+      },
+      {
+        type: 'h2',
+        content: 'Putting it together'
+      },
+      {
+        type: 'p',
+        content: "Accepting direct booking payments comes down to three decisions: use trusted rails (Stripe and PayPal), never handle raw card data yourself, and protect each booking with clear terms and sensible fraud habits. Do those three things and taking payment directly is no riskier than any online store — with the upside that you keep the 15-plus percent an OTA would have taken. The fastest path for a non-technical host is a direct booking tool that bundles the checkout, calendar, and confirmations, connects to your own payment accounts, and charges a flat fee instead of a commission."
+      },
+      {
+        type: 'h2',
+        content: 'Frequently asked questions'
+      },
+      {
+        type: 'faq',
+        faqs: [
+          {
+            q: "What is the safest way to accept direct booking payments?",
+            a: "Use an established card processor like Stripe together with PayPal, through booking software that integrates them properly. This keeps sensitive card data on secure infrastructure, gives both you and the guest recourse in a dispute, and lands the money in your own account. Avoid bank transfers, gift cards, or any method that asks the guest to pay outside a normal checkout."
+          },
+          {
+            q: "Do I need a developer to take Stripe payments?",
+            a: "No. You should not hand-build a checkout that handles card details, because that creates PCI compliance obligations. Instead use a direct booking platform that already integrates Stripe and PayPal — you connect your accounts in a few clicks and the secure parts are handled for you. Propvian works this way, with payments flowing straight to your own accounts and no code required."
+          },
+          {
+            q: "How do I avoid chargebacks on direct bookings?",
+            a: "Take payment through a real processor, publish a clear cancellation and refund policy that the guest agrees to at checkout, keep your booking and messaging records, and use a security deposit hold for higher-value stays. Disputes are far easier to win when your terms were visible and accepted and you have a full paper trail."
+          },
+          {
+            q: "What fees will I pay to accept payments directly?",
+            a: "Expect standard card processing fees of roughly 2.9 percent plus a small fixed amount per transaction from Stripe or PayPal. That is not a booking commission — it is the baseline cost of accepting a card that every channel pays. It is dramatically less than the 15 to 20 percent an OTA extracts once you count both the host and guest fees."
+          },
+          {
+            q: "Should I collect the full amount up front or take a deposit?",
+            a: "Both are fine — pick what suits your lead times. Full payment at booking works well for near-term stays; a deposit now with the balance due before check-in suits bookings made months ahead. The key is to state the schedule clearly at checkout so the guest knows exactly what they are agreeing to."
+          }
+        ]
+      },
+      {
+        type: 'cta',
+        content: "Take direct payments the safe way — connect your Stripe and PayPal to a Propvian booking site."
+      }
+    ]
+  },
 ]
