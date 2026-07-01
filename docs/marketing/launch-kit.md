@@ -172,12 +172,27 @@ real traffic. Use the boilerplate below.
 
 - **AlternativeTo** — list as an alternative to Lodgify, Hostaway, Guesty, OwnerRez, Uplisting
 - **SaaSHub** — category: Vacation Rental Software
-- **BetaList** — for pre/early-stage exposure
+- **BetaList** — go-to for pre/early-stage; a listing delivers a burst of signups
 - **Product Hunt** (see §1)
 - **Indie Hackers → Products**
 - **G2 / Capterra / GetApp** (Capterra especially — hosts search these; free to list)
 - **Uneed, SaaSAI, Startup Stash, SideProjectors, Fazier, Peerlist**
 - **There's An AI For That** (if/when the AI website copy feature ships)
+
+**Verified current top picks (2026) — do these first for the best reach + SEO:**
+- **Launching Next** — permanent dofollow backlink; surfaces in long-tail Google for years
+- **Smol Launch** — weekly launch windows (more than 24h to gain traction; less pressure)
+- **Uneed** — daily launch competition, permanent listing + dofollow backlink; 40k–70k monthly visitors
+- **Open Launch** — open-source Product Hunt alternative
+- **SaaSHunt** — community-driven PH-style niche directory, quality backlinks
+- **⭐ Hacker News "Show HN"** — a single honest founder post can reach 10k+ visitors in hours.
+  This is one of the fastest ways to real traffic and needs no social following. Title:
+  `Show HN: Propvian – direct-booking websites for short-term rental hosts (0% commission)`,
+  then a short first comment explaining why you built it (see the PH first comment for tone).
+
+**Directory pro tip (verified):** submit to only **3–4 directories on launch week**, then
+stagger the rest per quarter. Blasting dozens at once dilutes your backlink profile. A strong
+launch-week trio: **Product Hunt + Launching Next + Smol Launch** (plus a Show HN post).
 
 **Boilerplate short description (150 char):**
 > Direct-booking websites for short-term rental hosts. Keep 100% of revenue — 0%
