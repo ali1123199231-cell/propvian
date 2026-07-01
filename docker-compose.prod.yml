@@ -111,6 +111,10 @@ services:
       - backend
     networks:
       - smartlock-net
+      # Attach to the shared edge network so the external shared-caddy reverse
+      # proxy can reach this container. Without this, every recreate drops the
+      # attachment and the site 502s until it is reconnected manually.
+      - shared-edge-net
 
 volumes:
   postgres_data:
@@ -124,3 +128,6 @@ volumes:
 networks:
   smartlock-net:
     driver: bridge
+  # Externally-managed network shared with the shared-caddy reverse proxy.
+  shared-edge-net:
+    external: true
