@@ -1621,4 +1621,151 @@ export const blogPosts: BlogPost[] = [
       }
     ]
   },
+  {
+    slug: 'how-to-set-up-direct-bookings-for-airbnb',
+    title: 'How to Set Up Direct Bookings for Your Airbnb (Step-by-Step)',
+    description: 'A practical, step-by-step guide to setting up direct bookings alongside your Airbnb listing — build the site, connect payments, sync your calendar, and win repeat guests without breaking the rules.',
+    publishedAt: '2026-07-01',
+    author: 'Propvian Team',
+    category: 'Guides',
+    tags: ['direct bookings', 'Airbnb', 'setup guide', 'vacation rentals', 'how to'],
+    readingTime: 9,
+    featured: true,
+    sections: [
+      {
+        type: 'p',
+        content: "You have decided you are done handing 15 to 20 percent of every stay to the OTAs, at least for the guests you have already earned. Good. The gap between that decision and actually taking your first direct booking is smaller than most hosts think — it is an afternoon of setup, not a software project. This is the step-by-step version: what to build, in what order, and how to bring guests to it without running afoul of Airbnb's rules."
+      },
+      {
+        type: 'p',
+        content: "One framing to keep in mind the whole way through: you are not replacing Airbnb. You are adding a second channel that captures repeat guests, referrals, and anyone who looks you up by name — the warm traffic you should not be paying a commission on. Keep your OTA listings running; they remain your discovery engine."
+      },
+      {
+        type: 'h2',
+        content: 'Step 1 — Build a booking site guests can actually book on'
+      },
+      {
+        type: 'p',
+        content: "The single biggest mistake hosts make is calling a contact form a \"direct booking option.\" It is not. If a guest has to email you, wait for a reply, and sort out payment over messages, most will give up and rebook on the platform they trust. Your site needs the same one-two-tap flow the OTA gives them: see real availability, pick dates, pay, done."
+      },
+      {
+        type: 'p',
+        content: "At minimum, your booking site needs:"
+      },
+      {
+        type: 'ul',
+        items: [
+          "A real availability calendar that reflects your true open dates",
+          "Clear photos, nightly pricing, and house rules — the same confidence the OTA listing gives, without the added fees",
+          "A mobile-first layout, because most travel browsing happens on a phone",
+          "Instant online payment, not an invoice you send later",
+          "Your own domain and an HTTPS padlock so guests know it is a real business"
+        ]
+      },
+      {
+        type: 'p',
+        content: "You do not need a developer for any of this. A no-code builder like Propvian lets you assemble a mobile-responsive site from templates and drag-in sections in an afternoon, with the calendar and checkout already wired in. Whatever tool you choose, do not skip the domain: a page at yourcabin.com converts far better than a random subdomain, because typing a card number into a no-name URL makes guests hesitate."
+      },
+      {
+        type: 'h2',
+        content: 'Step 2 — Connect your own payment accounts'
+      },
+      {
+        type: 'p',
+        content: "Direct booking means the money comes to you, not to a platform that holds it. Connect your own Stripe and PayPal accounts so funds settle directly into your bank. Offering both tends to lift conversion, since some guests trust PayPal for larger amounts. Expect standard card processing fees of roughly 2.9 percent plus a small fixed amount per transaction — that is the baseline cost of accepting a card, not a booking commission, and it is a fraction of what the OTAs take."
+      },
+      {
+        type: 'p',
+        content: "Do not try to hand-build a checkout that stores card details; that drags you into PCI compliance you do not want. Use a booking tool that already integrates Stripe and PayPal so the sensitive parts happen on their secure infrastructure and you just click to connect. Decide your payment timing too: full amount at booking for near-term stays, or a deposit now with the balance due before check-in for bookings made far ahead. State it clearly at checkout."
+      },
+      {
+        type: 'h2',
+        content: 'Step 3 — Sync your calendar so you never double-book'
+      },
+      {
+        type: 'p',
+        content: "The nightmare scenario is a guest booking a date on your direct site that you already filled on Airbnb. Prevent it by importing your OTA calendars. A one-way iCal sync pulls your Airbnb, Vrbo, and Booking.com calendars on a schedule and blocks those dates on your direct site automatically."
+      },
+      {
+        type: 'ol',
+        items: [
+          "In each OTA, find the calendar export (iCal) link for your listing",
+          "Add those iCal URLs to your booking tool so it imports and blocks the booked dates",
+          "Confirm the sync interval — Propvian re-checks every 15 minutes — so newly booked OTA dates close on your direct site quickly",
+          "For extra safety, use a tool with a database-level constraint that makes two overlapping bookings physically impossible"
+        ]
+      },
+      {
+        type: 'p',
+        content: "Note that a one-way import is what a host of one to a dozen properties actually needs: it brings OTA bookings in to protect your calendar. It does not push your direct bookings back out to the OTAs — that is channel-manager territory and usually overkill at this scale."
+      },
+      {
+        type: 'h2',
+        content: 'Step 4 — Bring guests to your site (the compliant way)'
+      },
+      {
+        type: 'p',
+        content: "A booking site with no visitors takes no bookings. The good news is you do not need an ad budget — you need to put your direct link everywhere the OTA does not control, and to invite past guests back the right way."
+      },
+      {
+        type: 'p',
+        content: "Here is the line you must not cross: Airbnb's terms prohibit soliciting a guest to take their current, active reservation off the platform. Do not tell a mid-stay guest to cancel and rebook with you. What is completely fine, and is how hosts actually build this channel, is reaching a guest after their stay is complete, through your own contact details, to invite them to book directly next time. That is retention, not a violation."
+      },
+      {
+        type: 'ul',
+        items: [
+          "Put your site on your signage, welcome book, business cards, email signature, and social profiles — a QR code on the fridge that opens your booking page converts surprisingly well",
+          "Leave a printed card at checkout thanking guests and noting they can book direct next time and skip the service fee",
+          "After the stay, send a thank-you through your own channels and offer a returning-guest rate or a promo code that only works on your site",
+          "Make referrals easy with a code guests can pass to friends",
+          "Post the value-first version of your story in host communities where you are a genuine member — not cold spam"
+        ]
+      },
+      {
+        type: 'h2',
+        content: 'Step 5 — Give guests a reason to choose direct'
+      },
+      {
+        type: 'p',
+        content: "Once the site exists and guests are landing on it, a small nudge closes the deal. A modest direct-only discount, a free late checkout, or early access to peak dates usually costs you less than the OTA commission you would have paid anyway. Track which channel each booking comes from and which promo codes actually move people, then double down on what works. Over a couple of seasons this compounds: every stay adds a guest to your list, every follow-up brings a few back, and a meaningful slice of your calendar fills with no commission attached."
+      },
+      {
+        type: 'tip',
+        content: "Set a realistic target. Most independent hosts move 20 to 40 percent of bookings to direct within a year or two, weighted toward repeat and referral guests. Chasing 100 percent usually means sacrificing the OTA visibility that fills your slow weeks — a blended approach almost always earns more."
+      },
+      {
+        type: 'h2',
+        content: 'Frequently asked questions'
+      },
+      {
+        type: 'faq',
+        faqs: [
+          {
+            q: "How long does it take to set up direct bookings for an Airbnb?",
+            a: "With a no-code booking tool, the site, payments, and calendar sync can be live in an afternoon. There is no sales call or implementation project — you pick a template, connect your Stripe and PayPal, import your OTA calendars, and point your domain at it. Bringing in guests is the ongoing part, but the technical setup is a single sitting."
+          },
+          {
+            q: "Will setting up direct bookings get me banned from Airbnb?",
+            a: "No — having a direct booking site and inviting past guests to rebook directly next time is standard retention. The only thing prohibited is soliciting a guest to cancel a current, active reservation and rebook off-platform. Reach out after a completed stay through your own contact details and you are fine."
+          },
+          {
+            q: "Do I need to stop using Airbnb to take direct bookings?",
+            a: "Not at all, and you should not. Airbnb and the other OTAs are your discovery engine for new guests. The point of a direct channel is to capture the repeat and referral guests you have already earned, so keep your listings live and run both."
+          },
+          {
+            q: "How do I take payment for a direct booking safely?",
+            a: "Connect your own Stripe and PayPal accounts through a booking tool that integrates them, so guests pay by card online and the money lands in your account. Avoid bank transfers or gift cards, publish a clear cancellation policy the guest agrees to at checkout, and use a deposit hold for higher-value stays to protect against chargebacks."
+          },
+          {
+            q: "How do I avoid double-booking between Airbnb and my direct site?",
+            a: "Import your OTA calendars via one-way iCal so booked dates block automatically on your direct site. A tool that re-syncs frequently — Propvian checks every 15 minutes — plus a database-level constraint against overlapping bookings makes double-booking effectively impossible."
+          }
+        ]
+      },
+      {
+        type: 'cta',
+        content: "Set up your Airbnb direct booking site in an afternoon with Propvian — free first month."
+      }
+    ]
+  },
 ]
