@@ -32,6 +32,39 @@ jobs:
             docker compose -f docker-compose.prod.yml --env-file .env.prod \
               up -d --build --remove-orphans backend frontend
 
+            # Recreating the frontend gives it a new container IP. Caddy proxies to
+            # the static upstream smartlock-frontend:80, which it resolves at
+            # config-load time, so it keeps dialing the dead IP until a real reload.
+            # Two things matter here, and both were previously wrong:
+            #   1. This must run BEFORE the backend health wait. It used to run
+            #      after, so the site 502'd for the whole wait (measured: 45.9s).
+            #   2. --force is required. Without it Caddy sees identical config,
+            #      logs "config is unchanged" and does nothing at all.
+            # The frontend serves static files and only proxies /api to the backend,
+            # so it can serve the site before the backend is healthy.
+            echo "==> Waiting for frontend to accept connections..."
+            for i in $(seq 1 30); do
+              if docker exec smartlock-frontend wget -qO /dev/null http://127.0.0.1/ 2>/dev/null; then
+                echo "==> Frontend is serving"
+                break
+              fi
+              sleep 1
+            done
+
+            # shared-caddy also fronts whobela/slekio/ocroon. Caddy reloads are
+            # graceful, so this does not interrupt them.
+            echo "==> Reloading shared-caddy to re-resolve the new frontend IP..."
+            docker exec shared-caddy caddy reload --config /etc/caddy/Caddyfile --force 2>&1 | tail -1 || \
+              echo "WARN: caddy reload failed (site may 502 until Caddy re-resolves)"
+
+            echo "==> Verifying site responds through the edge proxy..."
+            for i in $(seq 1 6); do
+              CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://propvian.com/ || echo 000)
+              echo "  check $i/6: HTTP $CODE"
+              [ "$CODE" = "200" ] && break
+              sleep 5
+            done
+
             echo "==> Waiting for backend to become healthy..."
             for i in $(seq 1 20); do
               STATUS=$(docker inspect smartlock-backend --format='{{.State.Health.Status}}' 2>/dev/null)
@@ -46,18 +79,6 @@ jobs:
                 exit 1
               fi
               sleep 15
-            done
-
-            echo "==> Reloading shared-caddy so it re-resolves the recreated frontend..."
-            docker exec shared-caddy caddy reload --config /etc/caddy/Caddyfile 2>&1 || \
-              echo "WARN: caddy reload failed (site may 502 briefly until Caddy re-resolves)"
-
-            echo "==> Verifying site responds through the edge proxy..."
-            for i in $(seq 1 6); do
-              CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://propvian.com/ || echo 000)
-              echo "  check $i/6: HTTP $CODE"
-              [ "$CODE" = "200" ] && break
-              sleep 5
             done
 
             echo "==> Deploy complete"
