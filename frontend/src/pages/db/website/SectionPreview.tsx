@@ -195,10 +195,15 @@ export function SectionPreview({ section, config, isSelected, onClick }: Props) 
             <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center" style={{ fontFamily: font }}>
               {cfg.title || 'Guest Reviews'}
             </h2>
-            <div className="flex items-center justify-center gap-1 mb-6">
+            <div className="flex items-center justify-center gap-1 mb-3">
               {[1,2,3,4,5].map(i => <Star key={i} size={16} fill={accent} stroke="none" />)}
               <span className="text-sm font-semibold text-gray-700 ml-2">4.9 · 47 reviews</span>
             </div>
+            {/* The public site omits this section until real reviews exist — say so, or
+                the host reasonably assumes this sample copy is what guests will read. */}
+            <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-6 inline-block">
+              Sample content — your live site hides this section until you add real guest reviews.
+            </p>
             <div className="grid grid-cols-2 gap-4">
               {[
                 { name: 'Sarah M.', text: 'Absolutely stunning property! The views were breathtaking and the host was incredibly responsive.', rating: 5 },

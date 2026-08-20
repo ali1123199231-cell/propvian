@@ -1,0 +1,2 @@
+company,website,country,city,property_count,property_count_source_url,email,email_source_url,booking_setup,incumbent_software,companies_house_no,status,sent_1,sent_2,sent_3,sent_4,reply_date,reply_verbatim,outcome
+EXAMPLE Coastal Retreats Ltd,coastalretreats.co.uk,UK,Cornwall,11,https://coastalretreats.co.uk/our-cottages,bookings@coastalretreats.co.uk,https://coastalretreats.co.uk/contact,enquiry_form,none,08123456,new,,,,,,,

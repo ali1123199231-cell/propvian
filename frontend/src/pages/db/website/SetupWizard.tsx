@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Globe, Check, Loader2, Sparkles, Users, BedDouble, Bath, MapPin, CheckCircle, XCircle } from 'lucide-react'
+import { Globe, Check, Loader2, Sparkles, Users, BedDouble, Bath, MapPin, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 import type { WebsiteConfig } from '@/api/websiteBuilder'
 import type { Property } from '@/types'
 import { organizationsApi } from '@/api/organizations'
@@ -36,9 +36,12 @@ interface Props {
   existingSlug?: string  // set when wizard re-opens after a partial save
   onComplete: (data: Partial<WebsiteConfig>, siteSlug: string) => void
   isSubmitting: boolean
+  /** Flips the detected property to ACTIVE. Setup cannot complete while it is a draft. */
+  onActivateProperty: () => void
+  isActivating: boolean
 }
 
-export function SetupWizard({ property, orgName, existingSlug, onComplete, isSubmitting }: Props) {
+export function SetupWizard({ property, orgName, existingSlug, onComplete, isSubmitting, onActivateProperty, isActivating }: Props) {
   const [palette, setPalette] = useState(PALETTES[0])
   const [font, setFont] = useState(FONTS[0])
 
@@ -94,7 +97,14 @@ export function SetupWizard({ property, orgName, existingSlug, onComplete, isSub
     return () => { cancelled = true; if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [slugInput])
 
-  const canLaunch = slugStatus === 'available' && slugInput.length >= 3
+  /*
+   * A property created through the add-property wizard is DRAFT, and the API
+   * refuses to complete website setup unless one is ACTIVE. Without this the
+   * host fills the whole form and only learns that at the final click, with no
+   * hint of where 'active' is set.
+   */
+  const needsActivation = !!property && property.status !== 'ACTIVE'
+  const canLaunch = slugStatus === 'available' && slugInput.length >= 3 && !needsActivation
 
   const handleLaunch = () => {
     if (!canLaunch) return
@@ -294,6 +304,32 @@ export function SetupWizard({ property, orgName, existingSlug, onComplete, isSub
           </button>
         </div>
       </div>
+
+      {/* Draft properties cannot be published — say so here, not after the final click. */}
+      {needsActivation && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-amber-900 mb-1">
+                {property?.name} is still a draft
+              </p>
+              <p className="text-sm text-amber-800 leading-relaxed mb-3">
+                Guests can only book a property that is active. Activating it now publishes it to your booking site —
+                you can pause it again at any time from Properties.
+              </p>
+              <button
+                onClick={onActivateProperty}
+                disabled={isActivating}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white text-sm font-semibold rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors"
+              >
+                {isActivating && <Loader2 size={14} className="animate-spin" />}
+                {isActivating ? 'Activating…' : 'Activate this property'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Launch button */}
       <button

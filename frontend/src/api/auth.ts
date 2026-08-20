@@ -1,6 +1,7 @@
 import apiClient from './client'
 import type { AuthResponse } from '@/types'
 import { logger, maskEmail } from '@/lib/logger'
+import { getAttribution, clearAttribution } from '@/lib/attribution'
 
 const log = logger.child('AUTH')
 
@@ -19,8 +20,18 @@ export const authApi = {
     lastName?: string,
   ): Promise<AuthResponse> => {
     log.info('register — email=%s', maskEmail(email))
-    const { data } = await apiClient.post('/auth/register', { email, password, firstName, lastName })
+    // Attribution rides along with every signup so paid campaigns can be
+    // reconciled against subscriptions that actually convert.
+    const attribution = getAttribution()
+    const { data } = await apiClient.post('/auth/register', {
+      email,
+      password,
+      firstName,
+      lastName,
+      ...attribution,
+    })
     log.info('register — success userId=%s step=%s', data.data?.user?.id, data.data?.user?.onboardingStep)
+    clearAttribution()
     return data.data
   },
 

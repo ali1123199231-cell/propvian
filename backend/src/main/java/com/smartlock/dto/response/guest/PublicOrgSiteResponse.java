@@ -79,6 +79,8 @@ public class PublicOrgSiteResponse {
         private Integer bathrooms;
         private Integer maxGuests;
         private BigDecimal baseNightlyRate;
+        /** Hosts price per property; without this the public site renders every rate as USD. */
+        private String currency;
         private BigDecimal cleaningFee;
         private String propertyType;
         private int minStayNights;

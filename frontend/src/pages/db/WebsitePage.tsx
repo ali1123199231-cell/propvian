@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Home, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -11,6 +11,7 @@ import { WebsiteBuilder } from './website/WebsiteBuilder'
 
 export function WebsitePage() {
   const { activeOrg, setActiveOrg } = useAuthStore()
+  const queryClient = useQueryClient()
   const orgId = activeOrg?.id ?? ''
 
   const { data: config, isLoading: configLoading, refetch } = useQuery({
@@ -40,6 +41,20 @@ export function WebsitePage() {
       toast.success('Your website is ready!')
     },
     onError: (e: any) => toast.error(e.response?.data?.message || 'Failed to save setup'),
+  })
+
+  const activateMut = useMutation({
+    mutationFn: async () => {
+      if (!property) throw new Error('no property')
+      // The endpoint is a full replace and validates `name`, so a bare
+      // { status } payload fails validation and would wipe the other fields.
+      return propertiesApi.update(orgId, property.id, { ...property, status: 'ACTIVE' })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties', orgId] })
+      toast.success('Property activated')
+    },
+    onError: (e: any) => toast.error(e.response?.data?.message || 'Failed to activate property'),
   })
 
   if (configLoading || propsLoading) {
@@ -77,6 +92,8 @@ export function WebsitePage() {
         existingSlug={activeOrg?.slug?.startsWith('org-') ? undefined : activeOrg?.slug}
         onComplete={(data, siteSlug) => completeMut.mutate({ data, siteSlug })}
         isSubmitting={completeMut.isPending}
+        onActivateProperty={() => activateMut.mutate()}
+        isActivating={activateMut.isPending}
       />
     )
   }

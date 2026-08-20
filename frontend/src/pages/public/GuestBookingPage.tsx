@@ -5,6 +5,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
+import { formatPrice } from '@/lib/currency'
 import {
   MapPin, Star, Users, BedDouble, Bath, ChevronLeft, ChevronRight,
   CheckCircle, Loader2, CreditCard, X, AlertCircle,
@@ -96,14 +97,7 @@ function calcTotal(prop: PropertyInfo, checkIn: string, checkOut: string) {
   const cleaning = prop.cleaningFee ?? 0
   return { nights, rate, subtotal, cleaning, total: subtotal + cleaning }
 }
-function fmtPrice(amount: number, currency?: string): string {
-  const cur = currency && currency.length === 3 ? currency.toUpperCase() : 'USD'
-  try {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur }).format(amount)
-  } catch {
-    return `${cur} ${amount.toFixed(2)}`
-  }
-}
+const fmtPrice = formatPrice
 
 // ── API ───────────────────────────────────────────────────────────────────────
 

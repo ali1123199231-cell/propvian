@@ -177,6 +177,7 @@ public class GuestCheckoutService {
                             .bathrooms(p.getBathrooms())
                             .maxGuests(p.getMaxGuests())
                             .baseNightlyRate(p.getBaseNightlyRate())
+                            .currency(p.getCurrency())
                             .cleaningFee(p.getCleaningFee())
                             .propertyType(p.getPropertyType())
                             .minStayNights(p.getMinStayNights())

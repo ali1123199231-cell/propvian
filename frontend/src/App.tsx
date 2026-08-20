@@ -138,6 +138,7 @@ import { BookingEnginePage } from '@/pages/marketing/seo/BookingEnginePage'
 import { LodgifyAlternativePage } from '@/pages/marketing/seo/LodgifyAlternativePage'
 import { HostawayAlternativePage } from '@/pages/marketing/seo/HostawayAlternativePage'
 import { GuestyAlternativePage } from '@/pages/marketing/seo/GuestyAlternativePage'
+import { PropertyManagersPage } from '@/pages/marketing/PropertyManagersPage'
 
 // Smart routers — wait for config fetch before committing to a business model
 import { useSystemStore } from '@/store/systemStore'
@@ -246,6 +247,9 @@ export default function App() {
         <Route path="/lodgify-alternative"             element={<LodgifyAlternativePage />} />
         <Route path="/hostaway-alternative"            element={<HostawayAlternativePage />} />
         <Route path="/guesty-alternative"              element={<GuestyAlternativePage />} />
+
+        {/* Outbound campaign landing page — noIndex, see docs/marketing/outbound-batch-1.md */}
+        <Route path="/property-managers"               element={<PropertyManagersPage />} />
 
         {/* App (authenticated) — shared + model-aware routes */}
         <Route element={<AppLayout />}>

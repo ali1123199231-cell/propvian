@@ -43,6 +43,7 @@ const ALL_SECTION_TYPES = [
   { type: 'about',           icon: '✨', desc: 'Property description' },
   { type: 'amenities',       icon: '🛋️', desc: "What's included" },
   { type: 'booking-widget',  icon: '📅', desc: 'Availability calendar' },
+  { type: 'properties',      icon: '🏘️', desc: 'All your properties' },
   { type: 'reviews',         icon: '⭐', desc: 'Guest testimonials' },
   { type: 'faq',             icon: '❓', desc: 'Common questions' },
   { type: 'host-info',       icon: '👤', desc: 'About the host' },

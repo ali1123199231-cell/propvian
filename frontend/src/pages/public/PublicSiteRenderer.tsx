@@ -9,6 +9,7 @@ import {
   Sun, Thermometer, WashingMachine, Dumbbell, PawPrint, ArrowUp,
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
+import { formatPriceWhole } from '../../lib/currency'
 
 const log = logger.child('WEBSITE')
 
@@ -51,6 +52,7 @@ export interface PublicPropertyCard {
   bathrooms: number
   maxGuests: number
   baseNightlyRate: number
+  currency?: string
   cleaningFee: number
   propertyType: string
   minStayNights: number
@@ -202,7 +204,7 @@ function PropertyCard({ prop, primary, buttonStyle, onBook }: {
         <div className="flex items-center justify-between border-t border-gray-100 pt-3 mt-auto">
           <div>
             {prop.baseNightlyRate
-              ? <><span className="text-lg font-bold text-gray-900">${Number(prop.baseNightlyRate).toFixed(0)}</span><span className="text-sm text-gray-500"> / night</span></>
+              ? <><span className="text-lg font-bold text-gray-900">{formatPriceWhole(Number(prop.baseNightlyRate), prop.currency)}</span><span className="text-sm text-gray-500"> / night</span></>
               : <span className="text-sm text-gray-500">Contact for rates</span>}
             {prop.minStayNights > 1 && <p className="text-xs text-gray-400">{prop.minStayNights} night min</p>}
           </div>
@@ -246,6 +248,11 @@ function HeroSection({ cfg, primary, accent, font, btnStyle, buttonStyle, proper
           <>
             <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, ${primary}bb 0%, ${primary}77 45%, ${accent}55 100%)` }} />
+            {/* The brand tint alone runs as low as 33% alpha at the accent end, which
+                leaves white text sitting on whatever the photo happens to be — bright
+                surf and pale sky made it unreadable. A neutral scrim guarantees
+                contrast regardless of the image the host uploads. */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/25 to-black/40" />
           </>
         ) : (
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${primary}ff 0%, ${primary}cc 45%, ${accent}99 100%)` }} />
@@ -255,7 +262,7 @@ function HeroSection({ cfg, primary, accent, font, btnStyle, buttonStyle, proper
             {cfg.headline || properties[0]?.name || 'Welcome'}
           </h1>
           <p className="text-white/90 text-lg sm:text-xl mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-sm">
-            {properties[0]?.description || cfg.subheadline || 'Book direct for the best rates and a personal experience'}
+            {cfg.subheadline || properties[0]?.description || 'Book direct for the best rates and a personal experience'}
           </p>
           {(cfg.ctaText || 'Check Availability') && properties[0] && (
             <button
@@ -442,7 +449,7 @@ function BookingWidgetSection({ cfg, primary, accent, font, btnStyle, properties
           <div className="p-6">
             {prop.baseNightlyRate && (
               <div className="text-center mb-5">
-                <span className="text-3xl font-extrabold text-gray-900">${Number(prop.baseNightlyRate).toFixed(0)}</span>
+                <span className="text-3xl font-extrabold text-gray-900">{formatPriceWhole(Number(prop.baseNightlyRate), prop.currency)}</span>
                 <span className="text-sm font-medium text-gray-400"> / night</span>
               </div>
             )}
@@ -461,10 +468,24 @@ function BookingWidgetSection({ cfg, primary, accent, font, btnStyle, properties
 }
 
 function ReviewsSection({ cfg, primary, accent, font }: SectionBaseProps) {
-  const reviews: { name: string; text: string; rating: number }[] = cfg.reviews || [
-    { name: 'Sarah M.', text: 'Absolutely stunning property! The views were breathtaking and the host was incredibly responsive.', rating: 5 },
-    { name: 'James R.', text: 'Perfect for our family trip. Spotlessly clean, well-equipped, and exactly as described.', rating: 5 },
-  ]
+  /*
+   * Never invent reviews on a live site.
+   *
+   * This used to fall back to two sample testimonials and a hardcoded 4.9
+   * rating, which meant any host who left the section enabled published
+   * fabricated praise from people who do not exist. That is a prohibited
+   * practice under the FTC's Rule on Consumer Reviews and Testimonials in the
+   * US and the DMCC Act 2024 in the UK — and the host, not us, is the trader
+   * carrying the liability. With nothing real to show, the section is omitted.
+   * The builder still previews sample copy, clearly labelled as a sample.
+   */
+  const reviews: { name: string; text: string; rating: number }[] = cfg.reviews || []
+  if (reviews.length === 0) return null
+
+  const averageRating =
+    cfg.rating ??
+    (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1)
+
   return (
     <section className="py-20 px-4 bg-gray-50" style={{ fontFamily: font }}>
       <div className="max-w-5xl mx-auto">
@@ -472,8 +493,8 @@ function ReviewsSection({ cfg, primary, accent, font }: SectionBaseProps) {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">{cfg.title || 'Guest Reviews'}</h2>
           <div className="flex items-center justify-center gap-1.5 mt-3">
             {[1,2,3,4,5].map(i => <Star key={i} size={22} fill={accent} stroke="none" />)}
-            <span className="text-base font-bold text-gray-700 ml-2">{cfg.rating || '4.9'}</span>
-            <span className="text-gray-400 text-sm">· {cfg.reviewCount || reviews.length} reviews</span>
+            <span className="text-base font-bold text-gray-700 ml-2">{averageRating}</span>
+            <span className="text-gray-400 text-sm">· {reviews.length} review{reviews.length === 1 ? '' : 's'}</span>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -544,14 +565,34 @@ const RULE_ICONS: Record<string, string> = {
   SMOKING: '🚬', PARTIES: '🎉', PETS: '🐾', QUIET_HOURS: '🌙', CHILDREN: '👶',
 }
 
+/*
+ * Each rule needs its own wording. A generic "<label> allowed / not allowed"
+ * produces "Quiet hours allowed", which says the opposite of what the host set:
+ * quiet hours being on means they are enforced, not permitted.
+ */
+const RULE_PHRASES: Record<string, { yes: string; no: string }> = {
+  SMOKING:     { yes: 'Smoking allowed',          no: 'No smoking' },
+  PARTIES:     { yes: 'Parties / events allowed', no: 'No parties or events' },
+  PETS:        { yes: 'Pets welcome',             no: 'No pets' },
+  QUIET_HOURS: { yes: 'Quiet hours apply',        no: 'No set quiet hours' },
+  CHILDREN:    { yes: 'Children welcome',         no: 'Not suitable for children' },
+}
+
+function ruleText(ruleKey: string, allowed: boolean, notes?: string): string {
+  const phrase = RULE_PHRASES[ruleKey]
+  const label = RULE_LABELS[ruleKey] ?? ruleKey.replace(/_/g, ' ')
+  const base = phrase ? (allowed ? phrase.yes : phrase.no) : `${label}${allowed ? ' allowed' : ' not allowed'}`
+  return notes ? `${base} (${notes})` : base
+}
+
 function HouseRulesSection({ cfg, font, properties }: SectionBaseProps) {
   const propRules = properties[0]?.houseRules
   // Property admin data always wins — website-builder config is only a fallback
   const rules: { icon: string; text: string }[] =
     propRules && propRules.length > 0
       ? propRules.map(r => ({
-          icon: r.allowed ? '✅' : (RULE_ICONS[r.ruleKey] ?? '🚫'),
-          text: `${RULE_LABELS[r.ruleKey] ?? r.ruleKey.replace(/_/g, ' ')}${r.allowed ? ' allowed' : ' not allowed'}${r.notes ? ` (${r.notes})` : ''}`,
+          icon: RULE_ICONS[r.ruleKey] ?? (r.allowed ? '✅' : '🚫'),
+          text: ruleText(r.ruleKey, r.allowed, r.notes),
         }))
       : cfg.rules?.length > 0
         ? cfg.rules
@@ -1045,8 +1086,18 @@ export function PublicSiteRenderer({ sections, config, properties, getPropertyUr
     )
   }
 
-  // Auto-inject a properties listing if multi-property and no section handles it
-  const hasListingSection = enabledSections.some(s => s.sectionType === 'properties' || s.sectionType === 'booking-widget')
+  /*
+   * Auto-inject a properties listing when the host runs more than one place and
+   * no section already lists them.
+   *
+   * booking-widget deliberately does NOT count as a listing: it books a single
+   * property (properties[0]). Treating it as one meant every multi-property
+   * host who kept the default sections — which include booking-widget —
+   * published a site showing only their first property, with the rest
+   * unreachable. That is precisely backwards for the portfolio managers this is
+   * sold to.
+   */
+  const hasListingSection = enabledSections.some(s => s.sectionType === 'properties')
   const hasFooter = enabledSections.some(s => s.sectionType === 'footer')
 
   const sectionsToRender: PublicSection[] = [...enabledSections]

@@ -101,8 +101,21 @@ public class AuthService {
                 .emailVerified(false)
                 .onboardingStep("EMAIL_VERIFICATION")
                 .onboardingCompleted(false)
+                .gclid(request.getGclid())
+                .utmSource(request.getUtmSource())
+                .utmMedium(request.getUtmMedium())
+                .utmCampaign(request.getUtmCampaign())
+                .utmTerm(request.getUtmTerm())
+                .utmContent(request.getUtmContent())
+                .landingPage(request.getLandingPage())
+                .signupReferrer(request.getSignupReferrer())
                 .build();
         user = userRepository.save(user);
+        if (request.getGclid() != null || request.getUtmSource() != null) {
+            log.info("register — paid attribution userId={} source={} campaign={} gclid={}",
+                    user.getId(), request.getUtmSource(), request.getUtmCampaign(),
+                    request.getGclid() != null ? "present" : "none");
+        }
 
         // Auto-create a default organization — slug is a random internal ID,
         // never derived from the user's email. The host picks a public-facing

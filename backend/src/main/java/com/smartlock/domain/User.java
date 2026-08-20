@@ -75,6 +75,33 @@ public class User extends SoftDeletableEntity {
     @Column(name = "pending_ttlock_lock_name", length = 200)
     private String pendingTtlockLockName;
 
+    // Marketing attribution, set once at signup and never updated afterwards.
+    // Used to reconcile ad spend against subscriptions that reach ACTIVE.
+
+    @Column(name = "gclid", length = 255)
+    private String gclid;
+
+    @Column(name = "utm_source", length = 100)
+    private String utmSource;
+
+    @Column(name = "utm_medium", length = 100)
+    private String utmMedium;
+
+    @Column(name = "utm_campaign", length = 150)
+    private String utmCampaign;
+
+    @Column(name = "utm_term", length = 255)
+    private String utmTerm;
+
+    @Column(name = "utm_content", length = 150)
+    private String utmContent;
+
+    @Column(name = "landing_page", length = 500)
+    private String landingPage;
+
+    @Column(name = "signup_referrer", length = 500)
+    private String signupReferrer;
+
     public String getDisplayName() {
         if (name != null && !name.isBlank()) return name;
         if (firstName != null && !firstName.isBlank()) return firstName;
