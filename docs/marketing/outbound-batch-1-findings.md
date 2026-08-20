@@ -5,7 +5,12 @@ own target regions (Cornwall, Lake District, Gatlinburg/Pigeon Forge, Asheville)
 and checked against the four qualifiers in `outbound-batch-1.md`.
 
 **Nine out of nine already have online booking, a dedicated PMS, or both.**
-Raw data: `batch1-research-2026-08-20.csv`.
+
+The sample was then widened to **19 operators**, which gives a fairer number:
+**2 confirmed full qualifiers, 2 more probable, 15 disqualified — a hit rate of
+roughly 10-20%, not zero.** The first nine were the most visible operators in
+each region, and visibility was itself the bias. Raw data:
+`batch1-research-2026-08-20.csv`.
 
 | Operator | Market | What they already run |
 |---|---|---|
@@ -55,6 +60,27 @@ playbook explicitly excludes — **the host with listings but no website at all.
 ruled out as unreachable, not as a bad fit. They are reachable, just not by email:
 they are reachable by search ads, SEO and host communities, which is where the
 playbook itself concluded individual hosts must come from.
+
+## What the wider sample changes
+
+Qualifiers exist, but they sit at the **bottom** of the value range and cost far
+more to find than the playbook assumed:
+
+- **North Wales Holiday Cottages Ltd** (09827850) — 10 cottages counted around
+  Deganwy and Conwy, enquiry-only, `info@` on their own domain, active Ltd.
+- **Wayford Marine Ltd**, trading as Norfolk Holiday Accommodation (04193213) —
+  6 named properties, "book direct with us, the owners" but no live availability,
+  `enquiries@` on their own domain, active Ltd since 2001.
+
+At 6-10 properties these are $60-100/month accounts, not the 15-unit managers the
+economics were built around. And at a ~11% confirmed hit rate, a list of 30
+qualified leads means assessing roughly 270 sites — so the playbook's "15
+qualified leads/hour" is optimistic by something like 5x. Realistic rate is 2-3/hour.
+
+Two more are close but must not be contacted yet: **Wales Cottages** (booking form
+literally fails to load — the playbook's `broken_widget` case) needs a property
+count and a Companies House match, and **Serviced Lettings** has no confident
+company match, which PECR requires before a UK send.
 
 ## Recommendation
 
