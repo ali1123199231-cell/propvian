@@ -305,7 +305,13 @@ export function GuestBookingPage({ slug }: { slug: string }) {
 
   useEffect(() => {
     if (prop?.stripeEnabled && prop.stripePublishableKey && !stripePromise) {
-      setStripePromise(loadStripe(prop.stripePublishableKey, { stripeAccount: prop.stripeConnectedAccountId }))
+      // Only pass stripeAccount when there is one. A sandbox/demo org charges the
+      // platform account directly, and handing Stripe.js an undefined account id
+      // makes it reject the client secret.
+      setStripePromise(loadStripe(
+        prop.stripePublishableKey,
+        prop.stripeConnectedAccountId ? { stripeAccount: prop.stripeConnectedAccountId } : undefined,
+      ))
     }
     if (prop?.stripeEnabled) setPayProvider('stripe')
     else if (prop?.paypalEnabled) setPayProvider('paypal')

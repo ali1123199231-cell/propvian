@@ -50,6 +50,7 @@ public class StripeService {
     private String priceIdEnv;
 
     private final SubscriptionRepository subscriptionRepository;
+    private final com.smartlock.repository.OrganizationRepository organizationRepository;
     private final BillingService         billingService;
     private final SystemConfigService    systemConfigService;
 
@@ -67,6 +68,40 @@ public class StripeService {
     private String resolvedPriceId() {
         String db = systemConfigService.getActiveStripePriceId();
         return !db.isBlank() ? db : (priceIdEnv != null ? priceIdEnv : "");
+    }
+
+    /**
+     * Whether this organisation transacts against the Stripe test keys. True if the
+     * platform-wide flag is set, or if this single org is marked sandbox — which is how
+     * the demo site takes test bookings while real hosts stay on live keys.
+     */
+    public boolean isSandboxOrg(UUID orgId) {
+        if (systemConfigService.isStripeSandbox()) return true;
+        if (orgId == null) return false;
+        return organizationRepository.findById(orgId)
+                .map(com.smartlock.domain.Organization::isStripeSandbox)
+                .orElse(false);
+    }
+
+    private String secretKeyFor(boolean sandbox) {
+        String db = systemConfigService.stripeSecretKey(sandbox);
+        if (!db.isBlank()) return db;
+        // The env fallback only ever holds the live key, so it cannot stand in for sandbox.
+        return sandbox ? "" : (secretKeyEnv != null ? secretKeyEnv : "");
+    }
+
+    /**
+     * Request options carrying an explicit API key. {@code Stripe.apiKey} is a global
+     * static: with two modes live at once, relying on it would let a sandbox request
+     * leave the key set for whatever live request runs next.
+     */
+    private RequestOptions optionsFor(boolean sandbox, String connectedAccountId) {
+        RequestOptions.RequestOptionsBuilder b = RequestOptions.builder()
+                .setApiKey(secretKeyFor(sandbox));
+        if (connectedAccountId != null && !connectedAccountId.isBlank()) {
+            b.setStripeAccount(connectedAccountId);
+        }
+        return b.build();
     }
 
     private void initStripe() {
@@ -373,11 +408,12 @@ public class StripeService {
     // ── Guest booking payment ─────────────────────────────────────────────────
 
     /** Creates a Stripe PaymentIntent that transfers funds to the host's connected account. */
-    public String createGuestPaymentIntent(UUID bookingId, BigDecimal amount, String currency,
+    public String createGuestPaymentIntent(UUID orgId, UUID bookingId, BigDecimal amount, String currency,
                                            String hostStripeAccountId, String statementDescriptor) throws StripeException {
-        initStripe();
-        if (resolvedSecretKey().isBlank()) {
-            throw new AppException("Stripe is not configured", HttpStatus.SERVICE_UNAVAILABLE);
+        boolean sandbox = isSandboxOrg(orgId);
+        if (secretKeyFor(sandbox).isBlank()) {
+            throw new AppException(sandbox ? "Stripe test keys are not configured" : "Stripe is not configured",
+                    HttpStatus.SERVICE_UNAVAILABLE);
         }
         long amountCents = amount.multiply(BigDecimal.valueOf(100)).longValue();
 
@@ -394,14 +430,40 @@ public class StripeService {
 
         PaymentIntentCreateParams params = builder.build();
 
-        if (hostStripeAccountId != null && !hostStripeAccountId.isBlank()) {
-            RequestOptions options = RequestOptions.builder()
-                    .setStripeAccount(hostStripeAccountId)
-                    .build();
-            return PaymentIntent.create(params, options).getClientSecret();
-        }
+        // A sandbox org has no connected account: the charge lands on the platform's own
+        // test account, which is exactly what a demo needs and touches no real money.
+        log.info("[GUEST-PI] org={} sandbox={} connectedAccount={} amount={} {}",
+                orgId, sandbox, hostStripeAccountId == null ? "(platform)" : hostStripeAccountId,
+                amount, currency);
+        return PaymentIntent.create(params, optionsFor(sandbox, hostStripeAccountId)).getClientSecret();
+    }
 
-        return PaymentIntent.create(params).getClientSecret();
+    /**
+     * Confirms with Stripe that a payment intent actually succeeded, and for the expected
+     * amount and currency. Returns false if it did not.
+     */
+    public boolean isPaymentIntentSettled(UUID orgId, String paymentIntentId, String connectedAccountId,
+                                          BigDecimal expectedAmount, String expectedCurrency) {
+        boolean sandbox = isSandboxOrg(orgId);
+        try {
+            PaymentIntent pi = PaymentIntent.retrieve(paymentIntentId, optionsFor(sandbox, connectedAccountId));
+            long expectedCents = expectedAmount.multiply(BigDecimal.valueOf(100)).longValue();
+            // amount_received is the guard against a short payment, but it is not populated
+            // for every flow — treat it as a check to apply when present, not a requirement,
+            // so a legitimate booking is never left unconfirmed.
+            boolean ok = "succeeded".equals(pi.getStatus())
+                    && expectedCurrency.equalsIgnoreCase(pi.getCurrency())
+                    && (pi.getAmountReceived() == null || pi.getAmountReceived() >= expectedCents);
+            if (!ok) {
+                log.warn("[GUEST-PI-VERIFY] rejected pi={} status={} received={} expected={} currency={}/{}",
+                        paymentIntentId, pi.getStatus(), pi.getAmountReceived(), expectedCents,
+                        pi.getCurrency(), expectedCurrency);
+            }
+            return ok;
+        } catch (StripeException e) {
+            log.warn("[GUEST-PI-VERIFY] could not retrieve pi={}: {}", paymentIntentId, e.getMessage());
+            return false;
+        }
     }
 
     /**

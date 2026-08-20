@@ -39,6 +39,15 @@ public class Organization extends SoftDeletableEntity {
     @Column(length = 500)
     private String website;
 
+    /**
+     * Runs this org's guest payments against the Stripe test keys instead of live.
+     * Demo and testing orgs only — Stripe mode was previously platform-wide, which
+     * meant one test org would have dragged every paying customer into test mode.
+     */
+    @Column(name = "stripe_sandbox", nullable = false)
+    @Builder.Default
+    private boolean stripeSandbox = false;
+
     @Column(name = "automation_enabled", nullable = false)
     @Builder.Default
     private boolean automationEnabled = false;

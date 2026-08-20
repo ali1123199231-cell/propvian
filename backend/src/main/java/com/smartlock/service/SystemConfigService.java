@@ -125,6 +125,26 @@ public class SystemConfigService {
         return Boolean.parseBoolean(get("stripe.sandbox", "false"));
     }
 
+    // ── Explicit-mode getters ────────────────────────────────────────────────
+    // Stripe mode is per-organisation as well as platform-wide, so the caller has to
+    // be able to ask for a specific mode rather than whatever the global flag says.
+
+    public String stripeSecretKey(boolean sandbox) {
+        return get(sandbox ? "stripe.sandbox.secret_key" : "stripe.secret_key", "");
+    }
+
+    public String stripePublishableKey(boolean sandbox) {
+        return get(sandbox ? "stripe.sandbox.publishable_key" : "stripe.publishable_key", "");
+    }
+
+    public String stripeWebhookSecret(boolean sandbox) {
+        return get(sandbox ? "stripe.sandbox.webhook_secret" : "stripe.webhook_secret", "");
+    }
+
+    public String stripeConnectWebhookSecret(boolean sandbox) {
+        return get(sandbox ? "stripe.sandbox.connect_webhook_secret" : "stripe.connect_webhook_secret", "");
+    }
+
     // ── Stripe sandbox-aware active getters ──────────────────────────────────
 
     public String getActiveStripeSecretKey() {

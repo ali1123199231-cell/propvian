@@ -250,11 +250,14 @@ public class GuestCheckoutService {
         HostVerification v = verificationRepository.findByOrganizationId(property.getOrganizationId())
                 .orElse(null);
 
-        boolean stripeEnabled = v != null
+        // A sandbox org charges the platform's own test account, so it needs no connected
+        // account and no charges/payouts capabilities — those only exist on live accounts.
+        boolean sandboxOrg = stripeService.isSandboxOrg(property.getOrganizationId());
+        boolean stripeEnabled = sandboxOrg || (v != null
                 && v.getStripeAccountId() != null
                 && v.isStripeChargesEnabled()
                 && v.isStripePayoutsEnabled()
-                && v.isStripeGuestEnabled();
+                && v.isStripeGuestEnabled());
         boolean paypalEnabled = v != null && v.getPaypalAccountId() != null && v.isPaypalGuestEnabled();
         log.info("[GUEST-PROPERTY] Payment methods: stripe={} paypal={}", stripeEnabled, paypalEnabled);
 
@@ -359,8 +362,10 @@ public class GuestCheckoutService {
                 .depositPercent(property.getDepositPercent())
                 .stripeEnabled(stripeEnabled)
                 .paypalEnabled(paypalEnabled)
-                .stripePublishableKey(stripeEnabled ? systemConfigService.getActiveStripePublishableKey() : null)
-                .stripeConnectedAccountId(stripeEnabled ? v.getStripeAccountId() : null)
+                // The publishable key has to match the mode the payment intent is created in,
+                // or Stripe.js rejects the client secret.
+                .stripePublishableKey(stripeEnabled ? systemConfigService.stripePublishableKey(sandboxOrg) : null)
+                .stripeConnectedAccountId(stripeEnabled && v != null ? v.getStripeAccountId() : null)
                 .paypalClientId(paypalEnabled ? systemConfigService.getPaypalClientId() : null)
                 .bookingsEnabled(bookingsEnabled)
                 .customDomain(v != null && v.getDomainStatus() == com.smartlock.domain.enums.VerificationStatus.APPROVED
@@ -421,7 +426,8 @@ public class GuestCheckoutService {
                 .orElseThrow(() -> new AppException("This property cannot accept payments yet", HttpStatus.SERVICE_UNAVAILABLE));
 
         String provider = req.getPaymentProvider().toLowerCase();
-        validateProvider(provider, v);
+        boolean sandboxOrg = stripeService.isSandboxOrg(property.getOrganizationId());
+        validateProvider(provider, v, sandboxOrg);
 
         // Resolve and validate promo code if provided
         PromoCode promo = null;
@@ -474,7 +480,7 @@ public class GuestCheckoutService {
         // Log the exact account that will receive this payment — visible in prod logs for auditing.
         // A null/blank account here is a configuration bug: validateProvider() should have blocked it.
         if ("stripe".equals(provider)) {
-            if (v.getStripeAccountId() == null || v.getStripeAccountId().isBlank()) {
+            if (!sandboxOrg && (v.getStripeAccountId() == null || v.getStripeAccountId().isBlank())) {
                 log.error("[PAYMENT-ROUTING] bookingId={} provider=stripe MISSING stripeAccountId for org={} — aborting",
                         booking.getId(), property.getOrganizationId());
                 bookingRepository.delete(booking);
@@ -498,7 +504,8 @@ public class GuestCheckoutService {
         if ("stripe".equals(provider)) {
             try {
                 String clientSecret = stripeService.createGuestPaymentIntent(
-                        booking.getId(), total, currency, v.getStripeAccountId(), descriptor);
+                        property.getOrganizationId(), booking.getId(), total, currency,
+                        v != null ? v.getStripeAccountId() : null, descriptor);
                 return GuestInitiateResponse.builder()
                         .bookingId(booking.getId().toString())
                         .provider("stripe")
@@ -530,6 +537,19 @@ public class GuestCheckoutService {
         DirectBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new AppException("Booking not found", HttpStatus.NOT_FOUND));
         if (booking.getStatus() == DirectBookingStatus.CONFIRMED) return; // idempotent
+
+        // This endpoint is public and unauthenticated: without asking Stripe whether the
+        // intent actually settled, anyone who knows a booking id could mark it paid.
+        String connectedAccount = verificationRepository.findByOrganizationId(booking.getOrganizationId())
+                .map(HostVerification::getStripeAccountId).orElse(null);
+        boolean settled = stripeService.isPaymentIntentSettled(
+                booking.getOrganizationId(), paymentIntentId, connectedAccount,
+                booking.getTotalAmount(), booking.getCurrency());
+        if (!settled) {
+            log.warn("[GUEST-CONFIRM] REJECTED bookingId={} pi={} — Stripe does not show a settled payment",
+                    bookingId, paymentIntentId);
+            throw new AppException("Payment could not be verified", HttpStatus.PAYMENT_REQUIRED);
+        }
 
         booking.setPaymentIntentId(paymentIntentId);
         finalize(booking);
@@ -620,8 +640,9 @@ public class GuestCheckoutService {
         return "Direct Booking";
     }
 
-    private void validateProvider(String provider, HostVerification v) {
+    private void validateProvider(String provider, HostVerification v, boolean sandboxOrg) {
         if ("stripe".equals(provider)) {
+            if (sandboxOrg) return;   // charged to the platform test account, no connected account involved
             if (v.getStripeAccountId() == null || !v.isStripeChargesEnabled() || !v.isStripePayoutsEnabled() || !v.isStripeGuestEnabled()) {
                 throw new AppException("Stripe is not available for this property", HttpStatus.BAD_REQUEST);
             }
