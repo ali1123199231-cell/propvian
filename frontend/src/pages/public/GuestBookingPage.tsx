@@ -5,6 +5,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js'
 import axios from 'axios'
 import toast, { Toaster } from 'react-hot-toast'
+import { ruleText } from '@/lib/houseRules'
 import { formatPrice } from '@/lib/currency'
 import {
   MapPin, Star, Users, BedDouble, Bath, ChevronLeft, ChevronRight,
@@ -640,20 +641,17 @@ export function GuestBookingPage({ slug }: { slug: string }) {
             <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">House rules</p>
               <div className="space-y-1.5">
-                {prop.houseRules.map((r, i) => {
-                  const label = r.ruleKey === 'PETS' ? 'Pets' : r.ruleKey === 'SMOKING' ? 'Smoking' :
-                    r.ruleKey === 'PARTIES' ? 'Parties / events' : r.ruleKey === 'QUIET_HOURS' ? 'Quiet hours' :
-                    r.ruleKey === 'CHILDREN' ? 'Children' : r.ruleKey.replace(/_/g, ' ')
-                  return (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className={r.allowed ? 'text-emerald-600' : 'text-red-500'}>{r.allowed ? '✓' : '✕'}</span>
-                      <span className={r.allowed ? 'text-gray-700' : 'text-gray-500 line-through-subtle'}>
-                        {label}{r.allowed ? ' allowed' : ' not allowed'}
-                      </span>
-                      {r.notes && <span className="text-xs text-gray-400 ml-1">({r.notes})</span>}
-                    </div>
-                  )
-                })}
+                {prop.houseRules.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm">
+                    <span className={r.allowed ? 'text-emerald-600' : 'text-red-500'}>{r.allowed ? '✓' : '✕'}</span>
+                    {/* No strikethrough: the phrasing already carries the negative
+                        ("No smoking"), and striking that through reads as a double negative. */}
+                    <span className={r.allowed ? 'text-gray-700' : 'text-gray-500'}>
+                      {ruleText(r.ruleKey, r.allowed)}
+                    </span>
+                    {r.notes && <span className="text-xs text-gray-400 ml-1">({r.notes})</span>}
+                  </div>
+                ))}
               </div>
             </div>
           )}

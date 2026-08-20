@@ -9,6 +9,7 @@ import {
   Sun, Thermometer, WashingMachine, Dumbbell, PawPrint, ArrowUp,
 } from 'lucide-react'
 import { logger } from '../../lib/logger'
+import { RULE_ICONS, ruleText } from '@/lib/houseRules'
 import { formatPriceWhole } from '../../lib/currency'
 
 const log = logger.child('WEBSITE')
@@ -555,34 +556,6 @@ function HostInfoSection({ cfg, primary, accent, font, btnStyle }: SectionBasePr
       </div>
     </section>
   )
-}
-
-const RULE_LABELS: Record<string, string> = {
-  SMOKING: 'Smoking', PARTIES: 'Parties / events', PETS: 'Pets',
-  QUIET_HOURS: 'Quiet hours', CHILDREN: 'Children',
-}
-const RULE_ICONS: Record<string, string> = {
-  SMOKING: '🚬', PARTIES: '🎉', PETS: '🐾', QUIET_HOURS: '🌙', CHILDREN: '👶',
-}
-
-/*
- * Each rule needs its own wording. A generic "<label> allowed / not allowed"
- * produces "Quiet hours allowed", which says the opposite of what the host set:
- * quiet hours being on means they are enforced, not permitted.
- */
-const RULE_PHRASES: Record<string, { yes: string; no: string }> = {
-  SMOKING:     { yes: 'Smoking allowed',          no: 'No smoking' },
-  PARTIES:     { yes: 'Parties / events allowed', no: 'No parties or events' },
-  PETS:        { yes: 'Pets welcome',             no: 'No pets' },
-  QUIET_HOURS: { yes: 'Quiet hours apply',        no: 'No set quiet hours' },
-  CHILDREN:    { yes: 'Children welcome',         no: 'Not suitable for children' },
-}
-
-function ruleText(ruleKey: string, allowed: boolean, notes?: string): string {
-  const phrase = RULE_PHRASES[ruleKey]
-  const label = RULE_LABELS[ruleKey] ?? ruleKey.replace(/_/g, ' ')
-  const base = phrase ? (allowed ? phrase.yes : phrase.no) : `${label}${allowed ? ' allowed' : ' not allowed'}`
-  return notes ? `${base} (${notes})` : base
 }
 
 function HouseRulesSection({ cfg, font, properties }: SectionBaseProps) {
