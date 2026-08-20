@@ -228,7 +228,7 @@ const COPY: Record<BusinessModel, {
       '$10 / month per property — flat fee, no surprises',
       'Stripe & PayPal direct to your account',
     ],
-    footer:    '© 2025 Propvian. Direct booking software for short-term rental hosts.',
+    footer:    '© 2026 Propvian. Direct booking software for short-term rental hosts.',
   },
   ttlock: {
     seoTitle:  'Propvian — Smart Lock Automation for Short-Term Rentals',
@@ -240,14 +240,31 @@ const COPY: Record<BusinessModel, {
       'Free for 1 month — no payment details required',
       'After trial: $2 per lock / month',
     ],
-    footer:    '© 2025 Propvian. Enterprise-grade access automation.',
+    footer:    '© 2026 Propvian. Enterprise-grade access automation.',
   },
+}
+
+// Paid and organic cold traffic arrives without an account, so opening on the
+// sign-in form is a dead end for exactly the visitor an ad just paid for.
+// Anyone whose auth store still holds a user on this device is treated as
+// returning and keeps the sign-in tab.
+function hasAccountOnDevice(): boolean {
+  try {
+    const raw = localStorage.getItem('propvian-auth')
+    if (!raw) return false
+    const state = JSON.parse(raw)?.state
+    return Boolean(state?.user || state?.accessToken)
+  } catch {
+    return false
+  }
 }
 
 // ─── Landing Page ─────────────────────────────────────────────────────────────
 
 export function LandingPage() {
-  const [tab, setTab]                       = useState<'signin' | 'signup'>('signin')
+  const [tab, setTab]                       = useState<'signin' | 'signup'>(
+    () => (hasAccountOnDevice() ? 'signin' : 'signup'),
+  )
   const [businessModel, setBusinessModel]   = useState<BusinessModel>('ttlock')
   const { fetchConfig }                     = useSystemStore()
   const { isAuthenticated }                 = useAuthStore()
