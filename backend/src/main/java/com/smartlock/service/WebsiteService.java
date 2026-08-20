@@ -170,7 +170,7 @@ public class WebsiteService {
                 .websiteId(config.getId())
                 .sectionType(req.getSectionType())
                 .title(req.getTitle())
-                .enabled(req.getEnabled() != null ? req.getEnabled() : !"hero".equals(req.getSectionType()))
+                .enabled(req.getEnabled() == null || req.getEnabled())
                 .position(req.getPosition() != null ? req.getPosition() : (int) count)
                 .config(req.getConfig() != null ? req.getConfig().toString() : defaultConfig(req.getSectionType()))
                 .build();
@@ -360,7 +360,9 @@ public class WebsiteService {
                     .websiteId(websiteId)
                     .sectionType(sectionType)
                     .position(i)
-                    .enabled(!sectionType.equals("hero"))
+                    // Every template leads with the hero; creating it disabled published sites
+                    // that open on their second section.
+                    .enabled(true)
                     .config(defaultConfig(sectionType))
                     .build());
         }

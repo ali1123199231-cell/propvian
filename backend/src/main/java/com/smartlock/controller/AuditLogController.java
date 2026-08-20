@@ -4,6 +4,7 @@ import com.smartlock.domain.AuditLog;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.dto.response.common.PageResponse;
 import com.smartlock.service.AuditLogService;
+import com.smartlock.service.OrganizationSecurityService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class AuditLogController {
 
     private final AuditLogService auditLogService;
+    private final OrganizationSecurityService orgSecurity;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AuditLog>>> list(
@@ -31,6 +33,7 @@ public class AuditLogController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
         log.debug("AuditLogController.list — orgId={}", orgId);
+        orgSecurity.requireOrgAdmin(orgId);
         var pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return ResponseEntity.ok(ApiResponse.success(
                 PageResponse.from(auditLogService.getByOrg(orgId, pageable))));

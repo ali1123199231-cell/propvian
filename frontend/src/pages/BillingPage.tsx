@@ -25,6 +25,7 @@ function TrialBanner({ billing }: { billing: BillingStatus }) {
     0,
     Math.ceil((new Date(billing.trialEnd).getTime() - Date.now()) / 86_400_000)
   )
+  const quota = billing.propertyQuota
   return (
     <div className="card p-4 bg-blue-50 border border-blue-200 flex items-start gap-3">
       <Clock size={18} className="text-blue-500 mt-0.5 flex-shrink-0" />
@@ -33,8 +34,10 @@ function TrialBanner({ billing }: { billing: BillingStatus }) {
           Free trial — {daysLeft} day{daysLeft !== 1 ? 's' : ''} remaining
         </p>
         <p className="text-xs text-blue-600 mt-0.5">
-          Trial ends {format(parseISO(billing.trialEnd), 'MMMM d, yyyy')}. Subscribe to keep
-          automation running and add more than 1 property.
+          Trial ends {format(parseISO(billing.trialEnd), 'MMMM d, yyyy')}.
+          {quota != null
+            ? ` You can have ${quota} active propert${quota === 1 ? 'y' : 'ies'} during the trial (${billing.activeProperties} active, drafts don't count) — subscribe to keep automation running and add more.`
+            : ' Subscribe to keep automation running once the trial ends.'}
         </p>
       </div>
     </div>
@@ -98,7 +101,9 @@ function QuotaEditor({ billing, orgId }: { billing: BillingStatus; orgId: string
     mutationFn: (q: number) => billingApi.updateQuota(orgId, q),
     onSuccess: (data) => {
       queryClient.setQueryData(['billing-status', orgId], data)
+      toast.success('Subscription updated')
     },
+    onError: (e: any) => toast.error(e.response?.data?.message || 'Could not update your subscription'),
   })
 
   const changed = qty !== billing.lockQuota
@@ -107,7 +112,8 @@ function QuotaEditor({ billing, orgId }: { billing: BillingStatus; orgId: string
     <div className="card p-6">
       <h3 className="font-semibold text-gray-800 mb-1">Manage Lock Quota</h3>
       <p className="text-sm text-gray-500 mb-4">
-        Adjust how many locks your plan includes. Billed at $2/lock/month.
+        Adjust how many locks your plan includes. Billed at $2/lock/month — saving changes updates
+        your subscription immediately and prorates the difference.
       </p>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-1">
@@ -424,7 +430,12 @@ function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: ()
         </div>
         <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100">
           <div className="text-center">
-            <p className="text-2xl font-bold text-gray-900">{activeCount}</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {activeCount}
+              {billing?.propertyQuota != null && (
+                <span className="text-base font-medium text-gray-400"> / {billing.propertyQuota}</span>
+              )}
+            </p>
             <p className="text-xs text-gray-400 mt-0.5">Active properties</p>
           </div>
           <div className="text-center border-x border-gray-100">
@@ -449,8 +460,9 @@ function DirectBookingBilling({ orgId, onPortal }: { orgId: string; onPortal: ()
         </h3>
         <ul className="space-y-2">
           {[
-            'Billed monthly based on the number of active properties',
-            'Add or remove properties anytime — billing adjusts automatically',
+            'Billed monthly for each active property — drafts and paused properties are free',
+            'Your plan covers a set number of active properties; to publish more, raise your quantity first and the difference is prorated',
+            'Pausing or deleting a property frees its slot, but your bill only drops once you lower the quantity',
             'No setup fees, no contracts, cancel anytime',
             'Stripe & PayPal guest payments go directly to your account — Propvian never touches guest funds',
           ].map((item, i) => (

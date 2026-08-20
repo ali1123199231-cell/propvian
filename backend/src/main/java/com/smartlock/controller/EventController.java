@@ -3,6 +3,7 @@ package com.smartlock.controller;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.ActivityEventService;
+import com.smartlock.service.OrganizationSecurityService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class EventController {
 
     private final ActivityEventService activityEventService;
+    private final OrganizationSecurityService orgSecurity;
 
     @PostMapping("/track")
     public ResponseEntity<ApiResponse<Void>> track(
@@ -30,6 +32,7 @@ public class EventController {
             @RequestBody TrackRequest body,
             @AuthenticationPrincipal CustomUserDetails principal) {
         log.info("EventController.track — orgId={}, eventType={}", orgId, body.eventType());
+        orgSecurity.requireOrgAccess(orgId);
         String actorName = principal.getEmail();
         activityEventService.track(orgId, principal.getUserId(), actorName,
                 body.eventType(), body.metadata());

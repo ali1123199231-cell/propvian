@@ -1,5 +1,7 @@
 package com.smartlock.service;
 
+import com.smartlock.domain.OrganizationMember;
+import com.smartlock.domain.enums.MemberRole;
 import com.smartlock.exception.AppException;
 import com.smartlock.repository.OrganizationMemberRepository;
 import com.smartlock.repository.PropertyRepository;
@@ -58,6 +60,25 @@ public class OrganizationSecurityService {
             throw new AppException("Access denied to property", HttpStatus.FORBIDDEN, "PROPERTY_ACCESS_DENIED");
         }
         log.debug("OrgSecurity.requirePropertyAccess — granted propertyId={} orgId={}", propertyId, orgId);
+    }
+
+    /** Throws 403 unless the current principal is an OWNER/ADMIN member of orgId (global admins bypass). */
+    public void requireOrgAdmin(UUID orgId) {
+        CustomUserDetails principal = currentPrincipal();
+        if (isAdmin(principal)) {
+            log.debug("OrgSecurity.requireOrgAdmin — ADMIN bypass orgId={}", orgId);
+            return;
+        }
+        OrganizationMember member = memberRepository.findByOrganizationIdAndUserId(orgId, principal.getUserId())
+                .orElseThrow(() -> {
+                    log.warn("OrgSecurity.requireOrgAdmin — DENIED (not a member) userId={} orgId={}", principal.getUserId(), orgId);
+                    return new AppException("Access denied to organization", HttpStatus.FORBIDDEN, "ORG_ACCESS_DENIED");
+                });
+        if (member.getRole() != MemberRole.OWNER && member.getRole() != MemberRole.ADMIN) {
+            log.warn("OrgSecurity.requireOrgAdmin — DENIED (role={}) userId={} orgId={}", member.getRole(), principal.getUserId(), orgId);
+            throw new AppException("Admin access required", HttpStatus.FORBIDDEN, "ORG_ADMIN_REQUIRED");
+        }
+        log.debug("OrgSecurity.requireOrgAdmin — granted userId={} orgId={} role={}", principal.getUserId(), orgId, member.getRole());
     }
 
     public UUID currentOrgId() {

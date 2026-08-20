@@ -4,6 +4,7 @@ import com.smartlock.dto.response.analytics.DashboardStatsResponse;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.AnalyticsService;
+import com.smartlock.service.OrganizationSecurityService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +24,14 @@ import java.util.UUID;
 public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
+    private final OrganizationSecurityService orgSecurity;
 
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<DashboardStatsResponse>> getDashboardStats(
             @PathVariable UUID orgId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.debug("AnalyticsController.getDashboardStats — orgId={}", orgId);
+        orgSecurity.requireOrgAccess(orgId);
         return ResponseEntity.ok(ApiResponse.success(
                 analyticsService.getDashboardStats(orgId, userDetails.getUserId())));
     }

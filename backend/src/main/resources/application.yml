@@ -158,6 +158,13 @@ paypal:
   base-url: ${PAYPAL_BASE_URL:https://api-m.paypal.com}
 
 app:
+  billing:
+    # Properties allowed during the 30-day trial. Small managers must be able to load their whole
+    # portfolio before deciding to pay; a cap of 1 makes the trial useless to the target customer.
+    trial-property-quota: ${TRIAL_PROPERTY_QUOTA:5}
+    # Unpublished properties allowed on top of the quota. Drafts are not billed, so they must not
+    # consume quota; this only stops an account creating rows without limit.
+    draft-headroom: ${DRAFT_HEADROOM:10}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
   mail:

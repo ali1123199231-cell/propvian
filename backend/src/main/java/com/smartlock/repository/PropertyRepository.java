@@ -20,6 +20,7 @@ public interface PropertyRepository extends JpaRepository<Property, UUID> {
     List<Property> findByOrganizationIdAndStatus(UUID organizationId, PropertyStatus status);
     long countByOrganizationId(UUID organizationId);
     long countByOrganizationIdAndStatus(UUID organizationId, PropertyStatus status);
+    long countByOrganizationIdAndStatusNot(UUID organizationId, PropertyStatus status);
     Optional<Property> findBySlug(String slug);
     Optional<Property> findByIcalExportToken(String token);
 

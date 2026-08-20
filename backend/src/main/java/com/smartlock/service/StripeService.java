@@ -279,6 +279,55 @@ public class StripeService {
         });
     }
 
+    /**
+     * Changes the billed quantity on the live Stripe subscription, then stores what Stripe applied.
+     * Stripe owns the quantity — {@link #syncSubscriptionStatus} copies it back — so this must go
+     * to the API, never to the local row alone.
+     */
+    @Transactional
+    public void updateSubscriptionQuantity(UUID orgId, int quantity) throws StripeException {
+        initStripe();
+        if (resolvedSecretKey().isBlank()) {
+            throw new AppException("Stripe payments are not configured on this server.",
+                    HttpStatus.SERVICE_UNAVAILABLE, "PAYMENT_NOT_CONFIGURED");
+        }
+        Subscription sub = billingService.getSubscription(orgId);
+        String stripeSubId = sub.getStripeSubscriptionId();
+        if (stripeSubId == null || stripeSubId.isBlank()) {
+            throw new AppException("No Stripe subscription found for this organization.",
+                    HttpStatus.BAD_REQUEST, "NO_STRIPE_SUBSCRIPTION");
+        }
+
+        com.stripe.model.Subscription stripeSub = com.stripe.model.Subscription.retrieve(stripeSubId);
+        if (stripeSub.getItems().getData().isEmpty()) {
+            throw new AppException("Stripe subscription has no billable items.",
+                    HttpStatus.SERVICE_UNAVAILABLE, "STRIPE_SUBSCRIPTION_INVALID");
+        }
+        String itemId = stripeSub.getItems().getData().get(0).getId();
+
+        com.stripe.model.Subscription updated = stripeSub.update(
+                com.stripe.param.SubscriptionUpdateParams.builder()
+                        .addItem(com.stripe.param.SubscriptionUpdateParams.Item.builder()
+                                .setId(itemId)
+                                .setQuantity((long) quantity)
+                                .build())
+                        // Charge or credit the difference for the rest of the period rather than
+                        // letting the customer use extra capacity free until the next invoice.
+                        .setProrationBehavior(
+                                com.stripe.param.SubscriptionUpdateParams.ProrationBehavior.CREATE_PRORATIONS)
+                        .build());
+
+        long applied = updated.getItems().getData().isEmpty()
+                ? quantity : updated.getItems().getData().get(0).getQuantity();
+        sub.setLockQuota((int) applied);
+        if (updated.getCurrentPeriodStart() != null)
+            sub.setCurrentPeriodStart(Instant.ofEpochSecond(updated.getCurrentPeriodStart()));
+        if (updated.getCurrentPeriodEnd() != null)
+            sub.setCurrentPeriodEnd(Instant.ofEpochSecond(updated.getCurrentPeriodEnd()));
+        subscriptionRepository.save(sub);
+        log.info("Updated Stripe subscription quantity: org={} requested={} applied={}", orgId, quantity, applied);
+    }
+
     /** Fetches the current subscription state directly from Stripe and syncs it to the DB. */
     @Transactional
     public void syncSubscriptionStatus(UUID orgId) {

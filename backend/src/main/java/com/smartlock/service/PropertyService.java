@@ -50,9 +50,8 @@ public class PropertyService {
     public PropertyResponse createProperty(UUID orgId, CreatePropertyRequest request, UUID userId) {
         log.info("createProperty — orgId={} userId={} name={}", orgId, userId, request.getName());
         orgSecurity.requireOrgAccess(orgId);
-        long currentCount = propertyRepository.countByOrganizationId(orgId);
-        log.debug("createProperty — current property count={}", currentCount);
-        billingService.enforceCanAddProperty(orgId, currentCount);
+        PropertyStatus status = parseStatus(request.getStatus(), PropertyStatus.DRAFT);
+        billingService.enforceCanAddProperty(orgId, status == PropertyStatus.ACTIVE);
         Property property = Property.builder()
                 .organizationId(orgId)
                 .name(request.getName())
@@ -87,9 +86,7 @@ public class PropertyService {
                 .latitude(request.getLatitude())
                 .longitude(request.getLongitude())
                 .slug(request.getSlug())
-                .status(request.getStatus() != null
-                        ? PropertyStatus.valueOf(request.getStatus().toUpperCase())
-                        : PropertyStatus.DRAFT)
+                .status(status)
                 .build();
 
         PropertyResponse response = toResponse(propertyRepository.save(property));
@@ -101,6 +98,15 @@ public class PropertyService {
         }
 
         return response;
+    }
+
+    private PropertyStatus parseStatus(String raw, PropertyStatus fallback) {
+        if (raw == null || raw.isBlank()) return fallback;
+        try {
+            return PropertyStatus.valueOf(raw.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new AppException("Invalid property status: " + raw, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -161,11 +167,12 @@ public class PropertyService {
         if (request.getLongitude() != null)            property.setLongitude(request.getLongitude());
         if (request.getSlug() != null)                 property.setSlug(request.getSlug());
         if (request.getStatus() != null) {
-            try {
-                property.setStatus(PropertyStatus.valueOf(request.getStatus().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                throw new AppException("Invalid property status: " + request.getStatus(), HttpStatus.BAD_REQUEST);
+            PropertyStatus next = parseStatus(request.getStatus(), property.getStatus());
+            // Publishing is the moment billing starts, so that is where the quota is checked.
+            if (next == PropertyStatus.ACTIVE && property.getStatus() != PropertyStatus.ACTIVE) {
+                billingService.enforceCanActivateProperty(orgId);
             }
+            property.setStatus(next);
         }
 
         return toResponse(propertyRepository.save(property));

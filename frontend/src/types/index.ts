@@ -284,6 +284,10 @@ export interface BillingStatus {
   currentPeriodEnd?: string
   lockQuota: number
   usedLocks: number
+  /** Max ACTIVE properties on the current plan. Absent/null means uncapped. */
+  propertyQuota?: number | null
+  /** Properties currently ACTIVE, i.e. the ones being billed. Drafts are excluded. */
+  activeProperties: number
   cancelAtPeriodEnd: boolean
   paymentProvider?: 'STRIPE' | 'PAYPAL'
   failedPaymentAt?: string

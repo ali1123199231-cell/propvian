@@ -16,6 +16,9 @@ public class BillingStatusResponse {
     private Instant currentPeriodEnd;
     private Integer lockQuota;
     private long usedLocks;
+    /** Max ACTIVE properties; null means uncapped. Drafts are not billed and do not count. */
+    private Integer propertyQuota;
+    private long activeProperties;
     private boolean cancelAtPeriodEnd;
     private String paymentProvider;
     private Instant failedPaymentAt;

@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
@@ -19,6 +20,8 @@ import java.util.UUID;
 public class JwtTokenProvider {
 
     private static final String BLACKLIST_PREFIX = "auth:blacklist:";
+    /** HS512 signing keys must be at least 512 bits. */
+    private static final int MIN_SECRET_BYTES = 64;
 
     private final SecretKey key;
     private final long accessExpirationMs;
@@ -28,7 +31,15 @@ public class JwtTokenProvider {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-expiration-ms}") long accessExpirationMs,
             StringRedisTemplate redisTemplate) {
-        byte[] keyBytes = secret.getBytes();
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        // HS512 needs a 512-bit key. Without this check a short secret starts up fine and then
+        // throws WeakKeyException on the first token signed, i.e. every login and registration
+        // returns 500 on a server that looks healthy.
+        if (keyBytes.length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException(
+                    "jwt.secret must be at least " + MIN_SECRET_BYTES + " bytes for HS512 but is "
+                            + keyBytes.length + ". Set a longer JWT_SECRET.");
+        }
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessExpirationMs = accessExpirationMs;
         this.redisTemplate = redisTemplate;

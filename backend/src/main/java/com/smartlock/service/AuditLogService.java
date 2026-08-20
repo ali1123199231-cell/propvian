@@ -25,8 +25,16 @@ public class AuditLogService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(UUID orgId, UUID actorId, String actorEmail, String action,
                     String entityType, UUID entityId) {
-        log.debug("AuditLogService.log — orgId={} actor={} action={} entityType={} entityId={}",
-                orgId, actorId, action, entityType, entityId);
+        logResult(orgId, actorId, actorEmail, action, entityType, entityId, null, null, true, null);
+    }
+
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logResult(UUID orgId, UUID actorId, String actorEmail, String action,
+                    String entityType, UUID entityId, String ipAddress, String userAgent,
+                    boolean success, String errorMessage) {
+        log.debug("AuditLogService.logResult — orgId={} actor={} action={} entityType={} entityId={} success={}",
+                orgId, actorId, action, entityType, entityId, success);
         AuditLog entry = AuditLog.builder()
                 .organizationId(orgId)
                 .actorId(actorId)
@@ -34,7 +42,10 @@ public class AuditLogService {
                 .action(action)
                 .entityType(entityType)
                 .entityId(entityId)
-                .success(true)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .success(success)
+                .errorMessage(errorMessage)
                 .build();
         auditLogRepository.save(entry);
     }
