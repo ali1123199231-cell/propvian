@@ -1,0 +1,64 @@
+tier,company,website,country,city_region,property_count,count_source,email,booking_setup,incumbent_software,companies_house_no,entity_status,notes
+A,North Wales Holiday Cottages Ltd,northwalesholidaycottages.co.uk,UK,Deganwy Conwy,10,counted on /cottages,info@northwalesholidaycottages.co.uk,enquiry_form,none,09827850,active Ltd inc 2015 Deganwy,SEND NOW - all four qualifiers met
+A,Wayford Marine Ltd (Norfolk Holiday Accommodation),norfolkholidayaccommodation.co.uk,UK,Norfolk Broads,6,named on homepage,enquiries@norfolkholidayaccommodation.co.uk,enquiry_form,none,04193213,active Ltd inc 2001,SEND NOW - says book direct with owners but has no mechanism
+A,The Suffolk Cottage Collection Ltd,thesuffolkcottagecollection.co.uk,UK,Badingham Suffolk,~10,named on homepage,hello@thesuffolkcottagecollection.co.uk,enquiry_form,none,13775642,active Ltd inc 2021,SEND NOW - confirm exact count on the call
+A,My Favourite Cottages Ltd,myfavouritecottages.co.uk,UK,Devon/Somerset/Cornwall/Scotland,71,sitemap property URLs,info@myfavouritecottages.co.uk,enquiry_form,none,11254583,active Ltd,"SEND NOW - site says ""We're working on our search""; no live booking"
+B,Peak Cottage Collection,peakcottagecollection.co.uk,UK,Peak District,6,named on homepage,info@peakcottagecollection.co.uk,enquiry_form,none,NOT FOUND,no CH match on that name,Qualifies operationally - confirm legal entity before sending (PECR)
+B,Serviced Lettings,serviced-lettings.co.uk,UK,Edinburgh,5,Edinburgh page,stay@serviced-lettings.com,enquiry_form,none,UNCONFIRMED,several similar CH names,Qualifies operationally - no confident CH match yet
+B,Best of Suffolk,bestofsuffolk.co.uk,UK,Suffolk,unknown,,unknown,unknown,none detected,,,JS-rendered - needs a manual look
+B,Yorkshire Coastal Cottages,yorkshirecoastalcottages.com,UK,Whitby Yorkshire,unknown,,unknown,unknown,none detected,,,needs a manual look
+B,Crabpot Cottages,crabpotcottages.co.uk,UK,North Norfolk coast,unknown,,unknown,unknown,none detected,,,blocks automated access - manual look only
+B,Stay in Somerset,stayinsomerset.co.uk,UK,Somerset,unknown,,unknown,unknown,none detected,,,blocks automated access - manual look only
+C,Lake District Holiday Cottages,lakedistrictholidaycottages.uk,UK,Eden Valley Cumbria,not stated,,none published (phone only),enquiry_form,none,NOT FOUND,,DO NOT EMAIL - enquiry-only and no engine but publishes no email address at all
+B,Which Cottage,whichcottage.co.uk,UK,North West England,unknown,,unknown,unknown,none detected,,,needs a manual look
+B,Chic Scotland,chicscotland.com,UK,Scotland,unknown,,unknown,unknown,none detected,,,needs a manual look
+B,Cornish Cottage Holidays,cornishcottageholidays.co.uk,UK,Cornwall,unknown,,unknown,unknown,none detected,,,needs a manual look
+B,Holiday Cottages in Devon and Cornwall,holidaycottagesindevonandcornwall.co.uk,UK,Devon/Cornwall,unknown,,unknown,unknown,none detected,,,needs a manual look
+B,Wales Gower Cottages,walesgowercottages.co.uk,UK,Gower,unknown,,unknown,unknown,none detected,,,needs a manual look
+B,Scotland Holiday Cottage,scotland-holiday-cottage.com,UK,Scotland,unknown,,unknown,unknown,none detected,,,needs a manual look
+C,Tenby Town Cottages,tenbytowncottages.wales,UK,Tenby Pembrokeshire,8,"""eight fantastically central holiday cottages""",info@tenbytowncottages.wales,email_only,none,NOT FOUND,no CH match,DO NOT EMAIL - qualifies operationally but is not a company; PECR treats as individual
+C,Isle of Mull Holidays,isleofmullholidays.com,UK,Isle of Mull,8,named on homepage,enquiries@isleofmullholidays.com,enquiry_form,none,NOT FOUND,no CH match,DO NOT EMAIL - same reason
+C,Cottage Retreats,cottageretreats.net,UK,Pembrokeshire,not stated,,cottageretreatspembs@gmail.com,enquiry_form,none,NOT FOUND,no CH match,DO NOT EMAIL - gmail mailbox and no company
+C,Snowdonia Holidays,snowdoniaholidayseryri.co.uk,UK,Snowdonia,3,named on homepage,roberts@hafodyporth.plus.com,enquiry_form,none,NOT FOUND,,DO NOT EMAIL - under 5 properties and a personal mailbox
+D,Hill's Serviced Stays Ltd (Hilltop),hilltopapartments.co.uk,UK,Manchester,38,"""38 bespoke apartments & townhouses""",reservations@hilltopapts.co.uk,online_booking,own search/booking,11853641,active Ltd,DQ - books online; would have been the biggest lead here
+D,Waterside Breaks Ltd,watersidebreaks.com,UK,Devon/Cornwall/Somerset/Dorset,80+,homepage,holidays@watersidebreaks.com,online_booking,secure.booking-system.net,5795253,active Ltd,DQ - online booking
+D,Host My Home,hostmyhome.co.uk,UK,Penzance Cornwall,over 40,homepage,info@hostmyhome.co.uk,online_booking,Guesty,,,DQ - Guesty
+D,Cornish Secrets,cornishsecrets.co.uk,UK,Bude Cornwall,not stated,,info@cornishsecrets.co.uk,enquiry_form,Anytime Booking,,,DQ - already pays for a booking engine
+D,Forever Cornwall Limited,forevercornwall.co.uk,UK,Falmouth Cornwall,not stated,,info@forevercornwall.co.uk,portal,SuperControl,,,DQ - SuperControl
+D,Wheelwrights Cottages Limited,wheelwrights.com,UK,Lake District,not stated,,enquiries@wheelwrights.com,online_booking,own,09751392,active Ltd,DQ - live availability and pay
+D,Cornish Collection Ltd,cornishcollection.co.uk,UK,Looe Cornwall,not stated,,enquiries@cornishcollection.co.uk,search_form,owner portal,04829229,active Ltd,DQ
+D,Aspects Holidays Ltd,aspects-holidays.co.uk,UK,St Ives Cornwall,not stated,,hello@aspects-holidays.co.uk,portal,owner portal subdomain,08170265,active Ltd,DQ
+D,Norfolk Cottage Agency,norfolkcottageagency.co.uk,UK,Norfolk,not stated,,hello@norfolkcottageagency.co.uk,portal,SuperControl,15444424,active Ltd,DQ - SuperControl
+D,Broads Escapes (Waterside Holidays Direct LLP),broadsescapes.co.uk,UK,Norfolk Broads,~15,homepage,bookings@broadsescapes.co.uk,online_booking,none named,OC356279,active LLP,DQ - reserve online offered
+D,Wales Cottages,walescottages.com,UK,Wales,not stated,,obfuscated,broken_widget,SuperControl,,,DQ - SuperControl detected on rescan
+D,Amazing Apartments,amazingapartments.co.uk,UK,Edinburgh & Aviemore,8+,homepage,contactus@amazingapartments.co.uk,online_booking,none named,,,DQ - own online booking
+D,Ocean Serviced Apartments,oceanservicedapts.com,UK,Edinburgh,not stated,,none published,online_booking,STAAH,,,DQ - STAAH and no email
+D,Destination Edinburgh Ltd,destinationedinburghapartments.co.uk,UK,Edinburgh,not stated,,enquiries@destinationedinburghapartments.co.uk,online_booking,Guestline,,,DQ - Guestline
+D,Wight Staycation / West Bay Cottages,wightstaycation.co.uk,UK,Isle of Wight,3+,homepage,info@wightstaycation.co.uk,online_booking,RMS Cloud,,,DQ - RMS Cloud
+D,The Spires,thespires.co.uk,UK,Birmingham/Glasgow/Aberdeen/Edinburgh/Cardiff,not stated,,info@thespires.co.uk,online_booking,Synxis,,,DQ - Synxis
+D,Stay Manchester,staymanchestercitycentre.co.uk,UK,Manchester,2,homepage,lets@staymanchestercitycentre.co.uk,online_booking,Hostaway,,,DQ - Hostaway and under 5
+D,Brook Farmhouse Cottages,brookfarmhousecottages.co.uk,UK,Isle of Wight,4,named on homepage,not published,enquiry_form,none,,,DQ - 4 cottages is under the 5+ bar
+D,DSC Holiday Cottages,yorkshiredalecottages.com,UK,Grassington Yorkshire,1,homepage,support@yorkshiredalecottages.com,enquiry_form,none,,,DQ - single property
+D,Your Perfect Stay,yourperfectstay.co.uk,UK,Birmingham & Liverpool,not stated,,not published,online_booking,Guesty,,,DQ - Guesty
+D,No 8 Waterloo Street,birminghamservicedapartments.co.uk,UK,Birmingham,30+,homepage,not published,online_booking,Guestline,,,DQ - Guestline
+D,Elms Farm Cottages,elmsfarmcottages.co.uk,UK,Boston Lincolnshire,14,listing page,carol@elmsfarmcottages.co.uk,online_booking,SuperControl,,,DQ - SuperControl and a personal mailbox
+D,Cumbrian Cottage Holidays,cumbriancottageholidays.co.uk,UK,Cumbria,12,listing page,info@cumbriancottageholidays.co.uk,portal,SuperControl,,,DQ - SuperControl
+D,Argyll Self-Catering Holidays,argyllselfcateringholidays.co.uk,UK,Argyll,not stated,,info@argyllselfcateringholidays.co.uk,portal,SuperControl,,,DQ - SuperControl
+D,Blarghour Farm,self-catering-argyll.co.uk,UK,Loch Awe Argyll,5,listing page,not published,online_booking,SuperControl,,,DQ - SuperControl
+D,Horizon Cottages,horizoncottages.com,UK,Argyll & Bute,43,listing page,info@horizoncottages.com,portal,holidaycottages.co.uk,,,DQ - agency platform
+D,Luxury Cottages,luxurycottages.com,UK,UK-wide,27,listing page,not published,online_booking,SuperControl,,,DQ - SuperControl
+D,Cottages Made For Two,cottagesmadefortwo.com,UK,Cumbria,8,listing page,not published,online_booking,Freetobook,,,DQ - Freetobook
+D,Skye Self Catering,skye-self-catering.com,UK,Isle of Skye,not stated,,not published,online_booking,Freetobook,,,DQ - Freetobook
+D,East Jordeston Cottages,ejcottages.com,UK,Tenby Pembrokeshire,not stated,,hannah@ejcottages.com,enquiry_form,SuperControl,,,DQ - SuperControl and a personal mailbox
+D,The Bringewood,thebringewood.co.uk,UK,Ludlow Shropshire,7,listing page,not published,online_booking,SuperControl,,,DQ - SuperControl
+D,Gower Holidays,gowerholidays.com,UK,Gower Peninsula,71,listing page,not published,online_booking,Elina,,,DQ - Elina
+D,West Wales Holiday Cottages,westwalesholidaycottages.co.uk,UK,Cardigan Bay,650+,homepage,not published,online_booking,holidaycottages.co.uk,,,DQ
+D,Peak Venues,peakvenues.co.uk,UK,Peak District,not stated,,hello@peakvenues.co.uk,online_booking,SuperControl,,,DQ - SuperControl
+D,Short Let Space,shortletspace.co.uk,UK,Cotswolds,not stated,,stay@shortletspace.co.uk,online_booking,SuperControl,,,DQ - SuperControl
+D,StayCotswold,staycotswold.com,UK,Cotswolds,not stated,,stay@staycotswold.com,online_booking,SuperControl,,,DQ - SuperControl
+D,King John's Cottages,kingjohnscottages.co.uk,UK,Burford Cotswolds,not stated,,not published,online_booking,Freetobook,,,DQ - Freetobook
+D,Reeth Holiday Cottages,reethholidaycottages.co.uk,UK,Reeth Yorkshire Dales,4,homepage,info@reethholidaycottages.co.uk,online_booking,SuperControl,,,DQ - SuperControl
+D,Country Cottages Online (XE Website Solutions Ltd),countrycottagesonline.com,UK,Essex (directory),11 in Lincolnshire,region page,not published,online_booking,none named,03991504,active Ltd - advertising agency,DQ - a directory/ad agency not an operator
+D,Heartland Cabin Rentals,heartlandrentals.com,US,Gatlinburg TN,not stated,,none published,online_booking,Book on the Bright Side,,,DQ - also no email published
+D,Bear Camp Cabin Rentals,bearcampcabins.com,US,Pigeon Forge TN,not stated,,reservations@bearcampcabins.com,online_booking,own,,,DQ
+D,Carolina Mornings,carolinamornings.com,US,Asheville NC,200+,homepage,none published,online_booking,TrackHS,,,DQ - also no email published

@@ -101,3 +101,45 @@ made any spend unmeasurable — the CSP blocked every Google Ads conversion beac
 `captureAttribution()` was never called in production so `users.gclid` was never
 populated, and the landing page opened on a sign-in form for visitors with no
 account. See commits `dd80470` and `0c44ccd`.
+
+
+---
+
+# Final tally — 63 operators researched (2026-08-20)
+
+Full data in `batch1-leads.csv`, tiered. Discovery used sanctioned search plus a
+robots.txt-respecting pre-filter; sites that refuse automated access were skipped,
+not worked around.
+
+| Tier | Count | Meaning |
+|---|---|---|
+| A | 4 | Every qualifier met **and** an active Ltd confirmed at Companies House — sendable today |
+| B | 12 | Passes the cheap filter but is JavaScript-rendered or blocks bots; needs a human to look |
+| C | 5 | Qualifies operationally but **must not be emailed** — not incorporated, or no business mailbox |
+| D | 42 | Disqualified, overwhelmingly because they already run booking software |
+
+## Two filters compound, and the second one was the surprise
+
+**67% (42/63) already run a booking engine or sell online.** SuperControl alone
+accounts for a dozen; then Guesty, Freetobook, Guestline, STAAH, Synxis, TrackHS,
+Bookalet, Elina, RMS Cloud, Hostaway, Anytime Booking, Book on the Bright Side.
+
+**Of the operators that survive that filter, roughly half are not limited
+companies at all.** Tenby Town Cottages (8 cottages), Isle of Mull Holidays
+(8 cottages) and Cottage Retreats all qualify on every operational test and all
+had to be moved to "do not email", because PECR treats a sole trader as an
+individual and unsolicited B2B email to them is not lawful without consent.
+
+That second filter was not anticipated in the original playbook, and it is what
+makes the ICP genuinely thin: **the small, un-tooled operator that needs Propvian
+most is disproportionately the one that never incorporated.**
+
+## What 30 sendable leads would actually cost
+
+Measured Tier A rate is **4 in 63, about 6%**. If the 12 unresolved Tier B leads
+convert at the same A:C ratio observed so far, they would yield perhaps 5 more,
+lifting the effective rate to roughly 14%. Either way, **30 sendable leads means
+assessing somewhere between 210 and 500 operator websites.** The playbook budgeted
+13 hours for 200 leads at "15 qualified leads/hour". The real rate is closer to
+**1-2 qualified leads per hour**, and a large share of that time is spent on sites
+that block automated access and must be opened by hand.
