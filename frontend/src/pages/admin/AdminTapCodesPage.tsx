@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { CreditCard, Download, Loader2, Printer, QrCode } from 'lucide-react'
+import { CreditCard, Download, Loader2, Nfc, Printer, QrCode } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { adminTapCodesApi } from '@/api/guestPages'
 import type { TapCodeBatch } from '@/types/guestPage'
+import { NfcBatchWriter } from './NfcBatchWriter'
 
 function pct(part: number, whole: number) {
   return whole ? `${Math.round((part / whole) * 100)}%` : '–'
@@ -32,6 +33,7 @@ export function AdminTapCodesPage() {
   const qc = useQueryClient()
   const [label, setLabel] = useState(`stands-${format(new Date(), 'yyyy-MM')}`)
   const [count, setCount] = useState(20)
+  const [writing, setWriting] = useState<string | null>(null)
 
   const { data: batches = [], isLoading } = useQuery({ queryKey: ['tap-code-batches'], queryFn: adminTapCodesApi.batches })
 
@@ -101,6 +103,8 @@ export function AdminTapCodesPage() {
                               className="rounded-lg border border-gray-600 p-2 text-gray-300 hover:bg-gray-700"><Download size={14} /></button>
                       <a href={`/print/tap-codes/${encodeURIComponent(b.batchLabel)}`} target="_blank" rel="noopener noreferrer" title="Print sticker sheet"
                          className="rounded-lg border border-gray-600 p-2 text-gray-300 hover:bg-gray-700"><Printer size={14} /></a>
+                      <button type="button" onClick={() => setWriting(b.batchLabel)} title="Write NFC tags (Chrome on Android)"
+                              className="rounded-lg border border-gray-600 p-2 text-gray-300 hover:bg-gray-700"><Nfc size={14} /></button>
                       <a href={`/print/tap-codes/${encodeURIComponent(b.batchLabel)}?layout=cards`} target="_blank" rel="noopener noreferrer" title="Print A6 stand cards"
                          className="rounded-lg border border-gray-600 p-2 text-gray-300 hover:bg-gray-700"><CreditCard size={14} /></a>
                     </div>
@@ -111,6 +115,7 @@ export function AdminTapCodesPage() {
           </table>
         </div>
       )}
+      {writing && <NfcBatchWriter batchLabel={writing} onClose={() => setWriting(null)} />}
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2, Printer } from 'lucide-react'
@@ -90,6 +91,8 @@ export function PrintGuestSignPage() {
 export function PrintTapCodeSheetPage() {
   const { batchLabel = '' } = useParams<{ batchLabel: string }>()
   const cards = new URLSearchParams(window.location.search).get('layout') === 'cards'
+  // Acrylic kits carry the tag behind the card; the 3D stand hides it under its tap pad
+  const [tapPad, setTapPad] = useState(new URLSearchParams(window.location.search).get('tap') === 'pad')
   const { isAuthenticated, user } = useAuthStore()
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   const { data: batch, isLoading } = useQuery({
@@ -110,6 +113,15 @@ export function PrintTapCodeSheetPage() {
         <style>{PRINT_CSS}</style>
         <Toolbar title={`Batch ${batch.batchLabel} · ${batch.codes.length} stand cards`}
                  hint="One A6 card per page. Print at 100%, cut along the dashed line, then write the same code's link onto the NFC tag behind it." />
+        <div className="no-print mx-auto -mt-3 mb-6 flex max-w-3xl gap-2 text-sm">
+          <span className="self-center text-gray-500">The NFC tag is</span>
+          {([[false, 'behind the card (acrylic kit)'], [true, 'in the stand\u2019s tap pad (3D stand)']] as const).map(([pad, label]) => (
+            <button key={label} type="button" onClick={() => setTapPad(pad)}
+                    className={tapPad === pad ? 'rounded-lg bg-primary-600 px-3 py-1.5 text-white' : 'rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-gray-700'}>
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-col items-center gap-6 print:gap-0">
           {batch.codes.map((c) => (
             <div key={c.code} className="border border-dashed border-gray-400 bg-white shadow-md print:shadow-none"
@@ -119,6 +131,7 @@ export function PrintTapCodeSheetPage() {
                 kicker: 'Welcome',
                 guideUrl: c.qrUrl,
                 showNfcHint: true,
+                nfcHintText: tapPad ? 'Tap your phone on the pad below, or scan' : undefined,
                 writeInWifi: true,
                 footer: `New stand? Owners scan it to set it up · code ${c.code} · propvian.com`,
               }} />

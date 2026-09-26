@@ -23,6 +23,7 @@ export interface SignContent {
   wifi?: { ssid: string; password?: string | null; security: WifiSecurity; hidden?: boolean } | null
   showWifiText?: boolean     // print network name and password as text too
   showNfcHint?: boolean      // only when a tag will actually sit under the card
+  nfcHintText?: string       // where the tag is, when it isn't behind the card (e.g. a 3D stand's tap pad)
   writeInWifi?: boolean      // blank lines for a pen: pre-printed stand cards can't know the WiFi
   accent?: string
   footer?: string
@@ -33,7 +34,7 @@ const mm = (n: number) => `${n}mm`
 function CallToAction({ c, compact }: { c: SignContent; compact?: boolean }) {
   const Icon = c.showNfcHint ? Nfc : ScanLine
   const text = c.guideUrl
-    ? (c.showNfcHint ? 'Tap your phone here or scan the code' : 'Scan with your phone camera')
+    ? (c.showNfcHint ? (c.nfcHintText ?? 'Tap your phone here or scan the code') : 'Scan with your phone camera')
     : 'Scan with your phone camera to join'
   return (
     <p className="flex items-center justify-center gap-[1.5mm] font-semibold text-gray-900" style={{ fontSize: compact ? '9pt' : '10.5pt' }}>
