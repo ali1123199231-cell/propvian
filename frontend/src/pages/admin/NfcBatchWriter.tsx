@@ -69,7 +69,12 @@ export function NfcBatchWriter({ batchLabel, onClose }: { batchLabel: string; on
           <Loader2 className="animate-spin text-gray-500" />
         ) : (
           <>
-            <p className="text-sm text-gray-400">Tag {i + 1} of {codes.length}. It goes behind the card printed with:</p>
+            <p className="text-sm text-gray-400">
+              Tag {i + 1} of {codes.length}.{' '}
+              {current.kitCode
+                ? <>Kit <span className="font-mono">{current.kitCode}</span>, tag {codes.filter((c) => c.kitCode === current.kitCode).findIndex((c) => c.code === current.code) + 1} of {codes.filter((c) => c.kitCode === current.kitCode).length}. Keep it with that kit's card:</>
+                : 'It goes behind the card printed with:'}
+            </p>
             <p className="my-3 text-center font-mono text-4xl font-bold tracking-widest">{current.code}</p>
             {written.has(current.code) && <p className="mb-2 text-center text-xs text-green-400">Already written in this session</p>}
             <button type="button" onClick={write} disabled={state === 'waiting'}

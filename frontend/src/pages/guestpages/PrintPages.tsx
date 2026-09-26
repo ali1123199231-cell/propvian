@@ -123,7 +123,10 @@ export function PrintTapCodeSheetPage() {
           ))}
         </div>
         <div className="flex flex-col items-center gap-6 print:gap-0">
-          {batch.codes.map((c) => (
+          {/* One card per unit: a kit (tag trio) gets a single card, with its kit code's QR */}
+          {batch.codes.filter((c) => !c.kitCode || c.kitCode === c.code).map((c) => {
+            const kit = c.kitCode ? batch.codes!.filter((k) => k.kitCode === c.kitCode).map((k) => k.code) : []
+            return (
             <div key={c.code} className="border border-dashed border-gray-400 bg-white shadow-md print:shadow-none"
                  style={{ breakAfter: 'page', breakInside: 'avoid' }}>
               <Sign variant="card" size="a6" c={{
@@ -133,10 +136,13 @@ export function PrintTapCodeSheetPage() {
                 showNfcHint: true,
                 nfcHintText: tapPad ? 'Tap your phone on the pad below, or scan' : undefined,
                 writeInWifi: true,
-                footer: `New stand? Owners scan it to set it up · code ${c.code} · propvian.com`,
+                footer: kit.length
+                  ? `New tags? Owners scan this card to set up all ${kit.length}: ${kit.join(' · ')} · propvian.com`
+                  : `New stand? Owners scan it to set it up · code ${c.code} · propvian.com`,
               }} />
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     )

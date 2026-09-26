@@ -39,9 +39,9 @@ public class AdminTapCodeController {
     @PostMapping("/batches")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<TapCodeBatchResponse>> generate(@Valid @RequestBody GenerateTapCodesRequest request) {
-        log.info("AdminTapCodeController.generate — label={} count={}", request.getBatchLabel(), request.getCount());
+        log.info("AdminTapCodeController.generate — label={} count={} kitSize={}", request.getBatchLabel(), request.getCount(), request.getKitSize());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(tapCodeService.generateBatch(request.getCount(), request.getBatchLabel())));
+                .body(ApiResponse.success(tapCodeService.generateBatch(request.getCount(), request.getKitSize(), request.getBatchLabel())));
     }
 
     @GetMapping("/batches/{batchLabel}")

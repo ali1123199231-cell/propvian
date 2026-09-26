@@ -60,9 +60,10 @@ export const adminTapCodesApi = {
     return data.data
   },
 
-  generate: async (count: number, batchLabel: string): Promise<TapCodeBatch> => {
-    log.info('generate batch — label=%s count=%d', batchLabel, count)
-    const { data } = await apiClient.post('/admin/tap-codes/batches', { count, batchLabel })
+  /** count units of kitSize codes each: 1 for stands and cards, 3 for a tag trio */
+  generate: async (count: number, batchLabel: string, kitSize = 1): Promise<TapCodeBatch> => {
+    log.info('generate batch — label=%s count=%d kitSize=%d', batchLabel, count, kitSize)
+    const { data } = await apiClient.post('/admin/tap-codes/batches', { count, batchLabel, kitSize })
     return data.data
   },
 

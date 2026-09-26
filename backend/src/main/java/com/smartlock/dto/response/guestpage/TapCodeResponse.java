@@ -18,6 +18,7 @@ public class TapCodeResponse {
     private String qrUrl;         // what a printed QR code should encode
     private String nfcUrl;        // what an NFC tag should hold
     private String batchLabel;
+    private String kitCode;
     private Instant claimedAt;
     private long views30d;
 }

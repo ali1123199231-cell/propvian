@@ -33,12 +33,13 @@ export function AdminTapCodesPage() {
   const qc = useQueryClient()
   const [label, setLabel] = useState(`stands-${format(new Date(), 'yyyy-MM')}`)
   const [count, setCount] = useState(20)
+  const [kitSize, setKitSize] = useState(1)
   const [writing, setWriting] = useState<string | null>(null)
 
   const { data: batches = [], isLoading } = useQuery({ queryKey: ['tap-code-batches'], queryFn: adminTapCodesApi.batches })
 
   const generate = useMutation({
-    mutationFn: () => adminTapCodesApi.generate(count, label.trim()),
+    mutationFn: () => adminTapCodesApi.generate(count, label.trim(), kitSize),
     onSuccess: (b: TapCodeBatch) => {
       qc.invalidateQueries({ queryKey: ['tap-code-batches'] })
       toast.success(`${b.issued} codes created in ${b.batchLabel}`)
@@ -62,7 +63,15 @@ export function AdminTapCodesPage() {
                  maxLength={100} pattern="[A-Za-z0-9 _.\-]+" onChange={(e) => setLabel(e.target.value)} />
         </label>
         <label>
-          <span className="mb-1 block text-xs font-medium text-gray-400">How many</span>
+          <span className="mb-1 block text-xs font-medium text-gray-400">Each unit is</span>
+          <select className="rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-gray-100" value={kitSize}
+                  onChange={(e) => setKitSize(Number(e.target.value))}>
+            <option value={1}>a stand or card (1 code)</option>
+            <option value={3}>a tag trio (3 codes, set up together)</option>
+          </select>
+        </label>
+        <label>
+          <span className="mb-1 block text-xs font-medium text-gray-400">How many units</span>
           <input type="number" min={1} max={1000} className="w-28 rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-sm text-gray-100"
                  value={count} onChange={(e) => setCount(Math.max(1, Math.min(1000, Number(e.target.value) || 1)))} />
         </label>

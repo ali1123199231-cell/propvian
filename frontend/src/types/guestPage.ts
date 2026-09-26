@@ -24,6 +24,7 @@ export interface TapCodeInfo {
   qrUrl: string
   nfcUrl: string
   batchLabel?: string | null
+  kitCode?: string | null
   claimedAt?: string | null
   views30d: number
 }

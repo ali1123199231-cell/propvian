@@ -20,7 +20,9 @@ public interface TapCodeRepository extends JpaRepository<TapCode, String> {
 
     Optional<TapCode> findFirstByPropertyIdAndKindOrderByCreatedAtAsc(UUID propertyId, TapCodeKind kind);
 
-    List<TapCode> findByBatchLabelOrderByCodeAsc(String batchLabel);
+    /** Kit members stay next to each other, in the order the cards print and the tags get written. */
+    @Query("SELECT t FROM TapCode t WHERE t.batchLabel = :batch ORDER BY COALESCE(t.kitCode, t.code), t.code")
+    List<TapCode> findBatchInKitOrder(@Param("batch") String batchLabel);
 
     boolean existsByBatchLabel(String batchLabel);
 
@@ -31,6 +33,19 @@ public interface TapCodeRepository extends JpaRepository<TapCode, String> {
            "WHERE t.code = :code AND t.kind = com.smartlock.domain.enums.TapCodeKind.PRODUCT AND t.organizationId IS NULL")
     int claimIfUnclaimed(@Param("code") String code, @Param("orgId") UUID orgId, @Param("propertyId") UUID propertyId,
                          @Param("userId") UUID userId, @Param("now") Instant now);
+
+    /** Claims the still-unclaimed rest of a kit together with the code that was tapped. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE TapCode t SET t.organizationId = :orgId, t.propertyId = :propertyId, " +
+           "t.claimedAt = :now, t.claimedBy = :userId " +
+           "WHERE t.kitCode = :kitCode AND t.kind = com.smartlock.domain.enums.TapCodeKind.PRODUCT AND t.organizationId IS NULL")
+    int claimKitIfUnclaimed(@Param("kitCode") String kitCode, @Param("orgId") UUID orgId, @Param("propertyId") UUID propertyId,
+                            @Param("userId") UUID userId, @Param("now") Instant now);
+
+    /** Moves a whole kit between properties of the org that owns it. */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE TapCode t SET t.propertyId = :propertyId WHERE t.kitCode = :kitCode AND t.organizationId = :orgId")
+    int moveKit(@Param("kitCode") String kitCode, @Param("orgId") UUID orgId, @Param("propertyId") UUID propertyId);
 
     interface BatchSummary {
         String getBatchLabel();

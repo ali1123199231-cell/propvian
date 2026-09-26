@@ -213,7 +213,7 @@ function StandsSection({ page }: { page: GuestPage }) {
             {page.codes.map((c) => (
               <tr key={c.code} className="border-b border-gray-100 last:border-0">
                 <td className="py-2.5 pr-4 font-mono">{c.code}</td>
-                <td className="py-2.5 pr-4 text-gray-600">{c.kind === 'PROPERTY' ? 'This page’s own link, QR and NFC' : `Propvian stand${c.batchLabel ? ` · ${c.batchLabel}` : ''}`}</td>
+                <td className="py-2.5 pr-4 text-gray-600">{c.kind === 'PROPERTY' ? 'This page’s own link, QR and NFC' : c.kitCode ? `Tag from kit ${c.kitCode}` : `Propvian stand${c.batchLabel ? ` · ${c.batchLabel}` : ''}`}</td>
                 <td className="py-2.5 text-right tabular-nums">{c.views30d.toLocaleString()}</td>
               </tr>
             ))}

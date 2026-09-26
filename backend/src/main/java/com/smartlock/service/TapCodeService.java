@@ -63,22 +63,32 @@ public class TapCodeService {
         return code;
     }
 
+    /** {@code count} units of {@code kitSize} codes each; a kit's codes share the first one as kit code. */
     @Transactional
-    public TapCodeBatchResponse generateBatch(int count, String batchLabel) {
+    public TapCodeBatchResponse generateBatch(int count, int kitSize, String batchLabel) {
         String label = batchLabel.trim();
         if (tapCodeRepository.existsByBatchLabel(label)) {
             throw new AppException("A batch with this label already exists", HttpStatus.CONFLICT, "BATCH_EXISTS");
         }
-        List<TapCode> codes = new ArrayList<>(count);
-        for (int i = 0; i < count; i++) {
-            codes.add(TapCode.builder()
-                    .code(newUniqueCode())
-                    .kind(TapCodeKind.PRODUCT)
-                    .batchLabel(label)
-                    .build());
+        if ((long) count * kitSize > 1000) {
+            throw new AppException("A batch can hold at most 1,000 codes", HttpStatus.BAD_REQUEST, "BATCH_TOO_LARGE");
+        }
+        List<TapCode> codes = new ArrayList<>(count * kitSize);
+        for (int unit = 0; unit < count; unit++) {
+            String kitCode = null;
+            for (int k = 0; k < kitSize; k++) {
+                String code = newUniqueCode();
+                if (kitSize > 1 && k == 0) kitCode = code;
+                codes.add(TapCode.builder()
+                        .code(code)
+                        .kind(TapCodeKind.PRODUCT)
+                        .batchLabel(label)
+                        .kitCode(kitCode)
+                        .build());
+            }
         }
         List<TapCode> saved = tapCodeRepository.saveAll(codes);
-        log.info("TapCodeService.generateBatch — label={} count={}", label, saved.size());
+        log.info("TapCodeService.generateBatch — label={} units={} kitSize={} codes={}", label, count, kitSize, saved.size());
         return TapCodeBatchResponse.builder()
                 .batchLabel(label)
                 .issued(saved.size())
@@ -105,7 +115,7 @@ public class TapCodeService {
 
     @Transactional(readOnly = true)
     public TapCodeBatchResponse batch(String batchLabel) {
-        List<TapCode> codes = tapCodeRepository.findByBatchLabelOrderByCodeAsc(batchLabel);
+        List<TapCode> codes = tapCodeRepository.findBatchInKitOrder(batchLabel);
         if (codes.isEmpty()) {
             throw new AppException("Batch not found", HttpStatus.NOT_FOUND, "BATCH_NOT_FOUND");
         }
@@ -132,6 +142,7 @@ public class TapCodeService {
                 .qrUrl(url + "?s=q")
                 .nfcUrl(url + "?s=n")
                 .batchLabel(c.getBatchLabel())
+                .kitCode(c.getKitCode())
                 .claimedAt(c.getClaimedAt())
                 .views30d(views30d)
                 .build();

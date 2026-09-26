@@ -250,15 +250,23 @@ public class GuestPageService {
         }
         if (tap.getOrganizationId() == null) {
             // Conditional update: two people racing for the same unclaimed code can't both win
-            int won = tapCodeRepository.claimIfUnclaimed(code, orgId, propertyId, userId, Instant.now());
+            Instant now = Instant.now();
+            int won = tapCodeRepository.claimIfUnclaimed(code, orgId, propertyId, userId, now);
             if (won == 0) {
                 throw new AppException("This stand was just linked to another account", HttpStatus.CONFLICT, "TAP_CODE_ALREADY_CLAIMED");
             }
-            log.info("GuestPageService.claim — code={} claimed by org={} property={}", code, orgId, propertyId);
+            // One setup for the whole kit: a trio of tags is linked by tapping any one of them
+            int siblings = tap.getKitCode() != null
+                    ? tapCodeRepository.claimKitIfUnclaimed(tap.getKitCode(), orgId, propertyId, userId, now) : 0;
+            log.info("GuestPageService.claim — code={} (+{} kit codes) claimed by org={} property={}", code, siblings, orgId, propertyId);
         } else if (tap.getOrganizationId().equals(orgId)) {
-            tap.setPropertyId(propertyId);
-            tapCodeRepository.save(tap);
-            log.info("GuestPageService.claim — code={} moved to property={}", code, propertyId);
+            if (tap.getKitCode() != null) {
+                tapCodeRepository.moveKit(tap.getKitCode(), orgId, propertyId);
+            } else {
+                tap.setPropertyId(propertyId);
+                tapCodeRepository.save(tap);
+            }
+            log.info("GuestPageService.claim — code={} (kit={}) moved to property={}", code, tap.getKitCode(), propertyId);
         } else {
             log.warn("GuestPageService.claim — code={} already claimed by another org, requested by org={}", code, orgId);
             throw new AppException("This stand is already linked to another Propvian account",

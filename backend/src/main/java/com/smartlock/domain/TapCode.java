@@ -31,6 +31,10 @@ public class TapCode {
     @Column(name = "batch_label", length = 100)
     private String batchLabel;
 
+    // First code of the kit this code was made with; null for single codes
+    @Column(name = "kit_code", length = 16)
+    private String kitCode;
+
     @Column(name = "claimed_at")
     private Instant claimedAt;
 
