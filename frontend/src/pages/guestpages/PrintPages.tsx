@@ -82,11 +82,14 @@ export function PrintGuestSignPage() {
 }
 
 /**
- * A sheet of code stickers for a production batch: 4 × 5 per page, each with
- * its QR code and the code in letters for the claim screen.
+ * Print output for a production batch of pre-printed codes:
+ * - stickers (default): 4 × 5 per page, QR code plus the code in letters
+ * - ?layout=cards: one A6 stand card per page, for acrylic holders; the
+ *   owner scans it to set the stand up, guests scan it once it is set up
  */
 export function PrintTapCodeSheetPage() {
   const { batchLabel = '' } = useParams<{ batchLabel: string }>()
+  const cards = new URLSearchParams(window.location.search).get('layout') === 'cards'
   const { isAuthenticated, user } = useAuthStore()
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   const { data: batch, isLoading } = useQuery({
@@ -99,6 +102,31 @@ export function PrintTapCodeSheetPage() {
   if (!isAdmin) return <Navigate to="/dashboard" replace />
   if (isLoading || !batch?.codes) {
     return <div className="flex h-screen items-center justify-center"><Loader2 className="animate-spin text-gray-400" /></div>
+  }
+
+  if (cards) {
+    return (
+      <div className="min-h-screen bg-gray-100 py-8 print:bg-white print:py-0">
+        <style>{PRINT_CSS}</style>
+        <Toolbar title={`Batch ${batch.batchLabel} · ${batch.codes.length} stand cards`}
+                 hint="One A6 card per page. Print at 100%, cut along the dashed line, then write the same code's link onto the NFC tag behind it." />
+        <div className="flex flex-col items-center gap-6 print:gap-0">
+          {batch.codes.map((c) => (
+            <div key={c.code} className="border border-dashed border-gray-400 bg-white shadow-md print:shadow-none"
+                 style={{ breakAfter: 'page', breakInside: 'avoid' }}>
+              <Sign variant="card" size="a6" c={{
+                title: 'Guest guide & WiFi',
+                kicker: 'Welcome',
+                guideUrl: c.qrUrl,
+                showNfcHint: true,
+                writeInWifi: true,
+                footer: `New stand? Owners scan it to set it up · code ${c.code} · propvian.com`,
+              }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (

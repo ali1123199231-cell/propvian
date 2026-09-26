@@ -56,6 +56,7 @@ export interface GuestPage {
   bookDirectHideAirbnb: boolean
   defaultBookDirectUrl?: string | null
   showPoweredBy: boolean
+  canHideBranding: boolean
   brandColor: string
   code: string
   publicUrl: string
@@ -65,7 +66,7 @@ export interface GuestPage {
 
 export type GuestPageUpdate = Omit<GuestPage,
   'id' | 'propertyId' | 'propertyName' | 'legacyWifiDetails' | 'houseRules' | 'checkInTime' | 'checkOutTime'
-  | 'heroImageUrl' | 'defaultBookDirectUrl' | 'brandColor' | 'code' | 'publicUrl' | 'codes' | 'updatedAt'>
+  | 'heroImageUrl' | 'defaultBookDirectUrl' | 'canHideBranding' | 'brandColor' | 'code' | 'publicUrl' | 'codes' | 'updatedAt'>
 
 /** What a guest's phone receives. */
 export interface PublicGuestPage {

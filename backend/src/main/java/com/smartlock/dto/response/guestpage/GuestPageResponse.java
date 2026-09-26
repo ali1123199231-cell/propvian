@@ -49,6 +49,8 @@ public class GuestPageResponse {
     private String defaultBookDirectUrl;
 
     private boolean showPoweredBy;
+    // Hiding the footer is a paid-plan perk
+    private boolean canHideBranding;
     private String brandColor;
 
     private String code;

@@ -318,10 +318,16 @@ function ContentForm({ page, draft, set }: {
       </Panel>
 
       <Panel title="Branding">
-        <label className="flex items-center gap-3 text-sm text-gray-800">
-          <Toggle checked={draft.showPoweredBy} onChange={(v) => set('showPoweredBy', v)} />
+        <fieldset disabled={!page.canHideBranding} className={clsx('flex items-center gap-3 text-sm text-gray-800', !page.canHideBranding && 'opacity-60')}>
+          <Toggle checked={draft.showPoweredBy || !page.canHideBranding} onChange={(v) => set('showPoweredBy', v)} />
           Show "Guest page by Propvian" at the bottom
-        </label>
+        </fieldset>
+        {!page.canHideBranding && (
+          <p className="mt-2 text-xs text-gray-500">
+            Guest pages are free with this small footer. Hiding it is included in the paid plans.{' '}
+            <Link to="/billing" className="font-medium text-primary-700 hover:underline">See plans</Link>
+          </p>
+        )}
       </Panel>
     </div>
   )

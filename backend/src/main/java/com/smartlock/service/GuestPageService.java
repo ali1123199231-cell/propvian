@@ -33,6 +33,7 @@ import com.smartlock.repository.PropertyHouseRuleRepository;
 import com.smartlock.repository.PropertyPhotoRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
+import com.smartlock.repository.SubscriptionRepository;
 import com.smartlock.repository.TapCodeRepository;
 import com.smartlock.repository.WebsiteConfigRepository;
 import com.smartlock.security.GuestPageEventThrottle;
@@ -93,6 +94,8 @@ public class GuestPageService {
     private final OrganizationRepository organizationRepository;
     private final HostVerificationRepository verificationRepository;
     private final WebsiteConfigRepository websiteConfigRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final BillingService billingService;
     private final OrganizationSecurityService orgSecurity;
     private final TapCodeService tapCodeService;
     private final GuestPageEventThrottle throttle;
@@ -178,7 +181,13 @@ public class GuestPageService {
         page.setBookDirectPromoCode(requireKnownPromo(orgId, trimToNull(req.getBookDirectPromoCode())));
         page.setBookDirectUrl(trimToNull(req.getBookDirectUrl()));
         if (req.getBookDirectHideAirbnb() != null) page.setBookDirectHideAirbnb(req.getBookDirectHideAirbnb());
-        if (req.getShowPoweredBy() != null) page.setShowPoweredBy(req.getShowPoweredBy());
+        if (req.getShowPoweredBy() != null) {
+            if (!req.getShowPoweredBy() && !paying(orgId)) {
+                throw new AppException("Hiding the Propvian footer is part of the paid plans",
+                        HttpStatus.FORBIDDEN, "BRANDING_REQUIRES_PAID_PLAN");
+            }
+            page.setShowPoweredBy(req.getShowPoweredBy());
+        }
 
         page = guestPageRepository.save(page);
         log.info("GuestPageService.update — property={} enabled={} wifi={} bookDirect={}",
@@ -340,7 +349,8 @@ public class GuestPageService {
                 .bookDirectUrl(page.getBookDirectUrl())
                 .bookDirectHideAirbnb(page.isBookDirectHideAirbnb())
                 .defaultBookDirectUrl(defaultBookingUrl(property))
-                .showPoweredBy(page.isShowPoweredBy())
+                .showPoweredBy(showsPoweredBy(page))
+                .canHideBranding(paying(property.getOrganizationId()))
                 .brandColor(brandColor(wc))
                 .code(own.getCode())
                 .publicUrl(tapCodeService.publicUrl(own.getCode()))
@@ -386,7 +396,7 @@ public class GuestPageService {
                 .houseRules(houseRules(property.getId()))
                 .contact(contact(page))
                 .bookDirect(bookDirect(page, property))
-                .showPoweredBy(page.isShowPoweredBy())
+                .showPoweredBy(showsPoweredBy(page))
                 .build();
     }
 
@@ -453,6 +463,15 @@ public class GuestPageService {
                 .or(() -> photos.stream().findFirst())
                 .map(PropertyPhoto::getUrl)
                 .orElse(property.getImageUrl());
+    }
+
+    /** The footer is what pays for the free guest page, so only a paying host can hide it. */
+    private boolean showsPoweredBy(GuestPage page) {
+        return page.isShowPoweredBy() || !paying(page.getOrganizationId());
+    }
+
+    private boolean paying(UUID orgId) {
+        return subscriptionRepository.findByOrganizationId(orgId).map(billingService::isPaidActive).orElse(false);
     }
 
     private String brandColor(WebsiteConfig wc) {

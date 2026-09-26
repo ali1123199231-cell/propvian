@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Download, Loader2, Printer, QrCode } from 'lucide-react'
+import { CreditCard, Download, Loader2, Printer, QrCode } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { adminTapCodesApi } from '@/api/guestPages'
 import type { TapCodeBatch } from '@/types/guestPage'
@@ -101,6 +101,8 @@ export function AdminTapCodesPage() {
                               className="rounded-lg border border-gray-600 p-2 text-gray-300 hover:bg-gray-700"><Download size={14} /></button>
                       <a href={`/print/tap-codes/${encodeURIComponent(b.batchLabel)}`} target="_blank" rel="noopener noreferrer" title="Print sticker sheet"
                          className="rounded-lg border border-gray-600 p-2 text-gray-300 hover:bg-gray-700"><Printer size={14} /></a>
+                      <a href={`/print/tap-codes/${encodeURIComponent(b.batchLabel)}?layout=cards`} target="_blank" rel="noopener noreferrer" title="Print A6 stand cards"
+                         className="rounded-lg border border-gray-600 p-2 text-gray-300 hover:bg-gray-700"><CreditCard size={14} /></a>
                     </div>
                   </td>
                 </tr>

@@ -23,6 +23,7 @@ export interface SignContent {
   wifi?: { ssid: string; password?: string | null; security: WifiSecurity; hidden?: boolean } | null
   showWifiText?: boolean     // print network name and password as text too
   showNfcHint?: boolean      // only when a tag will actually sit under the card
+  writeInWifi?: boolean      // blank lines for a pen: pre-printed stand cards can't know the WiFi
   accent?: string
   footer?: string
 }
@@ -53,6 +54,22 @@ function WifiText({ c, size = '9.5pt' }: { c: SignContent; size?: string }) {
           <p className="font-mono font-semibold text-gray-900 break-all">{c.wifi.password}</p>
         </>
       )}
+    </div>
+  )
+}
+
+/** Ruled lines the owner fills in by hand, so guests without mobile data still get on the WiFi. */
+function WriteInWifi() {
+  const row = (label: string) => (
+    <div className="flex items-end gap-[2mm]">
+      <span className="shrink-0 text-gray-500" style={{ fontSize: '7.5pt', letterSpacing: '0.08em' }}>{label}</span>
+      <span className="flex-1 border-b border-gray-400" style={{ height: mm(6) }} />
+    </div>
+  )
+  return (
+    <div className="space-y-[2.5mm] rounded-[2mm] border border-gray-200 px-[4mm] py-[3mm] text-left">
+      {row('WIFI NETWORK')}
+      {row('PASSWORD')}
     </div>
   )
 }
@@ -91,6 +108,8 @@ export function SignCard({ c, size = 'a6' }: { c: SignContent; size?: CardSize }
               {c.showWifiText && <WifiText c={c} size="8.5pt" />}
             </div>
           </div>
+        ) : c.writeInWifi && !c.wifi ? (
+          <WriteInWifi />
         ) : (
           c.showWifiText && <div className="border-t border-gray-200 pt-[3mm]"><WifiText c={c} /></div>
         )}
