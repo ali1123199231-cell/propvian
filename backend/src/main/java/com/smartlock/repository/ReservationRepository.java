@@ -43,6 +43,18 @@ public interface ReservationRepository extends JpaRepository<Reservation, UUID> 
 
     Optional<Reservation> findByCheckinCode(String checkinCode);
 
+    /*
+     * Whether an Airbnb stay is in progress at the property right now. Matches on the
+     * iCal UID as well as the source, because the sync infers the source from the
+     * event summary and Airbnb's feed says "Reserved", which it records as OTHER;
+     * Airbnb's UIDs end in @airbnb.com either way.
+     */
+    @Query("SELECT COUNT(r) > 0 FROM Reservation r WHERE r.propertyId = :propertyId " +
+           "AND r.status <> com.smartlock.domain.enums.ReservationStatus.CANCELLED AND r.deletedAt IS NULL " +
+           "AND r.checkInDate <= :now AND r.checkOutDate > :now " +
+           "AND (r.source = com.smartlock.domain.enums.ReservationSource.AIRBNB OR LOWER(r.icalUid) LIKE '%airbnb%')")
+    boolean existsAirbnbStayInProgress(@Param("propertyId") UUID propertyId, @Param("now") Instant now);
+
     @Query("SELECT r FROM Reservation r WHERE r.propertyId IN :propertyIds AND r.status = com.smartlock.domain.enums.ReservationStatus.CONFIRMED AND r.checkOutDate > :now AND r.deletedAt IS NULL")
     List<Reservation> findUpcomingConfirmedByPropertyIds(@Param("propertyIds") List<UUID> propertyIds, @Param("now") Instant now);
 

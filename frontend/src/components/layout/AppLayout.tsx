@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Outlet, Navigate } from 'react-router-dom'
+import { Outlet, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Menu } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useSystemStore } from '@/store/systemStore'
 import { Sidebar } from './Sidebar'
+import { readPendingClaim } from '@/lib/pendingClaim'
 
 export function AppLayout() {
-  const { isAuthenticated, user }   = useAuthStore()
+  const { isAuthenticated, user, activeOrg } = useAuthStore()
   const { fetchConfig, isDirectBooking } = useSystemStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -15,6 +16,19 @@ export function AppLayout() {
   useEffect(() => {
     fetchConfig()
   }, [fetchConfig])
+
+  // A host who scanned an unclaimed stand, then signed in or signed up, lands on
+  // the dashboard with the stand code still waiting: send them on to link it.
+  // Wait for the active org (the claim needs it) and act only on /dashboard,
+  // because login navigates there twice, once before the org has loaded.
+  const location = useLocation()
+  const navigate = useNavigate()
+  const ready = isAuthenticated && user?.onboardingCompleted !== false && !!activeOrg?.id
+  useEffect(() => {
+    if (!ready || location.pathname !== '/dashboard') return
+    const pending = readPendingClaim()
+    if (pending) navigate(`/claim/${pending}`, { replace: true })
+  }, [ready, location.pathname, navigate])
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />

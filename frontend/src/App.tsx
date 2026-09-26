@@ -83,6 +83,13 @@ import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { OnboardingPage } from '@/pages/OnboardingPage'
 import { DirectBookingOnboardingPage } from '@/pages/DirectBookingOnboardingPage'
 import { CheckinPage } from '@/pages/CheckinPage'
+import { GuestPagePublic } from '@/pages/public/GuestPagePublic'
+import { GuestPagesListPage } from '@/pages/guestpages/GuestPagesListPage'
+import { GuestPageEditorPage } from '@/pages/guestpages/GuestPageEditorPage'
+import { ClaimStandPage } from '@/pages/guestpages/ClaimStandPage'
+import { PrintGuestSignPage, PrintTapCodeSheetPage } from '@/pages/guestpages/PrintPages'
+import { AdminTapCodesPage } from '@/pages/admin/AdminTapCodesPage'
+import { WifiSignToolPage } from '@/pages/marketing/tools/WifiSignToolPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { PropertiesPage } from '@/pages/PropertiesPage'
 import { ReservationsPage } from '@/pages/ReservationsPage'
@@ -216,6 +223,13 @@ export default function App() {
         {/* Public guest check-in */}
         <Route path="/checkin/:code" element={<CheckinPage />} />
 
+        {/* Guest page behind an NFC tag or QR code in the rental — no auth */}
+        <Route path="/g/:code" element={<GuestPagePublic />} />
+
+        {/* Print sheets: outside the app shell so only the sign reaches the printer */}
+        <Route path="/print/guest-page/:propertyId" element={<PrintGuestSignPage />} />
+        <Route path="/print/tap-codes/:batchLabel"  element={<PrintTapCodeSheetPage />} />
+
         {/* Marketing — public SEO pages */}
         <Route path="/blog"                         element={<BlogListPage />} />
         <Route path="/blog/:slug"                   element={<BlogPostPage />} />
@@ -225,6 +239,7 @@ export default function App() {
         <Route path="/integrations/ttlock"          element={<TTLockPage />} />
         <Route path="/features/guest-code-automation" element={<GuestCodePage />} />
         <Route path="/features/self-checkin"        element={<SelfCheckinPage />} />
+        <Route path="/tools/wifi-qr-code-sign"      element={<WifiSignToolPage />} />
 
         {/* Legal */}
         <Route path="/legal/terms"           element={<TermsPage />} />
@@ -275,6 +290,9 @@ export default function App() {
           <Route path="/domains"      element={<DomainsPage />} />
           <Route path="/reviews"      element={<ReviewsPage />} />
           <Route path="/messaging"    element={<MessagingPage />} />
+          <Route path="/guest-pages"             element={<GuestPagesListPage />} />
+          <Route path="/guest-pages/:propertyId" element={<GuestPageEditorPage />} />
+          <Route path="/claim/:code"             element={<ClaimStandPage />} />
         </Route>
 
         {/* Admin panel — separate layout, dark theme */}
@@ -286,6 +304,7 @@ export default function App() {
           <Route path="/admin/subscriptions"    element={<AdminSubscriptionsPage />} />
           <Route path="/admin/support"          element={<AdminSupportPage />} />
           <Route path="/admin/errors"           element={<AdminErrorLogsPage />} />
+          <Route path="/admin/tap-codes"        element={<AdminTapCodesPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

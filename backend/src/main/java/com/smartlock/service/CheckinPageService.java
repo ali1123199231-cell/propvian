@@ -8,6 +8,7 @@ import com.smartlock.domain.enums.AccessCodeStatus;
 import com.smartlock.dto.response.checkin.CheckinPageResponse;
 import com.smartlock.exception.ResourceNotFoundException;
 import com.smartlock.repository.AccessCodeRepository;
+import com.smartlock.repository.GuestPageRepository;
 import com.smartlock.repository.LockRepository;
 import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
@@ -30,6 +31,7 @@ public class CheckinPageService {
     private final PropertyRepository propertyRepository;
     private final AccessCodeRepository accessCodeRepository;
     private final LockRepository lockRepository;
+    private final GuestPageRepository guestPageRepository;
 
     @Transactional(readOnly = true)
     public CheckinPageResponse getCheckinPage(String code) {
@@ -72,9 +74,19 @@ public class CheckinPageService {
                 .validFrom(code0.getValidFrom())
                 .validTo(code0.getValidTo())
                 .timezone(reservation.getTimezone())
-                .wifiDetails(property.getWifiDetails())
+                .wifiDetails(property.getWifiDetails() != null ? property.getWifiDetails() : guestPageWifi(property))
                 .accessInstructions(property.getAccessInstructions())
                 .lockNotes(lockNotes)
                 .build();
+    }
+
+    // properties.wifi_details has no editor; the guest page is where hosts keep WiFi now
+    private String guestPageWifi(Property property) {
+        return guestPageRepository.findByPropertyId(property.getId())
+                .filter(p -> p.getWifiSsid() != null)
+                .map(p -> p.getWifiPassword() == null || "nopass".equals(p.getWifiSecurity())
+                        ? "Network: " + p.getWifiSsid()
+                        : "Network: " + p.getWifiSsid() + " · Password: " + p.getWifiPassword())
+                .orElse(null);
     }
 }

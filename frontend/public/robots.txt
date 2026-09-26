@@ -16,6 +16,7 @@ Allow: /booking-engine
 Allow: /lodgify-alternative
 Allow: /hostaway-alternative
 Allow: /guesty-alternative
+Allow: /tools/
 
 # Disallow authenticated app routes
 Disallow: /dashboard
@@ -39,5 +40,11 @@ Disallow: /messaging
 Disallow: /verification
 Disallow: /admin
 Disallow: /admin/
+
+# Guest pages carry WiFi passwords; print and claim screens are private
+Disallow: /g/
+Disallow: /claim/
+Disallow: /print/
+Disallow: /guest-pages
 
 Sitemap: https://propvian.com/sitemap.xml

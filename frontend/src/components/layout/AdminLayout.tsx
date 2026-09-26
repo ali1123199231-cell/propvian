@@ -3,7 +3,7 @@ import { NavLink, Outlet, Navigate, useNavigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import {
   LayoutDashboard, ShieldCheck, Building2, Users, CreditCard,
-  AlertTriangle, LifeBuoy, LogOut, Menu, ExternalLink, ChevronRight,
+  AlertTriangle, LifeBuoy, LogOut, Menu, ExternalLink, ChevronRight, QrCode,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { authApi } from '@/api/auth'
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { icon: CreditCard,      label: 'Subscriptions',  to: '/admin/subscriptions' },
   { icon: LifeBuoy,        label: 'Support',        to: '/admin/support' },
   { icon: AlertTriangle,   label: 'Error Logs',     to: '/admin/errors' },
+  { icon: QrCode,          label: 'Stands & codes', to: '/admin/tap-codes' },
 ]
 
 function AdminSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {

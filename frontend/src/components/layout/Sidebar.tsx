@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Building2, Calendar, Lock, Bell,
   Settings, LogOut, CreditCard, Plug,
   ShieldCheck, Globe, Star, MessageCircle, BarChart2,
-  Home, Wallet, CheckSquare, Shield, CalendarDays,
+  Home, Wallet, CheckSquare, Shield, CalendarDays, QrCode,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useSystemStore } from '@/store/systemStore'
@@ -18,6 +18,7 @@ const ttlockNavItems = [
   { icon: Building2,       label: 'Properties',   to: '/properties' },
   { icon: Calendar,        label: 'Reservations', to: '/reservations' },
   { icon: Lock,            label: 'Locks',        to: '/locks' },
+  { icon: QrCode,          label: 'Guest pages',  to: '/guest-pages' },
   { icon: Plug,            label: 'Integrations', to: '/integrations' },
   { icon: Bell,            label: 'Notifications',to: '/notifications' },
 ]
@@ -58,6 +59,7 @@ const dbNavSections = [
     items: [
       { icon: Home,         label: 'Website Builder', to: '/website' },
       { icon: Globe,        label: 'Domains',         to: '/domains' },
+      { icon: QrCode,       label: 'Guest pages',     to: '/guest-pages' },
       { icon: MessageCircle,label: 'Messaging',       to: '/messaging' },
     ],
   },
