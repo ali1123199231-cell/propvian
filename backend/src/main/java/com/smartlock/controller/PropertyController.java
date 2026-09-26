@@ -1,11 +1,13 @@
 package com.smartlock.controller;
 
 import com.smartlock.domain.PropertyPhoto;
+import com.smartlock.exception.AppException;
 import com.smartlock.dto.request.property.CreatePropertyRequest;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.dto.response.common.PageResponse;
 import com.smartlock.dto.response.property.PropertyResponse;
 import com.smartlock.repository.PropertyPhotoRepository;
+import com.smartlock.repository.PropertyRepository;
 import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.PropertyService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -35,6 +37,7 @@ public class PropertyController {
 
     private final PropertyService propertyService;
     private final PropertyPhotoRepository photoRepository;
+    private final PropertyRepository propertyRepository;
 
     // ── Public: website builder ───────────────────────────────────────────────
 
@@ -106,6 +109,7 @@ public class PropertyController {
             @PathVariable UUID orgId,
             @PathVariable UUID propertyId) {
         log.debug("PropertyController.listPhotos — propertyId={}", propertyId);
+        requirePropertyInOrg(orgId, propertyId);
         List<PhotoResponse> photos = photoRepository
                 .findByPropertyIdOrderBySortOrderAsc(propertyId).stream()
                 .map(PhotoResponse::from).toList();
@@ -119,6 +123,7 @@ public class PropertyController {
             @PathVariable UUID propertyId,
             @Valid @RequestBody AddPhotoRequest request) {
         log.info("PropertyController.addPhoto — propertyId={}", propertyId);
+        requirePropertyInOrg(orgId, propertyId);
         PropertyPhoto photo = PropertyPhoto.builder()
                 .propertyId(propertyId)
                 .url(request.getUrl())
@@ -137,7 +142,11 @@ public class PropertyController {
             @PathVariable UUID propertyId,
             @PathVariable UUID photoId) {
         log.info("PropertyController.deletePhoto — propertyId={}, photoId={}", propertyId, photoId);
-        photoRepository.deleteById(photoId);
+        requirePropertyInOrg(orgId, propertyId);
+        PropertyPhoto photo = photoRepository.findById(photoId)
+                .filter(p -> p.getPropertyId().equals(propertyId))
+                .orElseThrow(() -> new AppException("Photo not found", HttpStatus.NOT_FOUND, "PHOTO_NOT_FOUND"));
+        photoRepository.delete(photo);
         return ResponseEntity.ok(ApiResponse.success("Photo deleted"));
     }
 
@@ -148,17 +157,27 @@ public class PropertyController {
             @PathVariable UUID propertyId,
             @RequestBody ReorderPhotosRequest request) {
         log.info("PropertyController.reorderPhotos — propertyId={}", propertyId);
+        requirePropertyInOrg(orgId, propertyId);
         List<UUID> ids = request.getPhotoIds();
         for (int i = 0; i < ids.size(); i++) {
             final int order = i;
             final boolean isPrimary = (i == 0);
-            photoRepository.findById(ids.get(i)).ifPresent(photo -> {
+            photoRepository.findById(ids.get(i)).filter(p -> p.getPropertyId().equals(propertyId)).ifPresent(photo -> {
                 photo.setSortOrder(order);
                 photo.setPrimary(isPrimary);
                 photoRepository.save(photo);
             });
         }
         return ResponseEntity.ok(ApiResponse.success("Photos reordered"));
+    }
+
+    // Membership of {orgId} is enforced by OrganizationAccessInterceptor; this makes sure
+    // the property really is that org's, so a member of one org can't reach another's photos.
+    private void requirePropertyInOrg(UUID orgId, UUID propertyId) {
+        boolean owned = propertyRepository.findById(propertyId)
+                .map(p -> p.getOrganizationId().equals(orgId))
+                .orElse(false);
+        if (!owned) throw new AppException("Property not found", HttpStatus.NOT_FOUND, "PROPERTY_NOT_FOUND");
     }
 
     // ── DTOs ──────────────────────────────────────────────────────────────────

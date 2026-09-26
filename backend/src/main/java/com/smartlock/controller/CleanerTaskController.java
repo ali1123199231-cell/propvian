@@ -4,6 +4,7 @@ import com.smartlock.domain.CleanerTask;
 import com.smartlock.domain.enums.CleanerTaskStatus;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.dto.response.common.PageResponse;
+import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.CleanerTaskService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -40,8 +42,9 @@ public class CleanerTaskController {
     @PatchMapping("/cleaner-tasks/{taskId}/status")
     public ResponseEntity<ApiResponse<CleanerTask>> updateStatus(
             @PathVariable UUID taskId,
-            @RequestParam CleanerTaskStatus status) {
+            @RequestParam CleanerTaskStatus status,
+            @AuthenticationPrincipal CustomUserDetails currentUser) {
         log.info("CleanerTaskController.updateStatus — taskId={}, status={}", taskId, status);
-        return ResponseEntity.ok(ApiResponse.success(cleanerTaskService.updateStatus(taskId, status)));
+        return ResponseEntity.ok(ApiResponse.success(cleanerTaskService.updateStatus(taskId, status, currentUser.getUserId())));
     }
 }

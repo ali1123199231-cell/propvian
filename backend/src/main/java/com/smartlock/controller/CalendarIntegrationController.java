@@ -5,6 +5,7 @@ import com.smartlock.dto.response.calendar.CalendarIntegrationResponse;
 import com.smartlock.dto.response.common.ApiResponse;
 import com.smartlock.security.CustomUserDetails;
 import com.smartlock.service.CalendarIntegrationService;
+import com.smartlock.service.OrganizationSecurityService;
 import com.smartlock.service.ICalExportService;
 import java.util.Map;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -31,6 +32,7 @@ import java.util.UUID;
 public class CalendarIntegrationController {
 
     private final CalendarIntegrationService calendarIntegrationService;
+    private final OrganizationSecurityService orgSecurity;
     private final ICalExportService icalExportService;
 
     @PostMapping("/properties/{propertyId}/calendar-integrations")
@@ -47,6 +49,7 @@ public class CalendarIntegrationController {
     @GetMapping("/properties/{propertyId}/calendar-integrations")
     public ResponseEntity<ApiResponse<List<CalendarIntegrationResponse>>> list(@PathVariable UUID propertyId) {
         log.debug("CalendarIntegrationController.list — propertyId={}", propertyId);
+        orgSecurity.requirePropertyAccess(propertyId);   // the response carries the host's secret iCal feed URLs
         return ResponseEntity.ok(ApiResponse.success(calendarIntegrationService.getByProperty(propertyId)));
     }
 

@@ -112,6 +112,7 @@ public class AvailabilityController {
             @PathVariable UUID propertyId,
             @PathVariable UUID ruleId) {
         log.info("AvailabilityController.deletePricing — propertyId={}, ruleId={}", propertyId, ruleId);
+        orgSecurity.requirePropertyAccess(propertyId);
         PropertyPricingRule rule = pricingRepo.findById(ruleId)
                 .orElseThrow(() -> new AppException("Not found", HttpStatus.NOT_FOUND));
         if (!rule.getPropertyId().equals(propertyId))

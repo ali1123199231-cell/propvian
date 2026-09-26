@@ -121,6 +121,7 @@ public class PropertyService {
 
     @Transactional(readOnly = true)
     public PropertyResponse getProperty(UUID propertyId, UUID orgId) {
+        orgSecurity.requireOrgAccess(orgId);
         log.debug("getProperty — propertyId={} orgId={}", propertyId, orgId);
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
@@ -131,6 +132,7 @@ public class PropertyService {
 
     @Transactional
     public PropertyResponse updateProperty(UUID propertyId, UUID orgId, CreatePropertyRequest request) {
+        orgSecurity.requireOrgAccess(orgId);
         log.info("updateProperty — propertyId={} orgId={}", propertyId, orgId);
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
@@ -190,6 +192,7 @@ public class PropertyService {
 
     @Transactional
     public void deleteProperty(UUID propertyId, UUID orgId) {
+        orgSecurity.requireOrgAccess(orgId);
         Property property = propertyRepository.findById(propertyId)
                 .filter(p -> p.getOrganizationId().equals(orgId))
                 .orElseThrow(() -> new ResourceNotFoundException("Property", propertyId));

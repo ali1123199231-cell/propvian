@@ -35,6 +35,7 @@ public class CleanerTaskService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final OrganizationSecurityService orgSecurity;
 
     @Transactional
     public CleanerTask createCleanerTask(UUID reservationId, UUID organizationId) {
@@ -119,10 +120,14 @@ public class CleanerTaskService {
     }
 
     @Transactional
-    public CleanerTask updateStatus(UUID taskId, CleanerTaskStatus status) {
+    public CleanerTask updateStatus(UUID taskId, CleanerTaskStatus status, UUID userId) {
         log.info("CleanerTaskService.updateStatus — taskId={} status={}", taskId, status);
         CleanerTask task = cleanerTaskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("CleanerTask", taskId));
+        // The assigned cleaner may not be an org member; anyone else must be
+        if (!userId.equals(task.getAssignedUserId())) {
+            orgSecurity.requireOrgAccess(task.getOrganizationId());
+        }
         task.setStatus(status);
         if (status == CleanerTaskStatus.COMPLETED) {
             task.setCompletedAt(Instant.now());
