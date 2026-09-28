@@ -34,5 +34,7 @@ public class AuthResponse {
         private String onboardingStep;
         private boolean onboardingCompleted;
         private UUID organizationId;
+        /** Preferred UI/email language; the client applies it unless the visitor already chose one. */
+        private String locale;
     }
 }

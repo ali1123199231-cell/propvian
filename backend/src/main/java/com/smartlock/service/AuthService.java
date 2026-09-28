@@ -2,6 +2,7 @@ package com.smartlock.service;
 
 import com.smartlock.domain.*;
 import com.smartlock.domain.enums.MemberRole;
+import com.smartlock.util.LocaleSupport;
 import com.smartlock.util.LogMaskingUtil;
 import com.smartlock.domain.enums.Role;
 import com.smartlock.dto.request.auth.LoginRequest;
@@ -101,6 +102,7 @@ public class AuthService {
                 .emailVerified(false)
                 .onboardingStep("EMAIL_VERIFICATION")
                 .onboardingCompleted(false)
+                .locale(LocaleSupport.normalize(request.getLocale()))
                 .gclid(request.getGclid())
                 .utmSource(request.getUtmSource())
                 .utmMedium(request.getUtmMedium())
@@ -312,6 +314,7 @@ public class AuthService {
                         .onboardingStep(user.getOnboardingStep())
                         .onboardingCompleted(user.isOnboardingCompleted())
                         .organizationId(activeOrgId)
+                        .locale(user.getLocale())
                         .build())
                 .build();
     }

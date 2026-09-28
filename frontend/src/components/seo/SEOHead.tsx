@@ -1,4 +1,6 @@
 import { Helmet } from 'react-helmet-async'
+import { LANGUAGES, localizedPath } from '@/lib/i18n/config'
+import { currentLanguage } from '@/lib/i18n'
 
 const SITE_NAME = 'Propvian'
 const SITE_URL = 'https://propvian.com'
@@ -32,16 +34,39 @@ export function SEOHead({
   schema,
 }: SEOHeadProps) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Direct Booking Platform for Short-Term Rentals`
-  const canonicalUrl = canonical ? `${SITE_URL}${canonical}` : undefined
+
+  /*
+   * The canonical must point at THIS language's URL, not the English one.
+   * Pointing every translation at the English canonical tells Google the
+   * translations are duplicates and should be dropped from the index — the
+   * exact opposite of why they were built.
+   */
+  const lang = currentLanguage()
+  const canonicalUrl = canonical ? `${SITE_URL}${localizedPath(canonical, lang)}` : undefined
 
   const schemas = schema ? (Array.isArray(schema) ? schema : [schema]) : []
 
   return (
     <Helmet>
+      <html lang={lang} />
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
       {noIndex && <meta name="robots" content="noindex, nofollow" />}
+
+      {/* hreflang — tells search engines these pages are translations of each
+          other rather than competing duplicates. x-default points at English. */}
+      {canonical && !noIndex && LANGUAGES.map((l) => (
+        <link
+          key={l.code}
+          rel="alternate"
+          hrefLang={l.code}
+          href={`${SITE_URL}${localizedPath(canonical, l.code)}`}
+        />
+      ))}
+      {canonical && !noIndex && (
+        <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}${canonical}`} />
+      )}
 
       {/* Open Graph */}
       <meta property="og:title" content={fullTitle} />

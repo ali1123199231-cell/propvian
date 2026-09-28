@@ -1,0 +1,99 @@
+{
+  "dashboard": {
+    "title": "Pannello",
+    "greeting": "Bentornato, {{name}}",
+    "upcomingArrivals": "Prossimi arrivi",
+    "occupancy": "Occupazione",
+    "revenue": "Ricavi",
+    "noArrivals": "Nessun arrivo in programma",
+    "thisMonth": "Questo mese",
+    "lastMonth": "Mese scorso"
+  },
+  "properties": {
+    "title": "Proprietà",
+    "add": "Aggiungi proprietà",
+    "empty": "Non hai ancora aggiunto nessuna proprietà.",
+    "emptyHint": "Aggiungi la tua prima proprietà per pubblicare un sito di prenotazione.",
+    "name": "Nome della proprietà",
+    "address": "Indirizzo",
+    "nightlyRate": "Prezzo per notte",
+    "cleaningFee": "Spese di pulizia",
+    "maxGuests": "Ospiti massimi",
+    "bedrooms": "Camere da letto",
+    "beds": "Letti",
+    "bathrooms": "Bagni",
+    "minNights": "Notti minime",
+    "active": "Attiva",
+    "inactive": "Non attiva",
+    "deleteConfirm": "Eliminare questa proprietà? Le sue prenotazioni e la pagina di prenotazione verranno rimosse.",
+    "saved": "Proprietà salvata"
+  },
+  "reservations": {
+    "title": "Prenotazioni",
+    "empty": "Ancora nessuna prenotazione",
+    "guest": "Ospite",
+    "dates": "Date",
+    "nights": "Notti",
+    "total": "Totale",
+    "status": "Stato",
+    "source": "Origine",
+    "statuses": {
+      "confirmed": "Confermata",
+      "pending": "In attesa",
+      "cancelled": "Annullata",
+      "completed": "Completata"
+    },
+    "cancelConfirm": "Annullare questa prenotazione? L'ospite riceverà una notifica."
+  },
+  "calendar": {
+    "title": "Calendario",
+    "blockDates": "Blocca date",
+    "unblock": "Sblocca",
+    "blocked": "Bloccata",
+    "booked": "Prenotata",
+    "available": "Disponibile",
+    "selectProperty": "Seleziona una proprietà"
+  },
+  "billing": {
+    "title": "Fatturazione",
+    "plan": "Piano",
+    "trialActive": "Prova gratuita",
+    "trialEnds": "La tua prova gratuita termina il {{date}}.",
+    "trialEndedTitle": "La tua prova è terminata",
+    "activeProperties": "Proprietà attive",
+    "monthlyTotal": "Totale mensile",
+    "perPropertyPerMonth": "10 $ per proprietà al mese",
+    "subscribe": "Abbonati",
+    "manageSubscription": "Gestisci abbonamento",
+    "paymentMethod": "Metodo di pagamento",
+    "invoices": "Fatture",
+    "noInvoices": "Ancora nessuna fattura"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "profile": "Profilo",
+    "account": "Account",
+    "language": "Lingua",
+    "languageHint": "Cambia la lingua del tuo pannello e delle email che ti inviamo.",
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "email": "Email",
+    "changePassword": "Cambia password",
+    "currentPassword": "Password attuale",
+    "newPassword": "Nuova password",
+    "notifications": "Notifiche",
+    "dangerZone": "Zona pericolosa",
+    "deleteAccount": "Elimina account",
+    "saved": "Impostazioni salvate"
+  },
+  "website": {
+    "title": "Sito web",
+    "defaultLanguage": "Lingua predefinita",
+    "defaultLanguageHint": "La lingua con cui si apre il tuo sito di prenotazione. Gli ospiti possono cambiarla.",
+    "enabledLanguages": "Lingue che gli ospiti possono scegliere",
+    "enabledLanguagesHint": "Lasciane selezionata solo una per nascondere il selettore di lingua sul tuo sito.",
+    "publish": "Pubblica sito",
+    "published": "Sito pubblicato",
+    "viewSite": "Vedi sito"
+  }
+}

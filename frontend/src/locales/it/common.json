@@ -1,0 +1,69 @@
+{
+  "brand": {
+    "name": "Propvian",
+    "tagline": "Prenotazioni dirette per host di affitti brevi"
+  },
+  "nav": {
+    "dashboard": "Pannello",
+    "properties": "Proprietà",
+    "reservations": "Prenotazioni",
+    "calendar": "Calendario",
+    "messages": "Messaggi",
+    "website": "Sito web",
+    "locks": "Serrature",
+    "integrations": "Integrazioni",
+    "notifications": "Notifiche",
+    "settings": "Impostazioni",
+    "billing": "Fatturazione",
+    "pricing": "Prezzi",
+    "blog": "Blog",
+    "features": "Funzioni",
+    "login": "Accedi",
+    "logout": "Esci",
+    "signup": "Inizia gratis"
+  },
+  "actions": {
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "create": "Crea",
+    "add": "Aggiungi",
+    "remove": "Rimuovi",
+    "back": "Indietro",
+    "next": "Avanti",
+    "continue": "Continua",
+    "confirm": "Conferma",
+    "close": "Chiudi",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "retry": "Riprova",
+    "copy": "Copia",
+    "copied": "Copiato",
+    "publish": "Pubblica",
+    "preview": "Anteprima",
+    "viewAll": "Vedi tutto"
+  },
+  "states": {
+    "loading": "Caricamento…",
+    "empty": "Qui non c'è ancora nulla",
+    "error": "Qualcosa è andato storto",
+    "errorHint": "Riprova. Se il problema persiste, contatta l'assistenza.",
+    "notFound": "Non trovato",
+    "saved": "Salvato",
+    "required": "Obbligatorio"
+  },
+  "language": {
+    "label": "Lingua",
+    "change": "Cambia lingua",
+    "current": "Lingua attuale: {{language}}"
+  },
+  "footer": {
+    "product": "Prodotto",
+    "company": "Azienda",
+    "legal": "Note legali",
+    "resources": "Risorse",
+    "rights": "Tutti i diritti riservati."
+  }
+}

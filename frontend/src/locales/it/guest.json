@@ -1,0 +1,64 @@
+{
+  "booking": {
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "guests": "Ospiti",
+    "guest_one": "{{count}} ospite",
+    "guest_other": "{{count}} ospiti",
+    "night_one": "{{count}} notte",
+    "night_other": "{{count}} notti",
+    "pickDates": "Clicca su una data per iniziare",
+    "pickCheckout": "Ora scegli la data di check-out",
+    "yourDetails": "I tuoi dati",
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "email": "Email",
+    "phone": "Telefono",
+    "notes": "C'è qualcosa che dovremmo sapere?",
+    "houseRules": "Regole della casa",
+    "whatsIncluded": "Cosa è incluso",
+    "property": "Alloggio",
+    "book": "Prenota ora",
+    "booking": "Prenotazione…"
+  },
+  "pricing": {
+    "nightlyRate": "Prezzo per notte",
+    "cleaningFee": "Spese di pulizia",
+    "securityDeposit": "Cauzione",
+    "promoCode": "Codice promozionale",
+    "applyPromo": "Applica",
+    "promoApplied": "Codice promozionale applicato",
+    "promoInvalid": "Questo codice promozionale non è valido",
+    "discount": "Sconto",
+    "total": "Totale",
+    "totalPaid": "Totale pagato",
+    "perNight": "a notte"
+  },
+  "payment": {
+    "title": "Pagamento",
+    "method": "Metodo di pagamento",
+    "card": "Carta",
+    "paypal": "PayPal",
+    "payNow": "Paga e conferma",
+    "processing": "Elaborazione…",
+    "failed": "Non è stato possibile completare il pagamento. Non è stato addebitato nulla."
+  },
+  "confirmation": {
+    "title": "Prenotazione confermata",
+    "sentTo": "Abbiamo inviato una conferma a",
+    "reference": "Riferimento prenotazione",
+    "addToCalendar": "Aggiungi al calendario"
+  },
+  "errors": {
+    "unavailableTitle": "Prenotazioni temporaneamente non disponibili",
+    "unavailableBody": "Le prenotazioni per questo alloggio sono temporaneamente non disponibili.",
+    "badLink": "Non è possibile prenotare con questo link",
+    "noRate": "Nessun prezzo per notte impostato: questo alloggio non è ancora prenotabile.",
+    "datesTaken": "Quelle date sono appena state occupate. Scegline altre.",
+    "minNights": "Questo alloggio prevede un soggiorno minimo di {{count}} notti."
+  },
+  "legal": {
+    "privacyPolicy": "Informativa sulla privacy",
+    "terms": "Termini"
+  }
+}

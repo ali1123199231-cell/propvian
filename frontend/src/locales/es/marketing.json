@@ -1,0 +1,78 @@
+{
+  "landing": {
+    "direct_booking": {
+      "seoTitle": "Propvian — Software de reservas directas para anfitriones de alquiler vacacional",
+      "seoDesc": "Crea tu propia web de reservas directas en minutos. 10 $ al mes por propiedad. Sin comisiones de las OTA. Quédate con el 100 % de tus ingresos.",
+      "headline": "Tu propia web de reservas directas.\n0 % de comisión por reserva.",
+      "sub": "Crea una web de reservas con tu marca para tu alojamiento. Los huéspedes reservan directamente contigo, sin comisiones de las OTA. Los pagos van directos a tu cuenta de Stripe o PayPal.",
+      "bullets": [
+        "Web de reservas publicada en menos de 5 minutos",
+        "10 $ al mes por propiedad: tarifa plana, sin sorpresas",
+        "Stripe y PayPal directos a tu cuenta"
+      ],
+      "footer": "© 2025 Propvian. Software de reservas directas para anfitriones de alquiler vacacional."
+    },
+    "ttlock": {
+      "seoTitle": "Propvian — Automatización de cerraduras inteligentes para alquiler vacacional",
+      "seoDesc": "Crea y revoca automáticamente los códigos TTLock de tus huéspedes a partir de las reservas de Airbnb y Booking.com.",
+      "headline": "Cerraduras inteligentes\nautomatizadas para alquiler vacacional",
+      "sub": "Crea y revoca automáticamente los códigos TTLock de tus huéspedes a partir de las reservas de Airbnb y Booking.com, y ahórrate horas de trabajo manual.",
+      "bullets": [
+        "La configuración lleva unos 5 minutos",
+        "Gratis durante 1 mes, sin datos de pago",
+        "Después de la prueba: 2 $ por cerradura al mes"
+      ],
+      "footer": "© 2025 Propvian. Automatización de accesos de nivel profesional."
+    },
+    "tabs": {
+      "signin": "Iniciar sesión",
+      "signup": "Crear cuenta"
+    },
+    "headings": {
+      "welcomeBack": "Bienvenido de nuevo",
+      "getStarted": "Empieza gratis",
+      "signinSub": "Inicia sesión en tu cuenta de Propvian.",
+      "signupSubDirect": "Crea tu cuenta de anfitrión en segundos.",
+      "signupSubTtlock": "Crea una cuenta. No hace falta tarjeta."
+    },
+    "password": {
+      "weak": "Débil",
+      "fair": "Aceptable",
+      "strong": "Segura",
+      "suffix": "contraseña"
+    },
+    "validation": {
+      "emailInvalid": "Correo no válido",
+      "passwordRequired": "La contraseña es obligatoria",
+      "required": "Obligatorio",
+      "min8": "Al menos 8 caracteres",
+      "uppercase": "Al menos una letra mayúscula",
+      "number": "Al menos un número"
+    },
+    "terms": {
+      "prefix": "Al registrarte aceptas nuestros",
+      "terms": "Términos",
+      "and": "y la",
+      "privacy": "Política de privacidad"
+    },
+    "toast": {
+      "welcomeBack": "Bienvenido de nuevo.",
+      "signInFailed": "No se ha podido iniciar sesión",
+      "registrationFailed": "No se ha podido completar el registro"
+    }
+  },
+  "value": {
+    "commission": "0 % de comisión por reserva",
+    "flatPrice": "10 $ por propiedad al mes",
+    "freeTrial": "30 días gratis, sin tarjeta",
+    "noSalesCall": "Sin llamadas comerciales ni presupuestos",
+    "directPayments": "Los huéspedes pagan directamente a tu Stripe o PayPal",
+    "builtFor": "Pensado para anfitriones con entre 1 y 15 alojamientos"
+  },
+  "cta": {
+    "startFree": "Empezar gratis",
+    "seePricing": "Ver precios",
+    "createSite": "Crear mi web de reservas",
+    "noCard": "No hace falta tarjeta"
+  }
+}

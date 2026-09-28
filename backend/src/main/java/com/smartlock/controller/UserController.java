@@ -48,7 +48,8 @@ public class UserController {
                 principal.getUserId(),
                 request.getFirstName(),
                 request.getLastName(),
-                request.getAvatarUrl());
+                request.getAvatarUrl(),
+                request.getLocale());
         return ResponseEntity.ok(ApiResponse.success(toUserInfo(user)));
     }
 
@@ -76,6 +77,7 @@ public class UserController {
                 .onboardingStep(user.getOnboardingStep())
                 .onboardingCompleted(user.isOnboardingCompleted())
                 .organizationId(orgId)
+                .locale(user.getLocale())
                 .build();
     }
 
@@ -87,6 +89,9 @@ public class UserController {
         private String lastName;
         @Size(max = 500)
         private String avatarUrl;
+        /** ISO 639-1 code; unsupported values are coerced to 'en' rather than rejected. */
+        @Size(max = 10)
+        private String locale;
     }
 
     @Data

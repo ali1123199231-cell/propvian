@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Verify your email</title>
+  <title th:text="#{email.verificationCode.title}">Verify your email</title>
 </head>
 <body style="margin:0;padding:0;background:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9fafb;padding:40px 20px;">
@@ -24,10 +24,12 @@
           <!-- Body -->
           <tr>
             <td style="padding:40px 40px 32px;">
-              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.3px;">Verify your email</h1>
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.3px;"
+                  th:text="#{email.verificationCode.title}">Verify your email</h1>
               <p style="margin:0 0 24px;font-size:15px;color:#6b7280;line-height:1.6;">
-                Hi <span th:text="${name != null ? name : 'there'}">there</span>,<br/>
-                Enter the code below to verify your email and continue setup.
+                <span th:text="#{email.common.hi}">Hi</span>
+                <span th:text="${name != null ? name : #messages.msg('email.common.there')}">there</span>,<br/>
+                <span th:text="#{email.verificationCode.body}">Enter the code below to verify your email and continue setup.</span>
               </p>
 
               <!-- Code box -->
@@ -35,20 +37,17 @@
                 <div style="font-size:40px;font-weight:800;color:#4f46e5;letter-spacing:12px;" th:text="${code}">000000</div>
               </div>
 
-              <p style="margin:0 0 8px;font-size:13px;color:#9ca3af;text-align:center;">
-                This code expires in <strong style="color:#374151;">15 minutes</strong>.
-              </p>
-              <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;">
-                If you didn't request this, you can safely ignore this email.
-              </p>
+              <p style="margin:0 0 8px;font-size:13px;color:#9ca3af;text-align:center;"
+                 th:text="#{email.verificationCode.expiry}">This code expires in 15 minutes.</p>
+              <p style="margin:0;font-size:13px;color:#9ca3af;text-align:center;"
+                 th:text="#{email.verificationCode.ignore}">If you didn't request this, you can safely ignore this email.</p>
             </td>
           </tr>
           <!-- Footer -->
           <tr>
             <td style="background:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;text-align:center;">
-              <p style="margin:0;font-size:12px;color:#9ca3af;">
-                © 2025 Propvian. Enterprise-grade access automation.
-              </p>
+              <p style="margin:0;font-size:12px;color:#9ca3af;"
+                 th:text="#{email.common.footerAuto}">This is an automated message from Propvian.</p>
             </td>
           </tr>
         </table>

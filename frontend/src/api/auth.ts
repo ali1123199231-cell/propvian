@@ -2,6 +2,7 @@ import apiClient from './client'
 import type { AuthResponse } from '@/types'
 import { logger, maskEmail } from '@/lib/logger'
 import { getAttribution, clearAttribution } from '@/lib/attribution'
+import { currentLanguage } from '@/lib/i18n'
 
 const log = logger.child('AUTH')
 
@@ -28,6 +29,9 @@ export const authApi = {
       password,
       firstName,
       lastName,
+      // The language they signed up in, so their very first email matches the
+      // page that sold them rather than defaulting to English.
+      locale: currentLanguage(),
       ...attribution,
     })
     log.info('register — success userId=%s step=%s', data.data?.user?.id, data.data?.user?.onboardingStep)

@@ -1,0 +1,99 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "greeting": "Welcome back, {{name}}",
+    "upcomingArrivals": "Upcoming arrivals",
+    "occupancy": "Occupancy",
+    "revenue": "Revenue",
+    "noArrivals": "No arrivals scheduled",
+    "thisMonth": "This month",
+    "lastMonth": "Last month"
+  },
+  "properties": {
+    "title": "Properties",
+    "add": "Add property",
+    "empty": "You haven't added a property yet.",
+    "emptyHint": "Add your first property to publish a booking site.",
+    "name": "Property name",
+    "address": "Address",
+    "nightlyRate": "Nightly rate",
+    "cleaningFee": "Cleaning fee",
+    "maxGuests": "Maximum guests",
+    "bedrooms": "Bedrooms",
+    "beds": "Beds",
+    "bathrooms": "Bathrooms",
+    "minNights": "Minimum nights",
+    "active": "Active",
+    "inactive": "Inactive",
+    "deleteConfirm": "Delete this property? Its bookings and booking page will be removed.",
+    "saved": "Property saved"
+  },
+  "reservations": {
+    "title": "Reservations",
+    "empty": "No reservations yet",
+    "guest": "Guest",
+    "dates": "Dates",
+    "nights": "Nights",
+    "total": "Total",
+    "status": "Status",
+    "source": "Source",
+    "statuses": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "cancelled": "Cancelled",
+      "completed": "Completed"
+    },
+    "cancelConfirm": "Cancel this reservation? The guest will be notified."
+  },
+  "calendar": {
+    "title": "Calendar",
+    "blockDates": "Block dates",
+    "unblock": "Unblock",
+    "blocked": "Blocked",
+    "booked": "Booked",
+    "available": "Available",
+    "selectProperty": "Select a property"
+  },
+  "billing": {
+    "title": "Billing",
+    "plan": "Plan",
+    "trialActive": "Free trial",
+    "trialEnds": "Your free trial ends on {{date}}.",
+    "trialEndedTitle": "Your trial has ended",
+    "activeProperties": "Active properties",
+    "monthlyTotal": "Monthly total",
+    "perPropertyPerMonth": "$10 per property per month",
+    "subscribe": "Subscribe",
+    "manageSubscription": "Manage subscription",
+    "paymentMethod": "Payment method",
+    "invoices": "Invoices",
+    "noInvoices": "No invoices yet"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "account": "Account",
+    "language": "Language",
+    "languageHint": "Changes the language of your dashboard and the emails we send you.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "notifications": "Notifications",
+    "dangerZone": "Danger zone",
+    "deleteAccount": "Delete account",
+    "saved": "Settings saved"
+  },
+  "website": {
+    "title": "Website",
+    "defaultLanguage": "Default language",
+    "defaultLanguageHint": "The language your booking site opens in. Guests can still switch.",
+    "enabledLanguages": "Languages guests can choose",
+    "enabledLanguagesHint": "Leave only one selected to hide the language switcher on your site.",
+    "publish": "Publish site",
+    "published": "Site published",
+    "viewSite": "View site"
+  }
+}

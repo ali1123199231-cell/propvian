@@ -1,0 +1,69 @@
+{
+  "brand": {
+    "name": "Propvian",
+    "tagline": "Direct bookings for short-term rental hosts"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "properties": "Properties",
+    "reservations": "Reservations",
+    "calendar": "Calendar",
+    "messages": "Messages",
+    "website": "Website",
+    "locks": "Locks",
+    "integrations": "Integrations",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "billing": "Billing",
+    "pricing": "Pricing",
+    "blog": "Blog",
+    "features": "Features",
+    "login": "Sign in",
+    "logout": "Sign out",
+    "signup": "Start free"
+  },
+  "actions": {
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "add": "Add",
+    "remove": "Remove",
+    "back": "Back",
+    "next": "Next",
+    "continue": "Continue",
+    "confirm": "Confirm",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "retry": "Try again",
+    "copy": "Copy",
+    "copied": "Copied",
+    "publish": "Publish",
+    "preview": "Preview",
+    "viewAll": "View all"
+  },
+  "states": {
+    "loading": "Loading…",
+    "empty": "Nothing here yet",
+    "error": "Something went wrong",
+    "errorHint": "Please try again. If it keeps happening, contact support.",
+    "notFound": "Not found",
+    "saved": "Saved",
+    "required": "Required"
+  },
+  "language": {
+    "label": "Language",
+    "change": "Change language",
+    "current": "Current language: {{language}}"
+  },
+  "footer": {
+    "product": "Product",
+    "company": "Company",
+    "legal": "Legal",
+    "resources": "Resources",
+    "rights": "All rights reserved."
+  }
+}

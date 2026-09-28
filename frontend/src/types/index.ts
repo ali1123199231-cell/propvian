@@ -10,6 +10,8 @@ export interface User {
   onboardingStep?: string
   onboardingCompleted?: boolean
   organizationId?: string
+  /** Preferred UI + email language (ISO 639-1). Absent on older sessions. */
+  locale?: string
 }
 
 export interface AuthResponse {

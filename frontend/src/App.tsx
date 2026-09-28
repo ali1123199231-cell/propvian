@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { localePrefix, splitLocalePath } from '@/lib/i18n/config'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import { GuestBookingPage } from '@/pages/public/GuestBookingPage'
@@ -195,7 +196,17 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
+    /*
+     * Locale prefix as the router basename: /es/pricing then matches the same
+     * "/pricing" route as the English URL, so no route needs duplicating per
+     * language. English is unprefixed, which keeps every existing URL — and the
+     * search rankings and IndexNow submissions attached to them — intact.
+     *
+     * Read once from the URL at mount. Language switching navigates with a full
+     * page load rather than mutating this, since changing a live basename
+     * desynchronises React Router's history.
+     */
+    <BrowserRouter basename={localePrefix(splitLocalePath(window.location.pathname).lang)}>
       <Routes>
         {/* Public guest booking by path — works without subdomain DNS */}
         <Route path="/book/:slug" element={<GuestBookingRoute />} />

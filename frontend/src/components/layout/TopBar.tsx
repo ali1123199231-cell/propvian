@@ -2,6 +2,8 @@ import { Bell, Plus } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { notificationsApi } from '@/api/notifications'
 import { useNavigate } from 'react-router-dom'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { usersApi } from '@/api/users'
 
 interface TopBarProps {
   title: string
@@ -25,6 +27,9 @@ export function TopBar({ title, action }: TopBarProps) {
       <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
 
       <div className="flex items-center gap-3">
+        {/* Language — persists to the profile so emails follow the dashboard */}
+        <LanguageSwitcher variant="compact" onChange={(code) => usersApi.setLocale(code)} />
+
         {/* Notifications */}
         <button
           onClick={() => navigate('/notifications')}

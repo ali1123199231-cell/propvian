@@ -75,6 +75,11 @@ public class User extends SoftDeletableEntity {
     @Column(name = "pending_ttlock_lock_name", length = 200)
     private String pendingTtlockLockName;
 
+    /** UI + outbound email language. ISO 639-1; 'en' when the host never chose. */
+    @Column(name = "locale", nullable = false, length = 10)
+    @Builder.Default
+    private String locale = "en";
+
     // Marketing attribution, set once at signup and never updated afterwards.
     // Used to reconcile ad spend against subscriptions that reach ACTIVE.
 

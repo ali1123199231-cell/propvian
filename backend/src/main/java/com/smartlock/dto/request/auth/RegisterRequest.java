@@ -24,6 +24,14 @@ public class RegisterRequest {
     @Size(max = 200)
     private String name;
 
+    /**
+     * Language the visitor signed up in. Sent so a host who arrived through a
+     * Spanish ad gets Spanish email from the very first message, rather than
+     * English until they find the setting.
+     */
+    @Size(max = 10)
+    private String locale;
+
     // Marketing attribution — captured client-side on first landing, optional and untrusted.
     // Sizes mirror the users table columns so an oversized value is rejected rather than truncated.
 

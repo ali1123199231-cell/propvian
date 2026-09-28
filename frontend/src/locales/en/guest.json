@@ -1,0 +1,64 @@
+{
+  "booking": {
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "guests": "Guests",
+    "guest_one": "{{count}} guest",
+    "guest_other": "{{count}} guests",
+    "night_one": "{{count}} night",
+    "night_other": "{{count}} nights",
+    "pickDates": "Click a date to start your selection",
+    "pickCheckout": "Now pick a check-out date",
+    "yourDetails": "Your details",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "phone": "Phone",
+    "notes": "Anything we should know?",
+    "houseRules": "House rules",
+    "whatsIncluded": "What's included",
+    "property": "Property",
+    "book": "Book now",
+    "booking": "Booking…"
+  },
+  "pricing": {
+    "nightlyRate": "Nightly rate",
+    "cleaningFee": "Cleaning fee",
+    "securityDeposit": "Security deposit",
+    "promoCode": "Promo code",
+    "applyPromo": "Apply",
+    "promoApplied": "Promo code applied",
+    "promoInvalid": "That promo code isn't valid",
+    "discount": "Discount",
+    "total": "Total",
+    "totalPaid": "Total paid",
+    "perNight": "per night"
+  },
+  "payment": {
+    "title": "Payment",
+    "method": "Payment method",
+    "card": "Card",
+    "paypal": "PayPal",
+    "payNow": "Pay and confirm",
+    "processing": "Processing…",
+    "failed": "Payment could not be completed. No money has been taken."
+  },
+  "confirmation": {
+    "title": "Booking confirmed",
+    "sentTo": "A confirmation has been sent to",
+    "reference": "Booking reference",
+    "addToCalendar": "Add to calendar"
+  },
+  "errors": {
+    "unavailableTitle": "Bookings temporarily unavailable",
+    "unavailableBody": "Bookings are temporarily unavailable for this property.",
+    "badLink": "Booking not available on this link",
+    "noRate": "No nightly rate set — this property cannot be booked yet.",
+    "datesTaken": "Those dates have just been taken. Please choose another range.",
+    "minNights": "This property has a minimum stay of {{count}} nights."
+  },
+  "legal": {
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms"
+  }
+}

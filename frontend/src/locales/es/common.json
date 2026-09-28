@@ -1,0 +1,69 @@
+{
+  "brand": {
+    "name": "Propvian",
+    "tagline": "Reservas directas para anfitriones de alquiler vacacional"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "properties": "Propiedades",
+    "reservations": "Reservas",
+    "calendar": "Calendario",
+    "messages": "Mensajes",
+    "website": "Sitio web",
+    "locks": "Cerraduras",
+    "integrations": "Integraciones",
+    "notifications": "Notificaciones",
+    "settings": "Ajustes",
+    "billing": "Facturación",
+    "pricing": "Precios",
+    "blog": "Blog",
+    "features": "Funciones",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "signup": "Empezar gratis"
+  },
+  "actions": {
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "add": "Añadir",
+    "remove": "Quitar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "continue": "Continuar",
+    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "retry": "Reintentar",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "publish": "Publicar",
+    "preview": "Vista previa",
+    "viewAll": "Ver todo"
+  },
+  "states": {
+    "loading": "Cargando…",
+    "empty": "Aquí todavía no hay nada",
+    "error": "Algo ha salido mal",
+    "errorHint": "Inténtalo de nuevo. Si el problema persiste, contacta con soporte.",
+    "notFound": "No encontrado",
+    "saved": "Guardado",
+    "required": "Obligatorio"
+  },
+  "language": {
+    "label": "Idioma",
+    "change": "Cambiar idioma",
+    "current": "Idioma actual: {{language}}"
+  },
+  "footer": {
+    "product": "Producto",
+    "company": "Empresa",
+    "legal": "Legal",
+    "resources": "Recursos",
+    "rights": "Todos los derechos reservados."
+  }
+}

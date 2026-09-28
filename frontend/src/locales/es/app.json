@@ -1,0 +1,99 @@
+{
+  "dashboard": {
+    "title": "Panel",
+    "greeting": "Bienvenido de nuevo, {{name}}",
+    "upcomingArrivals": "Próximas llegadas",
+    "occupancy": "Ocupación",
+    "revenue": "Ingresos",
+    "noArrivals": "No hay llegadas previstas",
+    "thisMonth": "Este mes",
+    "lastMonth": "Mes pasado"
+  },
+  "properties": {
+    "title": "Propiedades",
+    "add": "Añadir propiedad",
+    "empty": "Aún no has añadido ninguna propiedad.",
+    "emptyHint": "Añade tu primera propiedad para publicar una web de reservas.",
+    "name": "Nombre de la propiedad",
+    "address": "Dirección",
+    "nightlyRate": "Precio por noche",
+    "cleaningFee": "Gastos de limpieza",
+    "maxGuests": "Huéspedes máximos",
+    "bedrooms": "Dormitorios",
+    "beds": "Camas",
+    "bathrooms": "Baños",
+    "minNights": "Noches mínimas",
+    "active": "Activa",
+    "inactive": "Inactiva",
+    "deleteConfirm": "¿Eliminar esta propiedad? Se borrarán sus reservas y su página de reservas.",
+    "saved": "Propiedad guardada"
+  },
+  "reservations": {
+    "title": "Reservas",
+    "empty": "Todavía no hay reservas",
+    "guest": "Huésped",
+    "dates": "Fechas",
+    "nights": "Noches",
+    "total": "Total",
+    "status": "Estado",
+    "source": "Origen",
+    "statuses": {
+      "confirmed": "Confirmada",
+      "pending": "Pendiente",
+      "cancelled": "Cancelada",
+      "completed": "Completada"
+    },
+    "cancelConfirm": "¿Cancelar esta reserva? Se avisará al huésped."
+  },
+  "calendar": {
+    "title": "Calendario",
+    "blockDates": "Bloquear fechas",
+    "unblock": "Desbloquear",
+    "blocked": "Bloqueada",
+    "booked": "Reservada",
+    "available": "Disponible",
+    "selectProperty": "Selecciona una propiedad"
+  },
+  "billing": {
+    "title": "Facturación",
+    "plan": "Plan",
+    "trialActive": "Prueba gratuita",
+    "trialEnds": "Tu prueba gratuita termina el {{date}}.",
+    "trialEndedTitle": "Tu prueba ha terminado",
+    "activeProperties": "Propiedades activas",
+    "monthlyTotal": "Total mensual",
+    "perPropertyPerMonth": "10 $ por propiedad al mes",
+    "subscribe": "Suscribirse",
+    "manageSubscription": "Gestionar suscripción",
+    "paymentMethod": "Método de pago",
+    "invoices": "Facturas",
+    "noInvoices": "Todavía no hay facturas"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "profile": "Perfil",
+    "account": "Cuenta",
+    "language": "Idioma",
+    "languageHint": "Cambia el idioma de tu panel y de los correos que te enviamos.",
+    "firstName": "Nombre",
+    "lastName": "Apellidos",
+    "email": "Correo electrónico",
+    "changePassword": "Cambiar contraseña",
+    "currentPassword": "Contraseña actual",
+    "newPassword": "Contraseña nueva",
+    "notifications": "Notificaciones",
+    "dangerZone": "Zona de riesgo",
+    "deleteAccount": "Eliminar cuenta",
+    "saved": "Ajustes guardados"
+  },
+  "website": {
+    "title": "Sitio web",
+    "defaultLanguage": "Idioma predeterminado",
+    "defaultLanguageHint": "El idioma con el que se abre tu web de reservas. Los huéspedes pueden cambiarlo.",
+    "enabledLanguages": "Idiomas que pueden elegir los huéspedes",
+    "enabledLanguagesHint": "Deja solo uno seleccionado para ocultar el selector de idioma en tu web.",
+    "publish": "Publicar sitio",
+    "published": "Sitio publicado",
+    "viewSite": "Ver sitio"
+  }
+}

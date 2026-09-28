@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, Link, Navigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, Loader2, Check } from 'lucide-react'
 import { PropvianLogo } from '@/components/PropvianLogo'
 import toast from 'react-hot-toast'
@@ -13,31 +14,42 @@ import { systemConfigApi } from '@/api/systemConfig'
 import { useAuthStore } from '@/store/authStore'
 import { useSystemStore } from '@/store/systemStore'
 import { SEOHead } from '@/components/seo/SEOHead'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import type { BusinessModel } from '@/types'
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
+//
+// Built inside the components from `t` rather than at module scope, so that
+// switching language re-renders the messages instead of leaving the visitor
+// with validation errors in the language the page first loaded in.
 
-const signInSchema = z.object({
-  email:    z.string().email('Invalid email'),
-  password: z.string().min(1, 'Password required'),
-})
+type TFn = (key: string) => string
 
-const signUpSchemaDirect = z.object({
-  firstName: z.string().min(1, 'Required').max(100),
-  lastName:  z.string().min(1, 'Required').max(100),
-  email:     z.string().email('Invalid email'),
-  password:  z.string()
-    .min(8, 'At least 8 characters')
-    .regex(/[A-Z]/, 'At least one uppercase letter')
-    .regex(/[0-9]/, 'At least one number'),
-})
+const buildSignInSchema = (t: TFn) =>
+  z.object({
+    email: z.string().email(t('landing.validation.emailInvalid')),
+    password: z.string().min(1, t('landing.validation.passwordRequired')),
+  })
 
-type SignInData    = z.infer<typeof signInSchema>
-type SignUpDirect  = z.infer<typeof signUpSchemaDirect>
+const buildSignUpSchema = (t: TFn) =>
+  z.object({
+    firstName: z.string().min(1, t('landing.validation.required')).max(100),
+    lastName: z.string().min(1, t('landing.validation.required')).max(100),
+    email: z.string().email(t('landing.validation.emailInvalid')),
+    password: z
+      .string()
+      .min(8, t('landing.validation.min8'))
+      .regex(/[A-Z]/, t('landing.validation.uppercase'))
+      .regex(/[0-9]/, t('landing.validation.number')),
+  })
+
+type SignInData   = z.infer<ReturnType<typeof buildSignInSchema>>
+type SignUpDirect = z.infer<ReturnType<typeof buildSignUpSchema>>
 
 // ─── Password strength ───────────────────────────────────────────────────────
 
 function PasswordStrengthBar({ password }: { password: string }) {
+  const { t } = useTranslation('marketing')
   if (!password) return null
   let score = 0
   if (password.length >= 8)  score++
@@ -46,7 +58,9 @@ function PasswordStrengthBar({ password }: { password: string }) {
   if (/[0-9]/.test(password)) score++
   if (/[^A-Za-z0-9]/.test(password)) score++
   const color = score <= 1 ? 'bg-red-500' : score <= 3 ? 'bg-yellow-500' : 'bg-green-500'
-  const label = score <= 1 ? 'Weak' : score <= 3 ? 'Fair' : 'Strong'
+  const label = score <= 1
+    ? t('landing.password.weak')
+    : score <= 3 ? t('landing.password.fair') : t('landing.password.strong')
   return (
     <div className="mt-2 space-y-1">
       <div className="flex gap-1">
@@ -54,7 +68,7 @@ function PasswordStrengthBar({ password }: { password: string }) {
           <div key={i} className={`h-1 flex-1 rounded-full ${i <= score ? color : 'bg-gray-200'}`} />
         ))}
       </div>
-      <p className="text-xs text-gray-500">{label} password</p>
+      <p className="text-xs text-gray-500">{label} {t('landing.password.suffix')}</p>
     </div>
   )
 }
@@ -64,11 +78,14 @@ function PasswordStrengthBar({ password }: { password: string }) {
 function SignInForm({ businessModel }: { businessModel: BusinessModel }) {
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+  const { t } = useTranslation('marketing')
+  const { t: tAuth } = useTranslation('auth')
   const { setAuth, setActiveOrg } = useAuthStore()
   const { fetchConfig } = useSystemStore()
 
+  const schema = useMemo(() => buildSignInSchema(t as TFn), [t])
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignInData>({
-    resolver: zodResolver(signInSchema),
+    resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: SignInData) => {
@@ -90,22 +107,22 @@ function SignInForm({ businessModel }: { businessModel: BusinessModel }) {
       }
 
       navigate('/dashboard')
-      toast.success('Welcome back!')
+      toast.success(t('landing.toast.welcomeBack'))
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Sign in failed')
+      toast.error(err.response?.data?.message || t('landing.toast.signInFailed'))
     }
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('login.email')}</label>
         <input {...register('email')} type="email" autoComplete="email"
-          placeholder="you@example.com" className="input-base" />
+          placeholder={tAuth('register.placeholders.email')} className="input-base" />
         {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('login.password')}</label>
         <div className="relative">
           <input {...register('password')} type={showPassword ? 'text' : 'password'}
             autoComplete="current-password" placeholder="••••••••" className="input-base pr-10" />
@@ -118,12 +135,12 @@ function SignInForm({ businessModel }: { businessModel: BusinessModel }) {
       </div>
       <div className="flex justify-end -mt-1">
         <Link to="/forgot-password" className="text-xs text-primary-600 hover:text-primary-700 font-medium">
-          Forgot password?
+          {tAuth('login.forgotPassword')}
         </Link>
       </div>
       <button type="submit" disabled={isSubmitting} className="btn-primary w-full justify-center py-3 mt-2">
         {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-        {isSubmitting ? 'Signing in…' : 'Sign in'}
+        {isSubmitting ? tAuth('login.submitting') : tAuth('login.submit')}
       </button>
     </form>
   )
@@ -135,11 +152,14 @@ function SignUpFormDirect() {
   const [showPassword, setShowPassword] = useState(false)
   const [pwValue, setPwValue]           = useState('')
   const navigate = useNavigate()
+  const { t } = useTranslation('marketing')
+  const { t: tAuth } = useTranslation('auth')
   const { setAuth, setActiveOrg } = useAuthStore()
   const { fetchConfig } = useSystemStore()
 
+  const schema = useMemo(() => buildSignUpSchema(t as TFn), [t])
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignUpDirect>({
-    resolver: zodResolver(signUpSchemaDirect),
+    resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: SignUpDirect) => {
@@ -158,7 +178,7 @@ function SignUpFormDirect() {
       window.gtag?.('event', 'conversion', { send_to: 'AW-18015500784/SVoYCIqh57McEPDzuo5D' })
       navigate('/onboarding-direct')
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Registration failed')
+      toast.error(err.response?.data?.message || t('landing.toast.registrationFailed'))
     }
   }
 
@@ -166,29 +186,30 @@ function SignUpFormDirect() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">First name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('register.firstName')}</label>
           <input {...register('firstName')} type="text" autoComplete="given-name"
-            placeholder="Jane" className="input-base" />
+            placeholder={tAuth('register.placeholders.firstName')} className="input-base" />
           {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Last name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('register.lastName')}</label>
           <input {...register('lastName')} type="text" autoComplete="family-name"
-            placeholder="Smith" className="input-base" />
+            placeholder={tAuth('register.placeholders.lastName')} className="input-base" />
           {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName.message}</p>}
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('register.email')}</label>
         <input {...register('email')} type="email" autoComplete="email"
-          placeholder="you@example.com" className="input-base" />
+          placeholder={tAuth('register.placeholders.email')} className="input-base" />
         {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tAuth('register.password')}</label>
         <div className="relative">
           <input {...register('password')} type={showPassword ? 'text' : 'password'}
-            autoComplete="new-password" placeholder="Min 8 characters" className="input-base pr-10"
+            autoComplete="new-password" placeholder={tAuth('register.placeholders.password')}
+            className="input-base pr-10"
             onChange={e => setPwValue(e.target.value)} />
           <button type="button" onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -200,73 +221,24 @@ function SignUpFormDirect() {
       </div>
       <button type="submit" disabled={isSubmitting} className="btn-primary w-full justify-center py-3 mt-2">
         {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-        {isSubmitting ? 'Creating account…' : 'Start free'}
+        {isSubmitting ? tAuth('register.submitting') : t('cta.startFree')}
       </button>
       <p className="text-xs text-gray-400 text-center">
-        By signing up you agree to our{' '}
-        <Link to="/legal/terms" className="underline hover:text-gray-600">Terms</Link> and{' '}
-        <Link to="/legal/privacy" className="underline hover:text-gray-600">Privacy Policy</Link>.
+        {t('landing.terms.prefix')}{' '}
+        <Link to="/legal/terms" className="underline hover:text-gray-600">{t('landing.terms.terms')}</Link>{' '}
+        {t('landing.terms.and')}{' '}
+        <Link to="/legal/privacy" className="underline hover:text-gray-600">{t('landing.terms.privacy')}</Link>.
       </p>
     </form>
   )
 }
 
-// ─── Marketing copy per business model ────────────────────────────────────────
-
-const COPY: Record<BusinessModel, {
-  seoTitle: string; seoDesc: string
-  headline: string; sub: string
-  bullets: string[]; footer: string
-}> = {
-  direct_booking: {
-    seoTitle:  'Propvian — Direct Booking Software for Short-Term Rental Hosts',
-    seoDesc:   'Launch your own direct booking website in minutes. $10/month per property. No OTA commissions. Keep 100% of your revenue.',
-    headline:  'Your own direct booking website.\n0% booking commissions.',
-    sub:       'Launch a branded booking site for your rental property. Guests book directly with you — Zero OTA commissions. Payments go straight to your Stripe or PayPal account.',
-    bullets:   [
-      'Live booking website in under 5 minutes',
-      '$10 / month per property — flat fee, no surprises',
-      'Stripe & PayPal direct to your account',
-    ],
-    footer:    '© 2026 Propvian. Direct booking software for short-term rental hosts.',
-  },
-  ttlock: {
-    seoTitle:  'Propvian — Smart Lock Automation for Short-Term Rentals',
-    seoDesc:   'Automatically create and revoke TTLock guest codes from Airbnb and Booking.com reservations.',
-    headline:  'Smart lock automation\nfor short-term rentals',
-    sub:       'Automatically create and revoke TTLock guest codes from Airbnb and Booking.com reservations — and save hours of manual work.',
-    bullets:   [
-      'Setup takes about 5 minutes',
-      'Free for 1 month — no payment details required',
-      'After trial: $2 per lock / month',
-    ],
-    footer:    '© 2026 Propvian. Enterprise-grade access automation.',
-  },
-}
-
-// Paid and organic cold traffic arrives without an account, so opening on the
-// sign-in form is a dead end for exactly the visitor an ad just paid for.
-// Anyone whose auth store still holds a user on this device is treated as
-// returning and keeps the sign-in tab.
-function hasAccountOnDevice(): boolean {
-  try {
-    const raw = localStorage.getItem('propvian-auth')
-    if (!raw) return false
-    const state = JSON.parse(raw)?.state
-    return Boolean(state?.user || state?.accessToken)
-  } catch {
-    return false
-  }
-}
-
 // ─── Landing Page ─────────────────────────────────────────────────────────────
 
 export function LandingPage() {
-  const [tab, setTab]                       = useState<'signin' | 'signup'>(
-    () => (hasAccountOnDevice() ? 'signin' : 'signup'),
-  )
+  const [tab, setTab]                       = useState<'signin' | 'signup'>('signin')
   const [businessModel, setBusinessModel]   = useState<BusinessModel>('ttlock')
-  const { fetchConfig }                     = useSystemStore()
+  const { t }                               = useTranslation('marketing')
   const { isAuthenticated }                 = useAuthStore()
 
   useEffect(() => {
@@ -277,7 +249,15 @@ export function LandingPage() {
 
   if (isAuthenticated) return <Navigate to="/dashboard" replace />
 
-  const copy = COPY[businessModel]
+  // Copy differs per business model; the namespace mirrors that shape.
+  const copy = {
+    seoTitle: t(`landing.${businessModel}.seoTitle`),
+    seoDesc:  t(`landing.${businessModel}.seoDesc`),
+    headline: t(`landing.${businessModel}.headline`),
+    sub:      t(`landing.${businessModel}.sub`),
+    bullets:  t(`landing.${businessModel}.bullets`, { returnObjects: true }) as string[],
+    footer:   t(`landing.${businessModel}.footer`),
+  }
 
   return (
     <>
@@ -287,8 +267,12 @@ export function LandingPage() {
         {/* ── Left: Marketing ──────────────────────────────────── */}
         <div className="lg:flex-1 bg-gradient-to-br from-primary-900 via-primary-700 to-indigo-600 flex flex-col justify-between p-8 lg:p-14">
 
-          {/* Logo */}
-          <PropvianLogo size={40} textClassName="text-xl font-bold text-white tracking-tight" />
+          {/* Logo + language — marketing pages are indexed per language, so the
+              switcher changes the URL rather than only the rendered strings. */}
+          <div className="flex items-center justify-between gap-4">
+            <PropvianLogo size={40} textClassName="text-xl font-bold text-white tracking-tight" />
+            <LanguageSwitcher variant="compact" syncUrl className="[&>button]:text-white [&>button]:hover:bg-white/10" />
+          </div>
 
           {/* Hero */}
           <div className="py-10 lg:py-0">
@@ -321,12 +305,12 @@ export function LandingPage() {
 
             {/* Tabs */}
             <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-8">
-              {(['signin', 'signup'] as const).map(t => (
-                <button key={t} onClick={() => setTab(t)}
+              {(['signin', 'signup'] as const).map(tabKey => (
+                <button key={tabKey} onClick={() => setTab(tabKey)}
                   className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    tab === tabKey ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}>
-                  {t === 'signin' ? 'Sign in' : 'Sign up'}
+                  {tabKey === 'signin' ? t('landing.tabs.signin') : t('landing.tabs.signup')}
                 </button>
               ))}
             </div>
@@ -334,14 +318,14 @@ export function LandingPage() {
             {/* Heading */}
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                {tab === 'signin' ? 'Welcome back' : 'Get started free'}
+                {tab === 'signin' ? t('landing.headings.welcomeBack') : t('landing.headings.getStarted')}
               </h2>
               <p className="text-sm text-gray-500 mt-1">
                 {tab === 'signin'
-                  ? 'Sign in to your Propvian account.'
+                  ? t('landing.headings.signinSub')
                   : businessModel === 'direct_booking'
-                  ? 'Create your host account in seconds.'
-                  : 'Create an account. No credit card needed.'}
+                  ? t('landing.headings.signupSubDirect')
+                  : t('landing.headings.signupSubTtlock')}
               </p>
             </div>
 

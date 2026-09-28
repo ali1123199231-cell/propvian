@@ -17,7 +17,10 @@
     <title>Propvian — Direct Booking & Property Management for Short-Term Rentals</title>
     <meta name="description" content="Accept direct bookings, manage your calendar, automate smart lock access codes, and grow your short-term rental business without marketplace fees. Free 1-month trial." />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://propvian.com/" />
+    <!-- No static canonical here on purpose. react-helmet-async cannot replace a
+         tag it did not render, so a hardcoded canonical survives alongside the
+         per-page one, and every localised URL (/es/…, /it/…) would end up
+         declaring the English root as its canonical. SEOHead emits it instead. -->
 
     <!-- Open Graph -->
     <meta property="og:title" content="Propvian — Direct Booking & Property Management for Short-Term Rentals" />

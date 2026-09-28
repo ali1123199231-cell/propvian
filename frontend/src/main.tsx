@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { HelmetProvider } from 'react-helmet-async'
 import App from './App'
 import { captureAttribution } from './lib/attribution'
+import './lib/i18n'
 import './index.css'
 
 // Must run before the router mounts — a client-side navigation would otherwise
