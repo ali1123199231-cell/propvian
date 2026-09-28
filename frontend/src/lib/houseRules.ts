@@ -26,7 +26,15 @@ export const RULE_PHRASES: Record<string, { yes: string; no: string }> = {
   CHILDREN:    { yes: 'Children welcome',         no: 'Not suitable for children' },
 }
 
-export function ruleText(ruleKey: string, allowed: boolean, notes?: string): string {
+/**
+ * Pass a translator bound to the "guest" namespace to get the guest's language
+ * (keys rules.<KEY>.yes / .no); without one the English phrases below are used.
+ */
+export function ruleText(ruleKey: string, allowed: boolean, notes?: string, t?: (key: string) => string): string {
+  if (t && RULE_PHRASES[ruleKey]) {
+    const base = t(`rules.${ruleKey}.${allowed ? 'yes' : 'no'}`)
+    return notes ? `${base} (${notes})` : base
+  }
   const phrase = RULE_PHRASES[ruleKey]
   const label = RULE_LABELS[ruleKey] ?? ruleKey.replace(/_/g, ' ')
   const base = phrase ? (allowed ? phrase.yes : phrase.no) : `${label}${allowed ? ' allowed' : ' not allowed'}`

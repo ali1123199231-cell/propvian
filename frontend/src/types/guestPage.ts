@@ -86,7 +86,7 @@ export interface PublicGuestPage {
   sections?: GuestPageSection[]
   houseRules?: GuestHouseRule[]
   contact?: { name?: string; phone?: string; whatsapp: boolean; email?: string }
-  bookDirect?: { url: string; message: string; promoCode?: string; discountLabel?: string }
+  bookDirect?: { url: string; message?: string | null; promoCode?: string; discountLabel?: string }
   showPoweredBy?: boolean
 }
 

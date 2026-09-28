@@ -85,6 +85,10 @@ public class OrganizationSecurityService {
         return currentPrincipal().getActiveOrgId();
     }
 
+    public UUID currentUserId() {
+        return currentPrincipal().getUserId();
+    }
+
     private CustomUserDetails currentPrincipal() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof CustomUserDetails ud) return ud;

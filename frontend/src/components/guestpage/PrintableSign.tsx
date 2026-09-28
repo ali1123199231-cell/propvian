@@ -1,4 +1,6 @@
 import { Wifi, Nfc, ScanLine } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import type { WifiSecurity } from '@/types/guestPage'
 import { wifiQrPayload } from '@/lib/wifiQr'
 import { QrCode } from './QrCode'
@@ -27,15 +29,27 @@ export interface SignContent {
   writeInWifi?: boolean      // blank lines for a pen: pre-printed stand cards can't know the WiFi
   accent?: string
   footer?: string
+  /** Language printed on the sign; defaults to the viewer's. A Polish stand prints Polish from any admin screen. */
+  lang?: string
 }
 
 const mm = (n: number) => `${n}mm`
 
+/** Translator fixed to the sign's own language, not the language of the screen printing it. */
+function useSignT(c: SignContent): TFunction {
+  const { i18n } = useTranslation('guestpage')
+  return i18n.getFixedT(c.lang ?? i18n.language, 'guestpage')
+}
+
+// Uppercase through CSS, so translations stay in normal case
+const LABEL: React.CSSProperties = { fontSize: '7.5pt', letterSpacing: '0.08em', textTransform: 'uppercase' }
+
 function CallToAction({ c, compact }: { c: SignContent; compact?: boolean }) {
+  const t = useSignT(c)
   const Icon = c.showNfcHint ? Nfc : ScanLine
   const text = c.guideUrl
-    ? (c.showNfcHint ? (c.nfcHintText ?? 'Tap your phone here or scan the code') : 'Scan with your phone camera')
-    : 'Scan with your phone camera to join'
+    ? (c.showNfcHint ? (c.nfcHintText ?? t('sign.tapOrScan')) : t('sign.scanCamera'))
+    : t('sign.scanToJoin')
   return (
     <p className="flex items-center justify-center gap-[1.5mm] font-semibold text-gray-900" style={{ fontSize: compact ? '9pt' : '10.5pt' }}>
       <Icon style={{ width: mm(4.5), height: mm(4.5) }} /> {text}
@@ -44,14 +58,15 @@ function CallToAction({ c, compact }: { c: SignContent; compact?: boolean }) {
 }
 
 function WifiText({ c, size = '9.5pt' }: { c: SignContent; size?: string }) {
+  const t = useSignT(c)
   if (!c.wifi) return null
   return (
     <div className="leading-snug" style={{ fontSize: size }}>
-      <p className="text-gray-500" style={{ fontSize: '7.5pt', letterSpacing: '0.08em' }}>WIFI NETWORK</p>
+      <p className="text-gray-500" style={LABEL}>{t('sign.wifiNetwork')}</p>
       <p className="font-semibold text-gray-900 break-all">{c.wifi.ssid}</p>
       {c.wifi.security !== 'nopass' && c.wifi.password && (
         <>
-          <p className="mt-[1mm] text-gray-500" style={{ fontSize: '7.5pt', letterSpacing: '0.08em' }}>PASSWORD</p>
+          <p className="mt-[1mm] text-gray-500" style={LABEL}>{t('sign.password')}</p>
           <p className="font-mono font-semibold text-gray-900 break-all">{c.wifi.password}</p>
         </>
       )}
@@ -60,23 +75,25 @@ function WifiText({ c, size = '9.5pt' }: { c: SignContent; size?: string }) {
 }
 
 /** Ruled lines the owner fills in by hand, so guests without mobile data still get on the WiFi. */
-function WriteInWifi() {
+function WriteInWifi({ c }: { c: SignContent }) {
+  const t = useSignT(c)
   const row = (label: string) => (
     <div className="flex items-end gap-[2mm]">
-      <span className="shrink-0 text-gray-500" style={{ fontSize: '7.5pt', letterSpacing: '0.08em' }}>{label}</span>
+      <span className="shrink-0 text-gray-500" style={LABEL}>{label}</span>
       <span className="flex-1 border-b border-gray-400" style={{ height: mm(6) }} />
     </div>
   )
   return (
     <div className="space-y-[2.5mm] rounded-[2mm] border border-gray-200 px-[4mm] py-[3mm] text-left">
-      {row('WIFI NETWORK')}
-      {row('PASSWORD')}
+      {row(t('sign.wifiNetwork'))}
+      {row(t('sign.password'))}
     </div>
   )
 }
 
 /** The portrait card for A6 / 4×6 holders. */
 export function SignCard({ c, size = 'a6' }: { c: SignContent; size?: CardSize }) {
+  const t = useSignT(c)
   const { w, h } = CARD_SIZES[size]
   const accent = c.accent || '#4f46e5'
   const mainQr = c.guideUrl ?? (c.wifi ? wifiQrPayload(c.wifi) : '')
@@ -84,7 +101,7 @@ export function SignCard({ c, size = 'a6' }: { c: SignContent; size?: CardSize }
   return (
     <div className="relative flex flex-col bg-white text-center" style={{ width: mm(w), height: mm(h), padding: mm(8) }}>
       <p className="font-semibold uppercase" style={{ color: accent, fontSize: '8pt', letterSpacing: '0.14em' }}>
-        {c.kicker ?? (c.guideUrl ? 'Welcome to' : 'Free WiFi')}
+        {c.kicker ?? (c.guideUrl ? t('sign.welcomeTo') : t('sign.freeWifi'))}
       </p>
       <h2 className="font-bold leading-tight text-gray-900" style={{ fontSize: c.title.length > 22 ? '15pt' : '19pt' }}>{c.title}</h2>
 
@@ -93,7 +110,7 @@ export function SignCard({ c, size = 'a6' }: { c: SignContent; size?: CardSize }
       </div>
       <div className="mt-[3mm]"><CallToAction c={c} /></div>
       {c.guideUrl && (
-        <p className="mt-[1mm] text-gray-500" style={{ fontSize: '8.5pt' }}>WiFi, house guide, check-out &amp; local tips</p>
+        <p className="mt-[1mm] text-gray-500" style={{ fontSize: '8.5pt' }}>{t('sign.guideContents')}</p>
       )}
 
       <div className="mt-auto">
@@ -104,13 +121,13 @@ export function SignCard({ c, size = 'a6' }: { c: SignContent; size?: CardSize }
             </div>
             <div className="min-w-0">
               <p className="flex items-center gap-[1mm] font-semibold text-gray-900" style={{ fontSize: '8.5pt' }}>
-                <Wifi style={{ width: mm(3.5), height: mm(3.5) }} /> Scan to join WiFi
+                <Wifi style={{ width: mm(3.5), height: mm(3.5) }} /> {t('sign.scanJoinWifi')}
               </p>
               {c.showWifiText && <WifiText c={c} size="8.5pt" />}
             </div>
           </div>
         ) : c.writeInWifi && !c.wifi ? (
-          <WriteInWifi />
+          <WriteInWifi c={c} />
         ) : (
           c.showWifiText && <div className="border-t border-gray-200 pt-[3mm]"><WifiText c={c} /></div>
         )}
@@ -122,6 +139,7 @@ export function SignCard({ c, size = 'a6' }: { c: SignContent; size?: CardSize }
 
 /** One landscape face of the folded table tent. */
 function TentFace({ c }: { c: SignContent }) {
+  const t = useSignT(c)
   const accent = c.accent || '#4f46e5'
   const mainQr = c.guideUrl ?? (c.wifi ? wifiQrPayload(c.wifi) : '')
   return (
@@ -131,7 +149,7 @@ function TentFace({ c }: { c: SignContent }) {
       </div>
       <div className="min-w-0 text-left">
         <p className="font-semibold uppercase" style={{ color: accent, fontSize: '8.5pt', letterSpacing: '0.14em' }}>
-          {c.kicker ?? (c.guideUrl ? 'Welcome to' : 'Free WiFi')}
+          {c.kicker ?? (c.guideUrl ? t('sign.welcomeTo') : t('sign.freeWifi'))}
         </p>
         <h2 className="mb-[3mm] font-bold leading-tight text-gray-900" style={{ fontSize: '18pt' }}>{c.title}</h2>
         <div className="mb-[3mm] text-left"><CallToAction c={c} compact /></div>
@@ -144,11 +162,12 @@ function TentFace({ c }: { c: SignContent }) {
 
 /** A4 sheet: the top face is upside down so both sides read correctly once folded. */
 export function SignTent({ c }: { c: SignContent }) {
+  const t = useSignT(c)
   return (
     <div className="flex flex-col items-center bg-white" style={{ width: mm(180) }}>
       <div style={{ transform: 'rotate(180deg)' }}><TentFace c={c} /></div>
       <div className="relative w-full border-t border-dashed border-gray-300" aria-hidden>
-        <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-[2mm] text-gray-400" style={{ fontSize: '6.5pt' }}>fold</span>
+        <span className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-[2mm] text-gray-400" style={{ fontSize: '6.5pt' }}>{t('sign.fold')}</span>
       </div>
       <TentFace c={c} />
     </div>
@@ -157,11 +176,12 @@ export function SignTent({ c }: { c: SignContent }) {
 
 /** Wall or fridge poster: fits inside the printable area of both A4 and US Letter. */
 export function SignPoster({ c }: { c: SignContent }) {
+  const t = useSignT(c)
   const accent = c.accent || '#4f46e5'
   return (
     <div className="flex flex-col bg-white text-center" style={{ width: mm(180), height: mm(250), padding: mm(14) }}>
       <p className="font-semibold uppercase" style={{ color: accent, fontSize: '11pt', letterSpacing: '0.16em' }}>
-        {c.kicker ?? (c.guideUrl ? 'Welcome to' : 'Free WiFi')}
+        {c.kicker ?? (c.guideUrl ? t('sign.welcomeTo') : t('sign.freeWifi'))}
       </p>
       <h2 className="mb-[8mm] font-bold leading-tight text-gray-900" style={{ fontSize: '30pt' }}>{c.title}</h2>
 
@@ -172,7 +192,7 @@ export function SignPoster({ c }: { c: SignContent }) {
               <QrCode value={wifiQrPayload(c.wifi)} size={mm(c.guideUrl ? 58 : 90)} ecc="Q" />
             </div>
             <p className="mt-[3mm] flex items-center gap-[1.5mm] font-semibold text-gray-900" style={{ fontSize: '13pt' }}>
-              <Wifi style={{ width: mm(5), height: mm(5) }} /> Scan to join WiFi
+              <Wifi style={{ width: mm(5), height: mm(5) }} /> {t('sign.scanJoinWifi')}
             </p>
           </div>
         )}
@@ -182,9 +202,9 @@ export function SignPoster({ c }: { c: SignContent }) {
               <QrCode value={c.guideUrl} size={mm(c.wifi ? 58 : 90)} ecc="Q" />
             </div>
             <p className="mt-[3mm] flex items-center gap-[1.5mm] font-semibold text-gray-900" style={{ fontSize: '13pt' }}>
-              <ScanLine style={{ width: mm(5), height: mm(5) }} /> House guide
+              <ScanLine style={{ width: mm(5), height: mm(5) }} /> {t('sign.houseGuide')}
             </p>
-            <p className="text-gray-500" style={{ fontSize: '10pt' }}>Check-out, house rules &amp; local tips</p>
+            <p className="text-gray-500" style={{ fontSize: '10pt' }}>{t('sign.posterGuideContents')}</p>
           </div>
         )}
       </div>

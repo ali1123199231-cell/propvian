@@ -57,6 +57,17 @@ export function resolveInitialLanguage(): LanguageCode {
     /* private browsing — fall through to English */
   }
 
+  /*
+   * The one exception to "the URL decides": guest pages opened from a printed QR
+   * code or an NFC tag. Those links carry no language prefix (one stand serves
+   * guests from everywhere), and the pages are noindex, so the SEO reason for
+   * ignoring the browser doesn't apply. The guest's own phone language wins.
+   */
+  if (/^\/g\//.test(splitLocalePath(window.location.pathname).path)) {
+    const browser = navigator.languages?.[0] ?? navigator.language
+    return normalizeLanguage(browser)
+  }
+
   return DEFAULT_LANGUAGE
 }
 

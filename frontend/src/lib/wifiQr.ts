@@ -14,8 +14,3 @@ export function wifiQrPayload(w: { ssid: string; password?: string | null; secur
   return out + ';'
 }
 
-export const SECURITY_LABELS: Record<WifiSecurity, string> = {
-  WPA: 'WPA / WPA2 / WPA3 (most routers)',
-  WEP: 'WEP (old routers)',
-  nopass: 'No password',
-}

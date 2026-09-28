@@ -60,5 +60,27 @@
   "legal": {
     "privacyPolicy": "Privacy Policy",
     "terms": "Terms"
+  },
+  "rules": {
+    "SMOKING": {
+      "yes": "Smoking allowed",
+      "no": "No smoking"
+    },
+    "PARTIES": {
+      "yes": "Parties / events allowed",
+      "no": "No parties or events"
+    },
+    "PETS": {
+      "yes": "Pets welcome",
+      "no": "No pets"
+    },
+    "QUIET_HOURS": {
+      "yes": "Quiet hours apply",
+      "no": "No set quiet hours"
+    },
+    "CHILDREN": {
+      "yes": "Children welcome",
+      "no": "Not suitable for children"
+    }
   }
 }

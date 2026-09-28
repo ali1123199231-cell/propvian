@@ -1,0 +1,377 @@
+{
+  "view": {
+    "guideLabel": "Guida per gli ospiti",
+    "wifiNetwork": "Rete WiFi",
+    "password": "Password",
+    "copyPassword": "Copia password",
+    "copied": "Copiato",
+    "copy": "Copia",
+    "pasteHint": "Poi apri Impostazioni → Wi-Fi, scegli {{ssid}} e incolla.",
+    "noPassword": "Nessuna password richiesta. Basta scegliere questa rete nelle impostazioni Wi-Fi.",
+    "connectAnother": "Collega un altro telefono",
+    "joinLabel": "Connettiti a {{ssid}}",
+    "otherPhoneHint": "Inquadra qui con la fotocamera dell'altro telefono per connetterti senza digitare nulla.",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "fromTime": "dalle {{time}}",
+    "byTime": "entro le {{time}}",
+    "needAnything": "Ti serve qualcosa?",
+    "hostHelps": "{{name}} è qui per aiutarti.",
+    "hostHelpsDefault": "Siamo qui per aiutarti.",
+    "call": "Chiama il {{phone}}",
+    "email": "Email",
+    "comeBack": "Torna a trovarci",
+    "bookDirectDefault": "Ti è piaciuto il soggiorno? La prossima volta prenota direttamente con noi.",
+    "code": "Codice",
+    "seeDates": "Vedi date e prezzi",
+    "poweredByPrefix": "Pagina ospiti creata con",
+    "poweredByCta": "Affitti un alloggio? Crea la tua pagina gratis",
+    "privacy": "Privacy"
+  },
+  "public": {
+    "notFoundTitle": "Pagina non trovata",
+    "notFoundBody": "Questo link non porta a una pagina ospiti. Controlla il codice stampato sotto il codice QR o chiedi alla struttura.",
+    "offTitle": "Questa pagina ospiti è disattivata",
+    "offBody": "Questa pagina è in pausa. Contatta direttamente la struttura per il WiFi e le informazioni di check-in."
+  },
+  "unclaimed": {
+    "title": "Questo supporto non è ancora configurato",
+    "guestLead": "Soggiorni qui?",
+    "guestBody": "La configurazione non è ancora completa. Chiedi alla struttura i dati del WiFi.",
+    "ownerTitle": "È il tuo supporto?",
+    "ownerBody": "Collegalo alla tua proprietà in circa due minuti. I tuoi ospiti avranno WiFi, guida della casa e contatti con un solo tocco. Gratis, e puoi cambiare tutto quando vuoi senza ristampare.",
+    "cta": "Configura il mio supporto",
+    "codeLabel": "Codice del supporto"
+  },
+  "sign": {
+    "tapOrScan": "Avvicina qui il telefono o scansiona il codice",
+    "tapPad": "Avvicina il telefono alla base qui sotto o scansiona",
+    "scanCamera": "Scansiona con la fotocamera del telefono",
+    "scanToJoin": "Scansiona con la fotocamera del telefono per connetterti",
+    "wifiNetwork": "Rete WiFi",
+    "password": "Password",
+    "welcomeTo": "Ti diamo il benvenuto a",
+    "welcome": "Ti diamo il benvenuto",
+    "freeWifi": "WiFi gratuito",
+    "guideAndWifi": "Guida e WiFi",
+    "guideContents": "WiFi, guida della casa, check-out e consigli locali",
+    "scanJoinWifi": "Scansiona per connetterti al WiFi",
+    "fold": "piega",
+    "houseGuide": "Guida della casa",
+    "posterGuideContents": "Check-out, regole della casa e consigli locali",
+    "footerGuestPage": "Pagina ospiti creata con propvian.com",
+    "toolFooter": "Creato gratis su propvian.com/tools",
+    "ownerSetup": "Supporto nuovo? Scansionalo per configurarlo · codice {{code}} · propvian.com",
+    "ownerSetupKit": "Tag nuovi? Scansiona questa scheda per configurarli tutti e {{count}}: {{codes}} · propvian.com",
+    "sticker": "Scansiona o avvicina il telefono · propvian.com"
+  },
+  "list": {
+    "title": "Pagine ospiti",
+    "intro": "Una pagina per proprietà che gli ospiti aprono avvicinando il telefono a un tag NFC o scansionando un codice QR: il WiFi con il pulsante copia, la guida della casa, i passaggi per il check-out e come contattarti. Meno messaggi del tipo «qual è la password del WiFi?».",
+    "gotStand": "Hai un supporto Propvian?",
+    "standCode": "Codice del supporto",
+    "link": "Collega",
+    "step1Title": "Inserisci il tuo WiFi",
+    "step1Body": "Compiliamo noi orari di check-in, regole della casa e una lista per il check-out.",
+    "step2Title": "Stampa una scheda o scrivi un tag",
+    "step2Body": "Scheda A6 per un supporto, un segnatavolo o un poster. Va bene qualsiasi adesivo NFC.",
+    "step3Title": "Gli ospiti fanno da sé",
+    "step3Body": "Avvicinano il telefono o scansionano, copiano la password e leggono la guida. Tu vedi quante volte.",
+    "noPropertiesTitle": "Prima aggiungi una proprietà",
+    "noPropertiesBody": "Ogni pagina ospiti appartiene a una delle tue proprietà.",
+    "goToProperties": "Vai alle proprietà",
+    "notSetUp": "Da configurare",
+    "live": "Attiva",
+    "off": "Disattivata",
+    "views30d_one": "{{count, number}} visita in 30 giorni",
+    "views30d_many": "{{count, number}} visite in 30 giorni",
+    "views30d_other": "{{count, number}} visite in 30 giorni",
+    "stands_one": "{{count}} supporto",
+    "stands_many": "{{count}} supporti",
+    "stands_other": "{{count}} supporti",
+    "noWifi": "WiFi non ancora inserito",
+    "edit": "Modifica",
+    "setUp": "Configura",
+    "openPage": "Apri la pagina ospiti"
+  },
+  "claim": {
+    "title": "Collega il tuo supporto",
+    "intro": "Scegli la proprietà in cui si trova. Chi avvicina il telefono o lo scansiona vedrà la pagina ospiti di quella proprietà.",
+    "notFound": "Non abbiamo trovato questo codice. Controlla le lettere stampate sotto il codice QR del supporto.",
+    "noProperties": "Aggiungi la proprietà a cui è destinato questo supporto, poi torna qui. Ci ricorderemo il codice.",
+    "addProperty": "Aggiungi una proprietà",
+    "alreadyLinked": "Questo supporto è già collegato a una proprietà. Se è tuo, scegliendo una proprietà qui sotto verrà spostato lì.",
+    "property": "Proprietà",
+    "chooseProperty": "Scegli una proprietà…",
+    "submit": "Collega supporto",
+    "notNow": "Non ora",
+    "linkedToast": "Supporto collegato. Ora aggiungi il tuo WiFi.",
+    "linkFailed": "Impossibile collegare questo supporto"
+  },
+  "editor": {
+    "saved": "Pagina ospiti salvata",
+    "saveFailed": "Impossibile salvare la pagina ospiti",
+    "loadFailed": "Impossibile caricare questa pagina ospiti.",
+    "backToList": "Torna alle pagine ospiti",
+    "openPage": "Apri pagina",
+    "saveChanges": "Salva modifiche",
+    "upToDate": "Salvato",
+    "tabs": {
+      "content": "Contenuti",
+      "print": "Stampa e NFC",
+      "stats": "Statistiche"
+    },
+    "livePreview": "Anteprima dal vivo",
+    "publicWarning": "Chiunque abbia il link può aprire questa pagina, <b>anche gli ospiti passati</b>. Non inserire mai qui codici di porte, cassette portachiavi o allarmi. I codici delle porte vanno nel link di check-in di ciascuna prenotazione.",
+    "wifi": {
+      "title": "WiFi",
+      "subtitle": "Gli ospiti copiano la password con un tocco. Aggiornala qui ogni volta che la cambi sul router, senza ristampare.",
+      "fromProperty": "Dalle impostazioni della proprietà:",
+      "network": "Nome della rete",
+      "networkPlaceholder": "es. CasaSol_5G",
+      "password": "Password",
+      "hidePassword": "Nascondi password",
+      "showPassword": "Mostra password",
+      "security": "Sicurezza",
+      "securities": {
+        "WPA": "WPA / WPA2 / WPA3 (la maggior parte dei router)",
+        "WEP": "WEP (router vecchi)",
+        "nopass": "Nessuna password"
+      },
+      "hidden": "Rete nascosta (non trasmette il suo nome)"
+    },
+    "welcome": "Messaggio di benvenuto",
+    "guide": {
+      "title": "Guida della casa",
+      "subtitle": "Le sezioni vuote restano nascoste agli ospiti finché non le compili.",
+      "sectionTitle": "Titolo della sezione",
+      "moveUp": "Sposta su",
+      "moveDown": "Sposta giù",
+      "remove": "Rimuovi sezione",
+      "rulesAuto": "Le regole della proprietà (animali, fumo, feste, orari di silenzio) compaiono qui automaticamente. Aggiungi qui sotto tutto il resto.",
+      "rulesAutoOnceSet": "Le regole della proprietà (animali, fumo, feste, orari di silenzio) compariranno qui automaticamente quando le imposterai sulla proprietà. Aggiungi qui sotto tutto il resto."
+    },
+    "sectionTypes": {
+      "CHECKIN": "Arrivo",
+      "CHECKOUT": "Check-out",
+      "HOUSE_RULES": "Regole della casa",
+      "LOCAL_TIPS": "Consigli locali",
+      "APPLIANCES": "Come funzionano le cose",
+      "PARKING": "Parcheggio",
+      "EMERGENCY": "Emergenze",
+      "CUSTOM": "Personalizzata"
+    },
+    "presets": {
+      "LOCAL_TIPS": {
+        "title": "Consigli locali",
+        "hint": "Il tuo bar preferito, la spiaggia migliore, il supermercato aperto la domenica…"
+      },
+      "APPLIANCES": {
+        "title": "Come funzionano le cose",
+        "hint": "Il riscaldamento, la macchina del caffè, il telecomando della TV, la lavatrice…"
+      },
+      "PARKING": {
+        "title": "Parcheggio",
+        "hint": "Dove parcheggiare, permessi, come trovare l'ingresso del garage…"
+      },
+      "EMERGENCY": {
+        "title": "Emergenze",
+        "hint": "Numero di emergenza, ospedale e farmacia più vicini, dove si trovano la cassetta di pronto soccorso e l'estintore…"
+      },
+      "CUSTOM": {
+        "title": "Altre informazioni",
+        "hint": "Qualsiasi altra cosa che gli ospiti dovrebbero sapere."
+      }
+    },
+    "contact": {
+      "title": "Contatti",
+      "subtitle": "Mostrati come pulsanti per chiamata, WhatsApp ed email.",
+      "name": "Nome",
+      "phone": "Telefono",
+      "email": "Email",
+      "whatsapp": "Questo numero ha WhatsApp"
+    },
+    "bookDirect": {
+      "title": "Prenotazione diretta",
+      "subtitle": "Invita gli ospiti a prenotare il prossimo soggiorno sul tuo sito.",
+      "show": "Mostra un'offerta di prenotazione diretta",
+      "airbnbTitle": "Gli ospiti Airbnb sono esclusi",
+      "airbnbBody": "Le regole di Airbnb sulle attività al di fuori della piattaforma vietano di chiedere o incoraggiare gli ospiti a spostare prenotazioni future o ripetute fuori da Airbnb, e di offrire sconti per farlo. Con l'interruttore qui sotto attivo, l'offerta viene nascosta ogni volta che il soggiorno in corso arriva da Airbnb. Serve che il tuo calendario Airbnb sia sincronizzato con Propvian.",
+      "readPolicy": "Leggi le regole",
+      "message": "Messaggio",
+      "messageHint": "Lascia vuoto per mostrare questo messaggio standard nella lingua di ciascun ospite.",
+      "promo": "Codice promozionale (facoltativo)",
+      "promoHint": "Deve già esistere in Sito web → promozioni.",
+      "link": "Link di prenotazione (facoltativo)",
+      "linkDefault": "Lascia vuoto per usare {{url}}",
+      "linkNeeded": "La tua proprietà non ha ancora una pagina di prenotazione Propvian, quindi aggiungi un link.",
+      "hideAirbnb": "Nascondi l'offerta durante i soggiorni Airbnb (consigliato)"
+    },
+    "branding": {
+      "title": "Branding",
+      "show": "Mostra «Pagina ospiti creata con Propvian» in fondo",
+      "freeNote": "Le pagine ospiti sono gratuite con questo piccolo piè di pagina. Nasconderlo è incluso nei piani a pagamento.",
+      "seePlans": "Vedi i piani"
+    }
+  },
+  "print": {
+    "unsaved": "Hai modifiche non salvate nella scheda Contenuti. Salvale prima, così il codice WiFi stampato corrisponde.",
+    "link": {
+      "title": "Il link della tua pagina ospiti",
+      "subtitle": "Condividilo anche nella conferma di prenotazione o nel manuale della casa. Non cambia mai, anche quando cambia il WiFi.",
+      "copy": "Copia link",
+      "copied": "Link copiato",
+      "open": "Apri",
+      "qrSvg": "Codice QR (SVG)"
+    },
+    "sign": {
+      "title": "Stampa un cartello",
+      "subtitle": "Stampa in scala 100% (disattiva «adatta alla pagina»). Cartoncino o plastificazione lo fanno durare di più.",
+      "cardSize": "Formato della scheda",
+      "titleField": "Titolo",
+      "language": "Lingua del cartello",
+      "wifiQr": "Aggiungi un codice QR per il WiFi",
+      "wifiQrNote": "I telefoni si connettono scansionandolo, senza digitare. Ristampalo se cambi la password.",
+      "wifiQrMissing": "Prima aggiungi il tuo WiFi nella scheda Contenuti.",
+      "wifiText": "Stampa il nome della rete e la password come testo",
+      "nfcHint": "Indicazione «Avvicina qui il telefono»",
+      "nfcHintNote": "Solo se dietro la scheda c'è un tag NFC. Vedi sotto.",
+      "print": "Stampa o salva come PDF"
+    },
+    "variants": {
+      "card": {
+        "label": "Scheda per supporto",
+        "note": "Per supporti in acrilico A6 e 4×6 pollici"
+      },
+      "tent": {
+        "label": "Segnatavolo",
+        "note": "Foglio A4, piegato a metà"
+      },
+      "poster": {
+        "label": "Poster",
+        "note": "A4 o Letter, per una parete o il frigo"
+      }
+    },
+    "sizes": {
+      "a6": "A6 (105 × 148 mm)",
+      "4x6": "4 × 6 pollici"
+    },
+    "nfc": {
+      "title": "Tag NFC",
+      "subtitle": "Un tag dietro la scheda permette agli ospiti di avvicinare il telefono invece di scansionare. Va bene qualsiasi adesivo NTAG213/215/216, circa 0,40 € l'uno.",
+      "shouldOpen": "Il tag deve aprire",
+      "write": "Scrivi su un tag NFC",
+      "holdTag": "Tieni il tag sul retro del telefono…",
+      "written": "Scritto. Avvicina il telefono per provarlo.",
+      "writeFailed": "Impossibile scrivere il tag.",
+      "androidOnly": "Apri questa pagina in Chrome su un telefono Android per scrivere i tag direttamente da qui.",
+      "anyPhone": "Con un iPhone (o qualsiasi telefono)",
+      "step1": "Installa l'app gratuita NFC Tools.",
+      "step2": "Scrivi (Write) → Aggiungi un record (Add a record) → URL, e incolla il link.",
+      "step3": "Tocca Scrivi (Write) e tieni il telefono sul tag.",
+      "step4": "Facoltativo: Altro (Other) → Blocca tag (Lock tag), così nessuno può sovrascriverlo. Il blocco è permanente, e va bene così: il link non cambia mai, cambia solo la pagina dietro.",
+      "whyLink": "Perché un link e non un record WiFi: gli iPhone aprono i link dai tag, ma non si connettono al WiFi da un tag. Il link funziona su entrambi, e il codice QR del WiFi sulla scheda copre la connessione immediata."
+    },
+    "stands": {
+      "title": "Supporti e tag che aprono questa pagina",
+      "subtitle": "Visite degli ultimi 30 giorni, per codice. Ogni supporto Propvian ha il suo codice, così vedi quale usano gli ospiti.",
+      "code": "Codice",
+      "what": "Cos'è",
+      "views": "Visite (30 giorni)",
+      "own": "Il link, il QR e l'NFC di questa pagina",
+      "kitTag": "Tag del kit {{kit}}",
+      "stand": "Supporto Propvian",
+      "linkLabel": "Collega un supporto Propvian",
+      "placeholder": "Codice stampato sotto il QR, es. K7M2QX9P",
+      "linked": "Supporto collegato a questa pagina"
+    }
+  },
+  "printPage": {
+    "print": "Stampa",
+    "card": "Scheda {{size}}",
+    "hint": "Stampa in scala 100% («dimensioni effettive»), non «adatta alla pagina».",
+    "hintTent": "Stampa al 100%, poi piega lungo la linea tratteggiata."
+  },
+  "stats": {
+    "range": "Periodo",
+    "lastDays_one": "Ultimo {{count}} giorno",
+    "lastDays_many": "Ultimi {{count}} giorni",
+    "lastDays_other": "Ultimi {{count}} giorni",
+    "views": "Visite alla pagina",
+    "wifiCopies": "Password WiFi copiate",
+    "bookDirectClicks": "Clic sulla prenotazione diretta",
+    "contactTaps": "Tocchi sui contatti",
+    "howOpened": "Come l'hanno aperta gli ospiti",
+    "sources": {
+      "NFC": "Hanno avvicinato il telefono a un tag NFC",
+      "QR": "Hanno scansionato un codice QR stampato",
+      "LINK": "Hanno aperto il link"
+    },
+    "shareOfViews": "{{pct}}% delle visite",
+    "perDay": "Visite al giorno",
+    "dedupe": "Più aperture dello stesso ospite entro un minuto contano una volta sola.",
+    "empty": "Ancora nessuna visita. Metti il cartello o il tag nell'alloggio e compariranno qui.",
+    "viewCount_one": "{{count}} visita",
+    "viewCount_many": "{{count}} visite",
+    "viewCount_other": "{{count}} visite",
+    "asTable": "Mostra come tabella"
+  },
+  "tool": {
+    "seoTitle": "Generatore gratuito di cartelli WiFi con codice QR per Airbnb e affitti",
+    "seoDescription": "Crea in pochi secondi un cartello WiFi con codice QR da stampare. Gli ospiti lo scansionano con la fotocamera e si connettono senza digitare la password. Gratis, senza registrazione, e la password non lascia mai il tuo browser.",
+    "schemaName": "Generatore di cartelli WiFi con codice QR",
+    "schemaDescription": "Cartello WiFi con codice QR gratuito da stampare, per Airbnb e case vacanza. Gli ospiti scansionano e si connettono senza digitare la password.",
+    "kicker": "Strumento gratuito · senza registrazione",
+    "h1": "Generatore di cartelli WiFi con codice QR",
+    "lead": "Stampa un cartello che gli ospiti scansionano per connettersi al WiFi. Niente da digitare e niente più messaggi «qual è la password?».",
+    "privacy": "Creato nel tuo browser. La tua password non viene mai inviata da nessuna parte.",
+    "step1": "1. Il tuo WiFi",
+    "networkPlaceholder": "Esattamente come appare sui telefoni",
+    "hidden": "Rete nascosta",
+    "step2": "2. Il tuo cartello",
+    "variantNotes": {
+      "card": "Supporti A6 / 4×6 pollici",
+      "tent": "Piegato a metà",
+      "poster": "A4 o Letter"
+    },
+    "alsoText": "Stampa anche il nome della rete e la password come testo",
+    "qrOnly": "Solo il codice QR (SVG)",
+    "needBoth": "Inserisci il nome della rete e la password per stampare.",
+    "needName": "Inserisci il nome della rete per stampare.",
+    "preview": "Anteprima",
+    "yourNetwork": "La tua rete",
+    "hostsKicker": "Per chi affitta alloggi",
+    "hostsTitle": "Un cartello che non passa mai di moda",
+    "hostsBody": "Metti una pagina ospiti Propvian dietro il tuo cartello. Gli ospiti avvicinano il telefono o scansionano e trovano il WiFi con il pulsante copia, la guida della casa, i passaggi per il check-out e come contattarti. Modifica tutto online e il cartello stampato continua a funzionare.",
+    "hostsCta": "Crea una pagina ospiti gratuita",
+    "benefits": {
+      "update": "Aggiorna la password del WiFi senza ristampare",
+      "nfc": "Funziona con un tag NFC su iPhone e Android",
+      "guide": "Regole della casa, lista per il check-out e consigli locali in un unico posto",
+      "stats": "Scopri quanti ospiti la aprono e da quale cartello"
+    },
+    "questions": "Domande",
+    "faq": {
+      "iphone": {
+        "q": "Gli ospiti con iPhone possono scansionarlo?",
+        "a": "Sì. La fotocamera dell'iPhone riconosce i codici QR del WiFi da iOS 11: basta inquadrare il cartello e toccare «Connetti alla rete». Android 10 e versioni successive fanno lo stesso dalla fotocamera o con Google Lens."
+      },
+      "stored": {
+        "q": "La mia password del WiFi viene salvata da qualche parte?",
+        "a": "No. Il cartello viene creato nel tuo browser e la password non lascia mai il tuo dispositivo. Niente di ciò che scrivi in questa pagina viene inviato a Propvian."
+      },
+      "change": {
+        "q": "Cosa succede se cambio la password del WiFi?",
+        "a": "Il codice QR contiene la password stessa, quindi stampa un nuovo cartello. Se la cambi spesso, una pagina ospiti Propvian gratuita mette sul cartello un link: aggiorni la password online e il cartello stampato continua a funzionare."
+      },
+      "nfc": {
+        "q": "Posso usare un tag NFC invece di un codice QR?",
+        "a": "I telefoni Android possono connettersi al WiFi da un tag NFC, ma gli iPhone no: dai tag aprono solo link. Un tag che apre una pagina ospiti funziona su entrambi, ed è così che sono configurati i supporti Propvian."
+      },
+      "paper": {
+        "q": "Su cosa lo stampo?",
+        "a": "Il formato scheda entra nei supporti in acrilico A6 e 4 × 6 pollici venduti per gli affitti. Il cartoncino spesso o un foglio plastificato durano di più. Stampa in scala 100% perché il codice resti nitido."
+      }
+    }
+  }
+}

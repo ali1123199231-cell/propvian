@@ -1,7 +1,5 @@
 import type { GuestPage, GuestPageUpdate, PublicGuestPage } from '@/types/guestPage'
 
-export const DEFAULT_BOOK_DIRECT_MESSAGE = 'Loved your stay? Next time, book directly with us.'
-
 export function toDraft(p: GuestPage): GuestPageUpdate {
   return {
     enabled: p.enabled,
@@ -51,7 +49,7 @@ export function draftToPublic(p: GuestPage, d: GuestPageUpdate): PublicGuestPage
         }
       : undefined,
     bookDirect: d.bookDirectEnabled && bookUrl
-      ? { url: bookUrl, message: d.bookDirectMessage?.trim() || DEFAULT_BOOK_DIRECT_MESSAGE, promoCode: d.bookDirectPromoCode?.trim() || undefined }
+      ? { url: bookUrl, message: d.bookDirectMessage?.trim() || '', promoCode: d.bookDirectPromoCode?.trim() || undefined }
       : undefined,
     showPoweredBy: d.showPoweredBy,
   }

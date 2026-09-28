@@ -35,11 +35,14 @@ import com.smartlock.repository.PropertyRepository;
 import com.smartlock.repository.ReservationRepository;
 import com.smartlock.repository.SubscriptionRepository;
 import com.smartlock.repository.TapCodeRepository;
+import com.smartlock.repository.UserRepository;
 import com.smartlock.repository.WebsiteConfigRepository;
 import com.smartlock.security.GuestPageEventThrottle;
+import com.smartlock.util.LocaleSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,6 +58,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -71,7 +75,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GuestPageService {
 
-    static final String DEFAULT_BOOK_DIRECT_MESSAGE = "Loved your stay? Next time, book directly with us.";
     private static final String DEFAULT_BRAND_COLOR = "#4f46e5";
     private static final Pattern HEX_COLOR = Pattern.compile("^#[0-9a-fA-F]{6}$");
     private static final List<String> RULE_ORDER = List.of("SMOKING", "PARTIES", "PETS", "QUIET_HOURS", "CHILDREN");
@@ -95,11 +98,13 @@ public class GuestPageService {
     private final HostVerificationRepository verificationRepository;
     private final WebsiteConfigRepository websiteConfigRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final UserRepository userRepository;
     private final BillingService billingService;
     private final OrganizationSecurityService orgSecurity;
     private final TapCodeService tapCodeService;
     private final GuestPageEventThrottle throttle;
     private final ObjectMapper objectMapper;
+    private final MessageSource messageSource;
 
     @Value("${app.frontend-url:https://propvian.com}")
     private String frontendUrl;
@@ -422,7 +427,7 @@ public class GuestPageService {
         PromoCode promo = activePromo(property.getOrganizationId(), page.getBookDirectPromoCode());
         return PublicGuestPageResponse.BookDirect.builder()
                 .url(url)
-                .message(notBlank(page.getBookDirectMessage()) ? page.getBookDirectMessage() : DEFAULT_BOOK_DIRECT_MESSAGE)
+                .message(notBlank(page.getBookDirectMessage()) ? page.getBookDirectMessage() : null)
                 .promoCode(promo != null ? promo.getCode() : null)
                 .discountLabel(promo != null ? discountLabel(promo, property.getCurrency()) : null)
                 .build();
@@ -489,43 +494,59 @@ public class GuestPageService {
 
     // ── Creating and validating ─────────────────────────────────────────────
 
+    /*
+     * The starter text is written in the host's own language, because the host
+     * edits it: a Polish host gets Polish sections to adapt, not English ones to
+     * translate. The book-direct message is left empty on purpose, so every
+     * guest sees the built-in line in their own language until the host writes one.
+     */
     private GuestPage createDefault(Property property) {
         String[] wifi = parseLegacyWifi(property.getWifiDetails());
+        Locale locale = hostLocale();
         GuestPage page = guestPageRepository.save(GuestPage.builder()
                 .organizationId(property.getOrganizationId())
                 .propertyId(property.getId())
-                .welcomeMessage("Welcome to " + property.getName() + "! We hope you have a wonderful stay. "
-                        + "Everything you need should be on this page. If anything is missing, just get in touch.")
+                .welcomeMessage(text(locale, "guestpage.default.welcome", property.getName()))
                 .wifiSsid(wifi[0])
                 .wifiPassword(wifi[1])
-                .sections(writeSections(defaultSections(property)))
-                .bookDirectMessage(DEFAULT_BOOK_DIRECT_MESSAGE)
+                .sections(writeSections(defaultSections(property, locale)))
                 .build());
         if (tapCodeRepository.findFirstByPropertyIdAndKindOrderByCreatedAtAsc(property.getId(), TapCodeKind.PROPERTY).isEmpty()) {
             tapCodeService.issuePropertyCode(property.getOrganizationId(), property.getId());
         }
-        log.info("GuestPageService.createDefault — property={} wifiPrefilled={}", property.getId(), wifi[0] != null);
+        log.info("GuestPageService.createDefault — property={} wifiPrefilled={} locale={}", property.getId(), wifi[0] != null, locale);
         return page;
     }
 
     // Arrival text deliberately says nothing about access: door and lockbox codes
     // belong on the per-booking check-in page, never on a page past guests can reopen.
-    private List<GuestPageSectionDto> defaultSections(Property property) {
+    private List<GuestPageSectionDto> defaultSections(Property property, Locale locale) {
         String in = notBlank(property.getCheckInTime()) ? property.getCheckInTime() : "15:00";
         String out = notBlank(property.getCheckOutTime()) ? property.getCheckOutTime() : "11:00";
         return List.of(
-                new GuestPageSectionDto(shortId(), "CHECKIN", "Arrival",
-                        "Check-in is from " + in + ". If you'll arrive late, just let us know."),
-                new GuestPageSectionDto(shortId(), "HOUSE_RULES", "House rules",
-                        "Please treat our home as your own and keep the noise down for the neighbours."),
-                new GuestPageSectionDto(shortId(), "CHECKOUT", "Before you leave",
-                        "Check-out is by " + out + ". Before you go, please:\n"
-                                + "• put used dishes in the dishwasher\n"
-                                + "• take the rubbish out\n"
-                                + "• switch off lights, heating and air conditioning\n"
-                                + "• leave the keys where you found them\n"
-                                + "Thank you, and safe travels!"),
-                new GuestPageSectionDto(shortId(), "LOCAL_TIPS", "Local tips", null));
+                new GuestPageSectionDto(shortId(), "CHECKIN", text(locale, "guestpage.default.arrival.title"),
+                        text(locale, "guestpage.default.arrival.body", in)),
+                new GuestPageSectionDto(shortId(), "HOUSE_RULES", text(locale, "guestpage.default.rules.title"),
+                        text(locale, "guestpage.default.rules.body")),
+                new GuestPageSectionDto(shortId(), "CHECKOUT", text(locale, "guestpage.default.checkout.title"),
+                        text(locale, "guestpage.default.checkout.body", out)),
+                new GuestPageSectionDto(shortId(), "LOCAL_TIPS", text(locale, "guestpage.default.tips.title"), null));
+    }
+
+    /** The signed-in host's chosen language; English when it can't be read. */
+    private Locale hostLocale() {
+        try {
+            return userRepository.findById(orgSecurity.currentUserId())
+                    .map(u -> LocaleSupport.toLocale(u.getLocale()))
+                    .orElseGet(() -> LocaleSupport.toLocale(null));
+        } catch (Exception e) {
+            log.warn("GuestPageService.hostLocale — lookup failed, defaulting to English: {}", e.getMessage());
+            return LocaleSupport.toLocale(null);
+        }
+    }
+
+    private String text(Locale locale, String key, Object... args) {
+        return messageSource.getMessage(key, args, locale);
     }
 
     /** Pulls a network name and password out of the property's free-text WiFi note, when it's unambiguous. */

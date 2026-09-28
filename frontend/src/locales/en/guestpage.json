@@ -1,0 +1,373 @@
+{
+  "view": {
+    "guideLabel": "Guest guide",
+    "wifiNetwork": "WiFi network",
+    "password": "Password",
+    "copyPassword": "Copy password",
+    "copied": "Copied",
+    "copy": "Copy",
+    "pasteHint": "Then open Settings → Wi-Fi, choose {{ssid}} and paste.",
+    "noPassword": "No password needed. Just choose this network in your Wi-Fi settings.",
+    "connectAnother": "Connect another phone",
+    "joinLabel": "Join {{ssid}}",
+    "otherPhoneHint": "Point the other phone's camera here to join without typing.",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "fromTime": "from {{time}}",
+    "byTime": "by {{time}}",
+    "needAnything": "Need anything?",
+    "hostHelps": "{{name}} is happy to help.",
+    "hostHelpsDefault": "Your host is happy to help.",
+    "call": "Call {{phone}}",
+    "email": "Email",
+    "comeBack": "Come back soon",
+    "bookDirectDefault": "Loved your stay? Next time, book directly with us.",
+    "code": "Code",
+    "seeDates": "See dates & prices",
+    "poweredByPrefix": "Guest page by",
+    "poweredByCta": "Are you a host? Get yours free",
+    "privacy": "Privacy"
+  },
+  "public": {
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "This link doesn't lead to a guest page. Check the code printed under the QR code, or ask your host.",
+    "offTitle": "This guest page is switched off",
+    "offBody": "Your host has paused this page. Please contact them directly for WiFi and check-in details."
+  },
+  "unclaimed": {
+    "title": "This stand isn't set up yet",
+    "guestLead": "Staying here?",
+    "guestBody": "Your host hasn't finished setting it up. Please ask them for the WiFi details.",
+    "ownerTitle": "Is this your stand?",
+    "ownerBody": "Link it to your property in about two minutes. Guests then get your WiFi, house guide and contact details with one tap. Free, and you can change it any time without reprinting.",
+    "cta": "Set up my stand",
+    "codeLabel": "Stand code"
+  },
+  "sign": {
+    "tapOrScan": "Tap your phone here or scan the code",
+    "tapPad": "Tap your phone on the pad below, or scan",
+    "scanCamera": "Scan with your phone camera",
+    "scanToJoin": "Scan with your phone camera to join",
+    "wifiNetwork": "WiFi network",
+    "password": "Password",
+    "welcomeTo": "Welcome to",
+    "welcome": "Welcome",
+    "freeWifi": "Free WiFi",
+    "guideAndWifi": "Guest guide & WiFi",
+    "guideContents": "WiFi, house guide, check-out & local tips",
+    "scanJoinWifi": "Scan to join WiFi",
+    "fold": "fold",
+    "houseGuide": "House guide",
+    "posterGuideContents": "Check-out, house rules & local tips",
+    "footerGuestPage": "Guest page by propvian.com",
+    "toolFooter": "Made free at propvian.com/tools",
+    "ownerSetup": "New stand? Owners scan it to set it up · code {{code}} · propvian.com",
+    "ownerSetupKit": "New tags? Owners scan this card to set up all {{count}}: {{codes}} · propvian.com",
+    "sticker": "Scan or tap · propvian.com"
+  },
+  "list": {
+    "title": "Guest pages",
+    "intro": "One page per property that guests open by tapping an NFC tag or scanning a QR code: WiFi with a copy button, your house guide, check-out steps and how to reach you. Fewer \"what's the WiFi?\" messages.",
+    "gotStand": "Got a Propvian stand?",
+    "standCode": "Stand code",
+    "link": "Link",
+    "step1Title": "Fill in your WiFi",
+    "step1Body": "We prefill check-in times, house rules and a check-out list for you.",
+    "step2Title": "Print a card or write a tag",
+    "step2Body": "A6 card for a sign holder, a table tent or a poster. Any NFC sticker works.",
+    "step3Title": "Guests help themselves",
+    "step3Body": "They tap or scan, copy the password and read the guide. You see how often.",
+    "noPropertiesTitle": "Add a property first",
+    "noPropertiesBody": "Each guest page belongs to one of your properties.",
+    "goToProperties": "Go to properties",
+    "notSetUp": "Not set up",
+    "live": "Live",
+    "off": "Off",
+    "views30d_one": "{{count, number}} view in 30 days",
+    "views30d_other": "{{count, number}} views in 30 days",
+    "stands_one": "{{count}} stand",
+    "stands_other": "{{count}} stands",
+    "noWifi": "No WiFi yet",
+    "edit": "Edit",
+    "setUp": "Set up",
+    "openPage": "Open the guest page"
+  },
+  "claim": {
+    "title": "Link your stand",
+    "intro": "Choose the property it sits in. Guests who tap or scan it will see that property's guest page.",
+    "notFound": "We couldn't find this code. Check the letters printed under the QR code on your stand.",
+    "noProperties": "Add the property this stand is for, then come back. We'll remember the code.",
+    "addProperty": "Add a property",
+    "alreadyLinked": "This stand is already linked to a property. If it's yours, choosing a property below moves it there.",
+    "property": "Property",
+    "chooseProperty": "Choose a property…",
+    "submit": "Link stand",
+    "notNow": "Not now",
+    "linkedToast": "Stand linked. Now add your WiFi.",
+    "linkFailed": "Could not link this stand"
+  },
+  "editor": {
+    "saved": "Guest page saved",
+    "saveFailed": "Could not save the guest page",
+    "loadFailed": "This guest page could not be loaded.",
+    "backToList": "Back to guest pages",
+    "openPage": "Open page",
+    "saveChanges": "Save changes",
+    "upToDate": "Saved",
+    "tabs": {
+      "content": "Content",
+      "print": "Print & NFC",
+      "stats": "Stats"
+    },
+    "livePreview": "Live preview",
+    "publicWarning": "Anyone with the link can open this page, <b>including past guests</b>. Never put door, lockbox or alarm codes here. Door codes belong on each booking's own check-in link.",
+    "wifi": {
+      "title": "WiFi",
+      "subtitle": "Guests copy the password with one tap. Change it here whenever you change it on the router — no reprinting.",
+      "fromProperty": "From your property settings:",
+      "network": "Network name",
+      "networkPlaceholder": "e.g. CasaSol_5G",
+      "password": "Password",
+      "hidePassword": "Hide password",
+      "showPassword": "Show password",
+      "security": "Security",
+      "securities": {
+        "WPA": "WPA / WPA2 / WPA3 (most routers)",
+        "WEP": "WEP (old routers)",
+        "nopass": "No password"
+      },
+      "hidden": "Hidden network (doesn't broadcast its name)"
+    },
+    "welcome": "Welcome message",
+    "guide": {
+      "title": "House guide",
+      "subtitle": "Empty sections stay hidden from guests until you fill them in.",
+      "sectionTitle": "Section title",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove section",
+      "rulesAuto": "Your property's rules (pets, smoking, parties, quiet hours) are listed here automatically. Add anything else below.",
+      "rulesAutoOnceSet": "Your property's rules (pets, smoking, parties, quiet hours) are listed here automatically once you set them on the property. Add anything else below."
+    },
+    "sectionTypes": {
+      "CHECKIN": "Arrival",
+      "CHECKOUT": "Check-out",
+      "HOUSE_RULES": "House rules",
+      "LOCAL_TIPS": "Local tips",
+      "APPLIANCES": "How things work",
+      "PARKING": "Parking",
+      "EMERGENCY": "Emergencies",
+      "CUSTOM": "Custom"
+    },
+    "presets": {
+      "LOCAL_TIPS": {
+        "title": "Local tips",
+        "hint": "Your favourite café, the best beach, the supermarket that opens on Sundays…"
+      },
+      "APPLIANCES": {
+        "title": "How things work",
+        "hint": "Heating, the coffee machine, the TV remote, the washing machine…"
+      },
+      "PARKING": {
+        "title": "Parking",
+        "hint": "Where to park, permits, how to find the garage entrance…"
+      },
+      "EMERGENCY": {
+        "title": "Emergencies",
+        "hint": "Emergency number, nearest hospital and pharmacy, where the first-aid kit and fire extinguisher are…"
+      },
+      "CUSTOM": {
+        "title": "More info",
+        "hint": "Anything else guests should know."
+      }
+    },
+    "contact": {
+      "title": "Contact",
+      "subtitle": "Shown as call, WhatsApp and email buttons.",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "whatsapp": "This number has WhatsApp"
+    },
+    "bookDirect": {
+      "title": "Book direct",
+      "subtitle": "Invite guests to book their next stay on your own site.",
+      "show": "Show a book-direct offer",
+      "airbnbTitle": "Airbnb guests are off limits",
+      "airbnbBody": "Airbnb's Off-Platform Policy prohibits asking or encouraging guests to move future or repeat bookings off Airbnb, and offering discounts to do so. With the switch below on, the offer is hidden whenever the current stay came from Airbnb. That needs your Airbnb calendar synced to Propvian.",
+      "readPolicy": "Read the policy",
+      "message": "Message",
+      "messageHint": "Leave empty to show this standard message in each guest's own language.",
+      "promo": "Promo code (optional)",
+      "promoHint": "Must already exist under Website → promotions.",
+      "link": "Booking link (optional)",
+      "linkDefault": "Leave empty to use {{url}}",
+      "linkNeeded": "Your property has no Propvian booking page yet, so add a link.",
+      "hideAirbnb": "Hide the offer during Airbnb stays (recommended)"
+    },
+    "branding": {
+      "title": "Branding",
+      "show": "Show \"Guest page by Propvian\" at the bottom",
+      "freeNote": "Guest pages are free with this small footer. Hiding it is included in the paid plans.",
+      "seePlans": "See plans"
+    }
+  },
+  "print": {
+    "unsaved": "You have unsaved changes on the Content tab. Save them first so the printed WiFi code matches.",
+    "link": {
+      "title": "Your guest page link",
+      "subtitle": "Share it in your booking confirmation or house manual too. It never changes, even when the WiFi does.",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "open": "Open",
+      "qrSvg": "QR code (SVG)"
+    },
+    "sign": {
+      "title": "Print a sign",
+      "subtitle": "Print at 100% scale (turn off “fit to page”). Card stock or a laminator makes it last.",
+      "cardSize": "Card size",
+      "titleField": "Title",
+      "language": "Language on the sign",
+      "wifiQr": "Add a WiFi QR code",
+      "wifiQrNote": "Phones join by scanning it, no typing. Reprint it if you change the password.",
+      "wifiQrMissing": "Add your WiFi on the Content tab first.",
+      "wifiText": "Print the network name and password as text",
+      "nfcHint": "“Tap your phone here” hint",
+      "nfcHintNote": "Only if an NFC tag sits behind the card. See below.",
+      "print": "Print or save as PDF"
+    },
+    "variants": {
+      "card": {
+        "label": "Stand card",
+        "note": "Fits A6 and 4×6 in acrylic holders"
+      },
+      "tent": {
+        "label": "Table tent",
+        "note": "A4 sheet, fold in half"
+      },
+      "poster": {
+        "label": "Poster",
+        "note": "A4 or Letter, for a wall or the fridge"
+      }
+    },
+    "sizes": {
+      "a6": "A6 (105 × 148 mm)",
+      "4x6": "4 × 6 in"
+    },
+    "nfc": {
+      "title": "NFC tag",
+      "subtitle": "A tag behind the card lets guests tap instead of scanning. Any NTAG213/215/216 sticker works, about €0.40 each.",
+      "shouldOpen": "The tag should open",
+      "write": "Write to an NFC tag",
+      "holdTag": "Hold the tag to the back of your phone…",
+      "written": "Written. Tap it to test.",
+      "writeFailed": "The tag could not be written.",
+      "androidOnly": "Open this page in Chrome on an Android phone to write tags here directly.",
+      "anyPhone": "With an iPhone (or any phone)",
+      "step1": "Install the free NFC Tools app.",
+      "step2": "Write → Add a record → URL, and paste the link.",
+      "step3": "Tap Write and hold the phone on the tag.",
+      "step4": "Optional: Other → Lock tag, so nobody can overwrite it. Locking is permanent, which is fine: the link never changes, only the page behind it.",
+      "whyLink": "Why a link and not a WiFi record: iPhones open links from tags but won't join WiFi from one. The link works on both, and the WiFi QR code on the card covers instant joining."
+    },
+    "stands": {
+      "title": "Stands and tags that open this page",
+      "subtitle": "Views in the last 30 days, per code. Each Propvian stand has its own code, so you can see which one guests use.",
+      "code": "Code",
+      "what": "What",
+      "views": "Views (30 days)",
+      "own": "This page's own link, QR and NFC",
+      "kitTag": "Tag from kit {{kit}}",
+      "stand": "Propvian stand",
+      "linkLabel": "Link a Propvian stand",
+      "placeholder": "Code printed under the QR, e.g. K7M2QX9P",
+      "linked": "Stand linked to this page"
+    }
+  },
+  "printPage": {
+    "print": "Print",
+    "card": "{{size}} card",
+    "hint": "Print at 100% scale (\"actual size\"), not \"fit to page\".",
+    "hintTent": "Print at 100%, then fold along the dashed line."
+  },
+  "stats": {
+    "range": "Time range",
+    "lastDays_one": "Last {{count}} day",
+    "lastDays_other": "Last {{count}} days",
+    "views": "Page views",
+    "wifiCopies": "WiFi passwords copied",
+    "bookDirectClicks": "Book-direct clicks",
+    "contactTaps": "Contact taps",
+    "howOpened": "How guests opened it",
+    "sources": {
+      "NFC": "Tapped an NFC tag",
+      "QR": "Scanned a printed QR code",
+      "LINK": "Opened the link"
+    },
+    "shareOfViews": "{{pct}}% of views",
+    "perDay": "Page views per day",
+    "dedupe": "Repeat opens by the same guest within a minute count once.",
+    "empty": "No views yet. Put the sign or tag in the rental and they'll appear here.",
+    "viewCount_one": "{{count}} view",
+    "viewCount_other": "{{count}} views",
+    "asTable": "Show as table"
+  },
+  "tool": {
+    "seoTitle": "Free WiFi QR Code Sign Maker for Airbnb & Rentals",
+    "seoDescription": "Make a printable WiFi QR code sign in seconds. Guests scan it with their camera and join, with no password typing. Free, no sign-up, and your password never leaves your browser.",
+    "schemaName": "WiFi QR Code Sign Maker",
+    "schemaDescription": "Free printable WiFi QR code sign for Airbnb and vacation rentals. Guests scan to join, no password typing.",
+    "kicker": "Free tool · no sign-up",
+    "h1": "WiFi QR code sign maker",
+    "lead": "Print a sign your guests scan to join the WiFi. No typing, no \"what's the password?\" messages.",
+    "privacy": "Made in your browser. Your password is never sent anywhere.",
+    "step1": "1. Your WiFi",
+    "networkPlaceholder": "Exactly as it appears on phones",
+    "hidden": "Hidden network",
+    "step2": "2. Your sign",
+    "variantNotes": {
+      "card": "A6 / 4×6 in holders",
+      "tent": "Fold in half",
+      "poster": "A4 or Letter"
+    },
+    "alsoText": "Also print the network name and password as text",
+    "qrOnly": "Just the QR code (SVG)",
+    "needBoth": "Enter your network name and password to print.",
+    "needName": "Enter your network name to print.",
+    "preview": "Preview",
+    "yourNetwork": "Your network",
+    "hostsKicker": "For rental hosts",
+    "hostsTitle": "A sign that never goes out of date",
+    "hostsBody": "Put a Propvian guest page behind your sign. Guests tap or scan and get the WiFi with a copy button, your house guide, check-out steps and how to reach you. Change anything online, and the printed sign keeps working.",
+    "hostsCta": "Create a free guest page",
+    "benefits": {
+      "update": "Update the WiFi password without reprinting",
+      "nfc": "Works with an NFC tag on iPhone and Android",
+      "guide": "House rules, check-out checklist and local tips in one place",
+      "stats": "See how many guests open it, and from which sign"
+    },
+    "questions": "Questions",
+    "faq": {
+      "iphone": {
+        "q": "Can guests with an iPhone scan it?",
+        "a": "Yes. The iPhone camera has recognised WiFi QR codes since iOS 11: guests point the camera at the sign and tap \"Join network\". Android 10 and later does the same from the camera or Google Lens."
+      },
+      "stored": {
+        "q": "Is my WiFi password stored anywhere?",
+        "a": "No. The sign is drawn in your browser and the password never leaves your device. Nothing you type on this page is sent to Propvian."
+      },
+      "change": {
+        "q": "What happens when I change the WiFi password?",
+        "a": "The QR code contains the password itself, so print a new sign. If you change it often, a free Propvian guest page puts a link on the sign instead: you update the password online and the printed sign keeps working."
+      },
+      "nfc": {
+        "q": "Can I use an NFC tag instead of a QR code?",
+        "a": "Android phones can join WiFi from an NFC tag, but iPhones can't: they only open links from tags. A tag that opens a guest page works on both, which is how Propvian stands are set up."
+      },
+      "paper": {
+        "q": "What should I print it on?",
+        "a": "The card size fits the A6 and 4 × 6 inch acrylic sign holders sold for rentals. Thick card or a laminated sheet lasts longest. Print at 100% scale so the code stays sharp."
+      }
+    }
+  }
+}
