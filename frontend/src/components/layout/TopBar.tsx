@@ -4,6 +4,7 @@ import { notificationsApi } from '@/api/notifications'
 import { useNavigate } from 'react-router-dom'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { usersApi } from '@/api/users'
+import { useAuthStore } from '@/store/authStore'
 
 interface TopBarProps {
   title: string
@@ -15,6 +16,7 @@ interface TopBarProps {
 
 export function TopBar({ title, action }: TopBarProps) {
   const navigate = useNavigate()
+  const updateUser = useAuthStore((s) => s.updateUser)
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['notifications', 'unread-count'],
@@ -28,7 +30,7 @@ export function TopBar({ title, action }: TopBarProps) {
 
       <div className="flex items-center gap-3">
         {/* Language — persists to the profile so emails follow the dashboard */}
-        <LanguageSwitcher variant="compact" onChange={(code) => usersApi.setLocale(code)} />
+        <LanguageSwitcher variant="compact" onChange={(code) => { updateUser({ locale: code }); void usersApi.setLocale(code) }} />
 
         {/* Notifications */}
         <button

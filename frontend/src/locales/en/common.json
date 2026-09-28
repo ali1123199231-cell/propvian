@@ -20,7 +20,19 @@
     "features": "Features",
     "login": "Sign in",
     "logout": "Sign out",
-    "signup": "Start free"
+    "signup": "Start free",
+    "getStarted": "Get Started",
+    "startTrial": "Start Free Trial",
+    "openMenu": "Menu",
+    "guestPages": "Guest pages",
+    "payments": "Payments",
+    "reviews": "Reviews",
+    "analytics": "Analytics",
+    "websiteBuilder": "Website Builder",
+    "domains": "Domains",
+    "messaging": "Messaging",
+    "verification": "Verification",
+    "adminPanel": "Admin Panel"
   },
   "actions": {
     "save": "Save",
@@ -64,6 +76,36 @@
     "company": "Company",
     "legal": "Legal",
     "resources": "Resources",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "blurb": "Direct booking platform for short-term rental hosts. Accept bookings, manage properties, and automate guest access — all in one place.",
+    "tagline": "Direct booking platform for short-term rental hosts worldwide.",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "cookies": "Cookie Policy",
+    "refund": "Refund Policy",
+    "acceptableUse": "Acceptable Use",
+    "dpa": "Data Processing Agreement",
+    "gdpr": "GDPR Rights",
+    "disclaimer": "Disclaimer",
+    "dmca": "DMCA / Copyright"
+  },
+  "menu": {
+    "airbnb": "Airbnb Integration",
+    "bookingCom": "Booking.com Integration",
+    "ttlock": "TTLock Integration",
+    "directBookingWebsite": "Direct Booking Website",
+    "calendarSync": "Calendar Sync",
+    "guestCodes": "Guest Code Automation",
+    "selfCheckIn": "Self Check-In",
+    "websiteBuilder": "Website Builder",
+    "bookingEngine": "Booking Engine",
+    "airbnbAlternative": "Airbnb Alternative",
+    "security": "Security"
+  },
+  "navGroups": {
+    "manage": "Manage",
+    "revenue": "Revenue",
+    "website": "Website",
+    "account": "Account"
   }
 }

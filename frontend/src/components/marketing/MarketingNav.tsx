@@ -1,31 +1,34 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Menu, X, ChevronDown } from 'lucide-react'
 import { PropvianLogo } from '@/components/PropvianLogo'
 import { systemConfigApi } from '@/api/systemConfig'
 
+// Labels are keys under common:menu
 const integrationsDB = [
-  { label: 'Airbnb Integration', href: '/integrations/airbnb' },
-  { label: 'Booking.com Integration', href: '/integrations/booking-com' },
+  { label: 'airbnb', href: '/integrations/airbnb' },
+  { label: 'bookingCom', href: '/integrations/booking-com' },
 ]
 
 const integrationsTTLock = [
-  { label: 'Airbnb Integration', href: '/integrations/airbnb' },
-  { label: 'Booking.com Integration', href: '/integrations/booking-com' },
-  { label: 'TTLock Integration', href: '/integrations/ttlock' },
+  { label: 'airbnb', href: '/integrations/airbnb' },
+  { label: 'bookingCom', href: '/integrations/booking-com' },
+  { label: 'ttlock', href: '/integrations/ttlock' },
 ]
 
 const featuresDB = [
-  { label: 'Direct Booking Website', href: '/features/self-checkin' },
-  { label: 'Calendar Sync',          href: '/integrations/airbnb' },
+  { label: 'directBookingWebsite', href: '/features/self-checkin' },
+  { label: 'calendarSync',         href: '/integrations/airbnb' },
 ]
 
 const featuresTTLock = [
-  { label: 'Guest Code Automation', href: '/features/guest-code-automation' },
-  { label: 'Self Check-In',         href: '/features/self-checkin' },
+  { label: 'guestCodes',  href: '/features/guest-code-automation' },
+  { label: 'selfCheckIn', href: '/features/self-checkin' },
 ]
 
 export function MarketingNav() {
+  const { t } = useTranslation('common')
   const [mobileOpen, setMobileOpen]         = useState(false)
   const [integrationsOpen, setIntegrationsOpen] = useState(false)
   const [featuresOpen, setFeaturesOpen]     = useState(false)
@@ -38,7 +41,7 @@ export function MarketingNav() {
 
   const integrations = isDirect ? integrationsDB  : integrationsTTLock
   const features     = isDirect ? featuresDB      : featuresTTLock
-  const ctaLabel     = isDirect ? 'Get Started'   : 'Start Free Trial'
+  const ctaLabel     = isDirect ? t('nav.getStarted') : t('nav.startTrial')
 
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
@@ -54,7 +57,7 @@ export function MarketingNav() {
             {/* Integrations dropdown */}
             <div className="relative" onMouseEnter={() => setIntegrationsOpen(true)} onMouseLeave={() => setIntegrationsOpen(false)}>
               <button className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
-                Integrations <ChevronDown size={14} className={`transition-transform ${integrationsOpen ? 'rotate-180' : ''}`} />
+                {t('nav.integrations')} <ChevronDown size={14} className={`transition-transform ${integrationsOpen ? 'rotate-180' : ''}`} />
               </button>
               {integrationsOpen && (
                 <div className="absolute top-full left-0 pt-1 w-52">
@@ -62,7 +65,7 @@ export function MarketingNav() {
                     {integrations.map((item) => (
                       <Link key={item.href} to={item.href}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                        {item.label}
+                        {t(`menu.${item.label}`)}
                       </Link>
                     ))}
                   </div>
@@ -73,7 +76,7 @@ export function MarketingNav() {
             {/* Features dropdown */}
             <div className="relative" onMouseEnter={() => setFeaturesOpen(true)} onMouseLeave={() => setFeaturesOpen(false)}>
               <button className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
-                Features <ChevronDown size={14} className={`transition-transform ${featuresOpen ? 'rotate-180' : ''}`} />
+                {t('nav.features')} <ChevronDown size={14} className={`transition-transform ${featuresOpen ? 'rotate-180' : ''}`} />
               </button>
               {featuresOpen && (
                 <div className="absolute top-full left-0 pt-1 w-56">
@@ -81,7 +84,7 @@ export function MarketingNav() {
                     {features.map((item) => (
                       <Link key={item.href} to={item.href}
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                        {item.label}
+                        {t(`menu.${item.label}`)}
                       </Link>
                     ))}
                   </div>
@@ -90,10 +93,10 @@ export function MarketingNav() {
             </div>
 
             <Link to="/pricing" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
-              Pricing
+              {t('nav.pricing')}
             </Link>
             <Link to="/blog" className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50 transition-colors">
-              Blog
+              {t('nav.blog')}
             </Link>
           </div>
 
@@ -101,7 +104,7 @@ export function MarketingNav() {
           <div className="hidden md:flex items-center gap-3">
             <button onClick={() => navigate('/', { state: { tab: 'signin' } })}
               className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
-              Sign in
+              {t('nav.login')}
             </button>
             <button onClick={() => navigate('/', { state: { tab: 'signup' } })}
               className="btn-primary py-2 px-5 text-sm">
@@ -110,7 +113,7 @@ export function MarketingNav() {
           </div>
 
           {/* Mobile menu toggle */}
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50">
+          <button onClick={() => setMobileOpen(!mobileOpen)} aria-label={t('nav.openMenu')} aria-expanded={mobileOpen} className="md:hidden p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-50">
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
@@ -119,25 +122,25 @@ export function MarketingNav() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-1 pb-0.5">Integrations</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-1 pb-0.5">{t('nav.integrations')}</p>
           {integrations.map((item) => (
             <Link key={item.href} to={item.href} onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
-              {item.label}
+              {t(`menu.${item.label}`)}
             </Link>
           ))}
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-0.5">Features</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2 pb-0.5">{t('nav.features')}</p>
           {features.map((item) => (
             <Link key={item.href} to={item.href} onClick={() => setMobileOpen(false)}
               className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">
-              {item.label}
+              {t(`menu.${item.label}`)}
             </Link>
           ))}
           <div className="border-t border-gray-100 pt-3 pb-1 space-y-2">
-            <Link to="/pricing" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">Pricing</Link>
-            <Link to="/blog" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">Blog</Link>
+            <Link to="/pricing" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">{t('nav.pricing')}</Link>
+            <Link to="/blog" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">{t('nav.blog')}</Link>
             <button onClick={() => { setMobileOpen(false); navigate('/') }}
-              className="btn-primary w-full justify-center py-2.5 mt-2">Start Free Trial</button>
+              className="btn-primary w-full justify-center py-2.5 mt-2">{ctaLabel}</button>
           </div>
         </div>
       )}

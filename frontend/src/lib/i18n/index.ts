@@ -111,9 +111,16 @@ export async function setLanguage(code: LanguageCode): Promise<void> {
  * Applies a logged-in host's saved locale, but never overrides a choice the
  * visitor made in this browser. Someone who deliberately switched to English on
  * a shared laptop should not be flipped back on their next sign-in.
+ *
+ * Called when a session is restored and at sign-in (see authStore). It also
+ * stands aside when the URL already names a language (a prefix or ?lang=), and
+ * on guest pages, which follow the guest's phone.
  */
 export async function syncUserLocale(userLocale: string | null | undefined): Promise<void> {
   if (!userLocale) return
+  const { lang: pathLang, path } = splitLocalePath(window.location.pathname)
+  if (pathLang !== DEFAULT_LANGUAGE || /^\/g\//.test(path)) return
+  if (isLanguageCode(new URLSearchParams(window.location.search).get('lang'))) return
   try {
     if (localStorage.getItem(LANGUAGE_STORAGE_KEY)) return
   } catch {

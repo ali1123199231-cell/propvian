@@ -5,27 +5,30 @@ import {
   ShieldCheck, Globe, Star, MessageCircle, BarChart2,
   Home, Wallet, CheckSquare, Shield, CalendarDays, QrCode,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/authStore'
 import { useSystemStore } from '@/store/systemStore'
 import { authApi } from '@/api/auth'
 import { PropvianLogo } from '@/components/PropvianLogo'
 import clsx from 'clsx'
 
+// Labels are keys under common:nav, section headings under common:navGroups
+
 // ── TTLock navigation ─────────────────────────────────────────────────────────
 
 const ttlockNavItems = [
-  { icon: LayoutDashboard, label: 'Dashboard',    to: '/dashboard' },
-  { icon: Building2,       label: 'Properties',   to: '/properties' },
-  { icon: Calendar,        label: 'Reservations', to: '/reservations' },
-  { icon: Lock,            label: 'Locks',        to: '/locks' },
-  { icon: QrCode,          label: 'Guest pages',  to: '/guest-pages' },
-  { icon: Plug,            label: 'Integrations', to: '/integrations' },
-  { icon: Bell,            label: 'Notifications',to: '/notifications' },
+  { icon: LayoutDashboard, label: 'dashboard',    to: '/dashboard' },
+  { icon: Building2,       label: 'properties',   to: '/properties' },
+  { icon: Calendar,        label: 'reservations', to: '/reservations' },
+  { icon: Lock,            label: 'locks',        to: '/locks' },
+  { icon: QrCode,          label: 'guestPages',  to: '/guest-pages' },
+  { icon: Plug,            label: 'integrations', to: '/integrations' },
+  { icon: Bell,            label: 'notifications',to: '/notifications' },
 ]
 
 const ttlockBottomItems = [
-  { icon: CreditCard, label: 'Billing',  to: '/billing' },
-  { icon: Settings,   label: 'Settings', to: '/settings' },
+  { icon: CreditCard, label: 'billing',  to: '/billing' },
+  { icon: Settings,   label: 'settings', to: '/settings' },
 ]
 
 // ── Direct Booking navigation ─────────────────────────────────────────────────
@@ -34,47 +37,47 @@ const dbNavSections = [
   {
     heading: null,
     items: [
-      { icon: LayoutDashboard, label: 'Dashboard', to: '/dashboard' },
+      { icon: LayoutDashboard, label: 'dashboard', to: '/dashboard' },
     ],
   },
   {
-    heading: 'Manage',
+    heading: 'manage',
     items: [
-      { icon: Building2,    label: 'Properties',   to: '/properties' },
-      { icon: Calendar,     label: 'Calendar',     to: '/calendar' },
-      { icon: CheckSquare,  label: 'Reservations', to: '/reservations' },
-      { icon: CalendarDays, label: 'Integrations', to: '/integrations' },
+      { icon: Building2,    label: 'properties',   to: '/properties' },
+      { icon: Calendar,     label: 'calendar',     to: '/calendar' },
+      { icon: CheckSquare,  label: 'reservations', to: '/reservations' },
+      { icon: CalendarDays, label: 'integrations', to: '/integrations' },
     ],
   },
   {
-    heading: 'Revenue',
+    heading: 'revenue',
     items: [
-      { icon: Wallet,   label: 'Payments',  to: '/payments' },
-      { icon: Star,     label: 'Reviews',   to: '/reviews' },
-      { icon: BarChart2,label: 'Analytics', to: '/analytics' },
+      { icon: Wallet,   label: 'payments',  to: '/payments' },
+      { icon: Star,     label: 'reviews',   to: '/reviews' },
+      { icon: BarChart2,label: 'analytics', to: '/analytics' },
     ],
   },
   {
-    heading: 'Website',
+    heading: 'website',
     items: [
-      { icon: Home,         label: 'Website Builder', to: '/website' },
-      { icon: Globe,        label: 'Domains',         to: '/domains' },
-      { icon: QrCode,       label: 'Guest pages',     to: '/guest-pages' },
-      { icon: MessageCircle,label: 'Messaging',       to: '/messaging' },
+      { icon: Home,         label: 'websiteBuilder', to: '/website' },
+      { icon: Globe,        label: 'domains',         to: '/domains' },
+      { icon: QrCode,       label: 'guestPages',     to: '/guest-pages' },
+      { icon: MessageCircle,label: 'messaging',       to: '/messaging' },
     ],
   },
   {
-    heading: 'Account',
+    heading: 'account',
     items: [
-      { icon: ShieldCheck, label: 'Verification', to: '/verification' },
-      { icon: Bell,        label: 'Notifications',to: '/notifications' },
+      { icon: ShieldCheck, label: 'verification', to: '/verification' },
+      { icon: Bell,        label: 'notifications',to: '/notifications' },
     ],
   },
 ]
 
 const dbBottomItems = [
-  { icon: CreditCard, label: 'Billing',  to: '/billing' },
-  { icon: Settings,   label: 'Settings', to: '/settings' },
+  { icon: CreditCard, label: 'billing',  to: '/billing' },
+  { icon: Settings,   label: 'settings', to: '/settings' },
 ]
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -85,6 +88,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { t } = useTranslation('common')
   const { user, logout } = useAuthStore()
   const { isDirectBooking } = useSystemStore()
   const navigate = useNavigate()
@@ -104,7 +108,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       className={({ isActive }) => clsx('sidebar-item', isActive && 'active')}
     >
       <Icon size={16} className="flex-shrink-0" />
-      <span>{label}</span>
+      <span>{t(`nav.${label}`)}</span>
     </NavLink>
   )
 
@@ -128,7 +132,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div key={section.heading ?? 'main'}>
                 {section.heading && (
                   <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1.5">
-                    {section.heading}
+                    {t(`navGroups.${section.heading}`)}
                   </p>
                 )}
                 <div className="space-y-0.5">
@@ -162,7 +166,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100 mt-1"
           >
             <Shield size={16} className="flex-shrink-0" />
-            <span>Admin Panel</span>
+            <span>{t('nav.adminPanel')}</span>
           </NavLink>
         )}
 
@@ -181,7 +185,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <button
               onClick={handleLogout}
               className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-              title="Logout"
+              title={t('nav.logout')}
+              aria-label={t('nav.logout')}
             >
               <LogOut size={14} />
             </button>

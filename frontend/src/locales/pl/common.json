@@ -20,7 +20,19 @@
     "features": "Funkcje",
     "login": "Zaloguj się",
     "logout": "Wyloguj się",
-    "signup": "Zacznij za darmo"
+    "signup": "Zacznij za darmo",
+    "getStarted": "Zacznij teraz",
+    "startTrial": "Wypróbuj za darmo",
+    "openMenu": "Menu",
+    "guestPages": "Strony dla gości",
+    "payments": "Płatności",
+    "reviews": "Opinie",
+    "analytics": "Analityka",
+    "websiteBuilder": "Kreator stron",
+    "domains": "Domeny",
+    "messaging": "Wiadomości",
+    "verification": "Weryfikacja",
+    "adminPanel": "Panel administratora"
   },
   "actions": {
     "save": "Zapisz",
@@ -64,6 +76,36 @@
     "company": "Firma",
     "legal": "Informacje prawne",
     "resources": "Zasoby",
-    "rights": "Wszelkie prawa zastrzeżone."
+    "rights": "Wszelkie prawa zastrzeżone.",
+    "blurb": "Platforma rezerwacji bezpośrednich dla wynajmujących krótkoterminowo. Przyjmuj rezerwacje, zarządzaj obiektami i automatyzuj dostęp gości — wszystko w jednym miejscu.",
+    "tagline": "Platforma rezerwacji bezpośrednich dla wynajmujących krótkoterminowo na całym świecie.",
+    "terms": "Regulamin",
+    "privacy": "Polityka prywatności",
+    "cookies": "Polityka plików cookie",
+    "refund": "Zasady zwrotów",
+    "acceptableUse": "Dozwolony użytek",
+    "dpa": "Umowa powierzenia przetwarzania danych",
+    "gdpr": "Prawa wynikające z RODO",
+    "disclaimer": "Zastrzeżenia prawne",
+    "dmca": "DMCA / Prawa autorskie"
+  },
+  "menu": {
+    "airbnb": "Integracja z Airbnb",
+    "bookingCom": "Integracja z Booking.com",
+    "ttlock": "Integracja z TTLock",
+    "directBookingWebsite": "Strona rezerwacji bezpośrednich",
+    "calendarSync": "Synchronizacja kalendarzy",
+    "guestCodes": "Automatyczne kody dla gości",
+    "selfCheckIn": "Samodzielne zameldowanie",
+    "websiteBuilder": "Kreator stron",
+    "bookingEngine": "Silnik rezerwacji",
+    "airbnbAlternative": "Alternatywa dla Airbnb",
+    "security": "Bezpieczeństwo"
+  },
+  "navGroups": {
+    "manage": "Zarządzanie",
+    "revenue": "Przychody",
+    "website": "Strona",
+    "account": "Konto"
   }
 }

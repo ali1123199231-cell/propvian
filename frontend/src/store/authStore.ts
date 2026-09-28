@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User, Organization } from '@/types'
 import { logger, maskEmail, shortId } from '@/lib/logger'
+import { syncUserLocale } from '@/lib/i18n'
 
 interface AuthState {
   user: User | null
@@ -34,6 +35,7 @@ export const useAuthStore = create<AuthState>()(
           role: user.role,
         })
         set({ user, accessToken, refreshToken, isAuthenticated: true })
+        void syncUserLocale(user.locale)
       },
 
       setTokens: (accessToken, refreshToken) => {
@@ -77,6 +79,8 @@ export const useAuthStore = create<AuthState>()(
             maskEmail(state.user?.email),
             shortId(state.activeOrg?.id),
           )
+          // Rehydration runs before the first render, so a restored session opens in the host's language
+          void syncUserLocale(state.user?.locale)
         } else {
           log.debug('Auth store rehydrated — no active session')
         }

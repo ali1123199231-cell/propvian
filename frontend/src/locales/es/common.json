@@ -20,7 +20,19 @@
     "features": "Funciones",
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
-    "signup": "Empezar gratis"
+    "signup": "Empezar gratis",
+    "getStarted": "Empezar",
+    "startTrial": "Prueba gratis",
+    "openMenu": "Menú",
+    "guestPages": "Páginas para huéspedes",
+    "payments": "Pagos",
+    "reviews": "Reseñas",
+    "analytics": "Analíticas",
+    "websiteBuilder": "Creador de webs",
+    "domains": "Dominios",
+    "messaging": "Mensajes",
+    "verification": "Verificación",
+    "adminPanel": "Panel de administración"
   },
   "actions": {
     "save": "Guardar",
@@ -64,6 +76,36 @@
     "company": "Empresa",
     "legal": "Legal",
     "resources": "Recursos",
-    "rights": "Todos los derechos reservados."
+    "rights": "Todos los derechos reservados.",
+    "blurb": "Plataforma de reservas directas para anfitriones de alquiler vacacional. Acepta reservas, gestiona tus propiedades y automatiza el acceso de tus huéspedes, todo en un solo lugar.",
+    "tagline": "Plataforma de reservas directas para anfitriones de alquiler vacacional de todo el mundo.",
+    "terms": "Términos del servicio",
+    "privacy": "Política de privacidad",
+    "cookies": "Política de cookies",
+    "refund": "Política de reembolsos",
+    "acceptableUse": "Uso aceptable",
+    "dpa": "Acuerdo de tratamiento de datos",
+    "gdpr": "Derechos RGPD",
+    "disclaimer": "Aviso legal",
+    "dmca": "DMCA / Derechos de autor"
+  },
+  "menu": {
+    "airbnb": "Integración con Airbnb",
+    "bookingCom": "Integración con Booking.com",
+    "ttlock": "Integración con TTLock",
+    "directBookingWebsite": "Web de reservas directas",
+    "calendarSync": "Sincronización de calendarios",
+    "guestCodes": "Códigos de acceso automáticos",
+    "selfCheckIn": "Check-in autónomo",
+    "websiteBuilder": "Creador de webs",
+    "bookingEngine": "Motor de reservas",
+    "airbnbAlternative": "Alternativa a Airbnb",
+    "security": "Seguridad"
+  },
+  "navGroups": {
+    "manage": "Gestión",
+    "revenue": "Ingresos",
+    "website": "Sitio web",
+    "account": "Cuenta"
   }
 }

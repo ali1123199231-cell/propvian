@@ -20,7 +20,19 @@
     "features": "Funzioni",
     "login": "Accedi",
     "logout": "Esci",
-    "signup": "Inizia gratis"
+    "signup": "Inizia gratis",
+    "getStarted": "Inizia ora",
+    "startTrial": "Prova gratis",
+    "openMenu": "Menu",
+    "guestPages": "Pagine ospiti",
+    "payments": "Pagamenti",
+    "reviews": "Recensioni",
+    "analytics": "Statistiche",
+    "websiteBuilder": "Creatore di siti web",
+    "domains": "Domini",
+    "messaging": "Messaggi",
+    "verification": "Verifica",
+    "adminPanel": "Pannello di amministrazione"
   },
   "actions": {
     "save": "Salva",
@@ -64,6 +76,36 @@
     "company": "Azienda",
     "legal": "Note legali",
     "resources": "Risorse",
-    "rights": "Tutti i diritti riservati."
+    "rights": "Tutti i diritti riservati.",
+    "blurb": "Piattaforma di prenotazione diretta per host di affitti brevi. Accetta prenotazioni, gestisci le proprietà e automatizza l'accesso degli ospiti, tutto in un unico posto.",
+    "tagline": "Piattaforma di prenotazione diretta per host di affitti brevi in tutto il mondo.",
+    "terms": "Termini di servizio",
+    "privacy": "Informativa sulla privacy",
+    "cookies": "Cookie policy",
+    "refund": "Politica di rimborso",
+    "acceptableUse": "Uso accettabile",
+    "dpa": "Accordo sul trattamento dei dati",
+    "gdpr": "Diritti GDPR",
+    "disclaimer": "Esclusione di responsabilità",
+    "dmca": "DMCA / Copyright"
+  },
+  "menu": {
+    "airbnb": "Integrazione Airbnb",
+    "bookingCom": "Integrazione Booking.com",
+    "ttlock": "Integrazione TTLock",
+    "directBookingWebsite": "Sito per prenotazioni dirette",
+    "calendarSync": "Sincronizzazione calendari",
+    "guestCodes": "Codici di accesso automatici",
+    "selfCheckIn": "Self check-in",
+    "websiteBuilder": "Creatore di siti web",
+    "bookingEngine": "Motore di prenotazione",
+    "airbnbAlternative": "Alternativa ad Airbnb",
+    "security": "Sicurezza"
+  },
+  "navGroups": {
+    "manage": "Gestione",
+    "revenue": "Ricavi",
+    "website": "Sito web",
+    "account": "Account"
   }
 }
