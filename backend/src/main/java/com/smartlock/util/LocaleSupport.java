@@ -15,7 +15,7 @@ public final class LocaleSupport {
 
     public static final String DEFAULT_LANGUAGE = "en";
 
-    public static final List<String> SUPPORTED = List.of("en", "es", "it");
+    public static final List<String> SUPPORTED = List.of("en", "es", "it", "pl");
 
     private LocaleSupport() {
     }

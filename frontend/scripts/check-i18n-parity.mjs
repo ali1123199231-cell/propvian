@@ -1,9 +1,18 @@
 import { readFileSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const LOCALES_DIR = '/home/x/E/IdeaProjects/smartlock2/frontend/src/locales'
-const BACKEND_RES = '/home/x/E/IdeaProjects/smartlock2/backend/src/main/resources'
+// Relative to this script, so it checks the checkout it lives in (worktrees included)
+const HERE = dirname(fileURLToPath(import.meta.url))
+const LOCALES_DIR = join(HERE, '..', 'src', 'locales')
+const BACKEND_RES = join(HERE, '..', '..', 'backend', 'src', 'main', 'resources')
 const SOURCE = 'en'
+
+// Languages need different plural forms (English: one/other; Polish: one/few/many/other),
+// so plural keys are compared by their base name.
+const PLURAL = /_(zero|one|two|few|many|other)$/
+const base = (key) => key.replace(PLURAL, '')
+const unique = (keys) => [...new Set(keys.map(base))]
 
 function flatten(obj, prefix = '', out = []) {
   for (const [k, v] of Object.entries(obj)) {
@@ -24,10 +33,10 @@ const namespaces = readdirSync(join(LOCALES_DIR, SOURCE))
 console.log(`Frontend: languages [${langs.join(', ')}], namespaces [${namespaces.map(n => n.replace('.json','')).join(', ')}]\n`)
 
 for (const ns of namespaces) {
-  const source = flatten(JSON.parse(readFileSync(join(LOCALES_DIR, SOURCE, ns), 'utf8')))
+  const source = unique(flatten(JSON.parse(readFileSync(join(LOCALES_DIR, SOURCE, ns), 'utf8'))))
   for (const lang of langs) {
     if (lang === SOURCE) continue
-    const target = flatten(JSON.parse(readFileSync(join(LOCALES_DIR, lang, ns), 'utf8')))
+    const target = unique(flatten(JSON.parse(readFileSync(join(LOCALES_DIR, lang, ns), 'utf8'))))
     const missing = source.filter(k => !target.includes(k))
     const extra = target.filter(k => !source.includes(k))
     if (missing.length || extra.length) {
@@ -52,7 +61,7 @@ function propKeys(file) {
 
 console.log('\nBackend message bundles:')
 const baseKeys = propKeys(join(BACKEND_RES, 'messages.properties'))
-for (const lang of ['es', 'it']) {
+for (const lang of langs.filter((l) => l !== SOURCE)) {
   const target = propKeys(join(BACKEND_RES, `messages_${lang}.properties`))
   const missing = baseKeys.filter(k => !target.includes(k))
   const extra = target.filter(k => !baseKeys.includes(k))

@@ -10,6 +10,7 @@ export const LANGUAGES = [
   { code: 'en', label: 'English', nativeLabel: 'English', flag: '🇬🇧' },
   { code: 'es', label: 'Spanish', nativeLabel: 'Español', flag: '🇪🇸' },
   { code: 'it', label: 'Italian', nativeLabel: 'Italiano', flag: '🇮🇹' },
+  { code: 'pl', label: 'Polish', nativeLabel: 'Polski', flag: '🇵🇱' },
 ] as const
 
 export type LanguageCode = (typeof LANGUAGES)[number]['code']
@@ -24,7 +25,7 @@ export const LANGUAGE_STORAGE_KEY = 'propvian_lang'
 /**
  * English is served unprefixed so the existing URLs — and the rankings and
  * IndexNow submissions attached to them — keep working. Other languages are
- * prefixed: /es/pricing, /it/pricing.
+ * prefixed: /es/pricing, /it/pricing, /pl/pricing.
  */
 export function localePrefix(code: LanguageCode): string {
   return code === DEFAULT_LANGUAGE ? '' : `/${code}`

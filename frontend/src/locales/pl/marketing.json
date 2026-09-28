@@ -1,0 +1,78 @@
+{
+  "landing": {
+    "direct_booking": {
+      "seoTitle": "Propvian — oprogramowanie do rezerwacji bezpośrednich dla gospodarzy najmu krótkoterminowego",
+      "seoDesc": "Uruchom własną stronę z rezerwacjami bezpośrednimi w kilka minut. $10 miesięcznie za obiekt. Bez prowizji portali. 100% przychodu zostaje u Ciebie.",
+      "headline": "Twoja własna strona z rezerwacjami.\n0% prowizji od rezerwacji.",
+      "sub": "Uruchom stronę rezerwacji z własną marką dla swojego obiektu. Goście rezerwują bezpośrednio u Ciebie — bez prowizji portali. Płatności trafiają prosto na Twoje konto Stripe lub PayPal.",
+      "bullets": [
+        "Strona z rezerwacjami działa w mniej niż 5 minut",
+        "$10 miesięcznie za obiekt — stała opłata, bez niespodzianek",
+        "Stripe i PayPal bezpośrednio na Twoje konto"
+      ],
+      "footer": "© 2025 Propvian. Oprogramowanie do rezerwacji bezpośrednich dla gospodarzy najmu krótkoterminowego."
+    },
+    "ttlock": {
+      "seoTitle": "Propvian — automatyzacja zamków inteligentnych w najmie krótkoterminowym",
+      "seoDesc": "Automatycznie twórz i usuwaj kody TTLock dla gości na podstawie rezerwacji z Airbnb i Booking.com.",
+      "headline": "Automatyzacja zamków inteligentnych\nw najmie krótkoterminowym",
+      "sub": "Automatycznie twórz i usuwaj kody TTLock dla gości na podstawie rezerwacji z Airbnb i Booking.com — i oszczędzaj godziny ręcznej pracy.",
+      "bullets": [
+        "Konfiguracja zajmuje około 5 minut",
+        "Miesiąc za darmo — bez podawania danych płatniczych",
+        "Po okresie próbnym: $2 za zamek miesięcznie"
+      ],
+      "footer": "© 2025 Propvian. Automatyzacja dostępu klasy enterprise."
+    },
+    "tabs": {
+      "signin": "Zaloguj się",
+      "signup": "Załóż konto"
+    },
+    "headings": {
+      "welcomeBack": "Witaj ponownie",
+      "getStarted": "Zacznij za darmo",
+      "signinSub": "Zaloguj się do swojego konta Propvian.",
+      "signupSubDirect": "Załóż konto gospodarza w kilka sekund.",
+      "signupSubTtlock": "Załóż konto. Bez karty kredytowej."
+    },
+    "password": {
+      "weak": "Słabe",
+      "fair": "Średnie",
+      "strong": "Silne",
+      "suffix": "hasło"
+    },
+    "validation": {
+      "emailInvalid": "Nieprawidłowy e-mail",
+      "passwordRequired": "Podaj hasło",
+      "required": "Wymagane",
+      "min8": "Co najmniej 8 znaków",
+      "uppercase": "Co najmniej jedna wielka litera",
+      "number": "Co najmniej jedna cyfra"
+    },
+    "terms": {
+      "prefix": "Rejestrując się, akceptujesz nasz",
+      "terms": "Regulamin",
+      "and": "i",
+      "privacy": "Politykę prywatności"
+    },
+    "toast": {
+      "welcomeBack": "Witaj ponownie.",
+      "signInFailed": "Logowanie nie powiodło się",
+      "registrationFailed": "Rejestracja nie powiodła się"
+    }
+  },
+  "value": {
+    "commission": "0% prowizji od rezerwacji",
+    "flatPrice": "$10 za obiekt miesięcznie",
+    "freeTrial": "30 dni za darmo, bez karty kredytowej",
+    "noSalesCall": "Bez rozmów handlowych i wycen",
+    "directPayments": "Goście płacą prosto na Twoje konto Stripe lub PayPal",
+    "builtFor": "Dla gospodarzy z 1–15 obiektami"
+  },
+  "cta": {
+    "startFree": "Zacznij za darmo",
+    "seePricing": "Zobacz cennik",
+    "createSite": "Utwórz moją stronę rezerwacji",
+    "noCard": "Bez karty kredytowej"
+  }
+}

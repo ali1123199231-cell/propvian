@@ -1,0 +1,68 @@
+{
+  "booking": {
+    "checkIn": "Zameldowanie",
+    "checkOut": "Wymeldowanie",
+    "guests": "Goście",
+    "guest_one": "{{count}} gość",
+    "guest_few": "{{count}} gości",
+    "guest_many": "{{count}} gości",
+    "guest_other": "{{count}} gościa",
+    "night_one": "{{count}} noc",
+    "night_few": "{{count}} noce",
+    "night_many": "{{count}} nocy",
+    "night_other": "{{count}} nocy",
+    "pickDates": "Kliknij datę, aby zacząć wybór",
+    "pickCheckout": "Teraz wybierz datę wymeldowania",
+    "yourDetails": "Twoje dane",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
+    "email": "E-mail",
+    "phone": "Telefon",
+    "notes": "Czy jest coś, o czym powinniśmy wiedzieć?",
+    "houseRules": "Zasady domu",
+    "whatsIncluded": "Co jest w cenie",
+    "property": "Obiekt",
+    "book": "Zarezerwuj",
+    "booking": "Rezerwowanie…"
+  },
+  "pricing": {
+    "nightlyRate": "Cena za noc",
+    "cleaningFee": "Opłata za sprzątanie",
+    "securityDeposit": "Kaucja",
+    "promoCode": "Kod rabatowy",
+    "applyPromo": "Zastosuj",
+    "promoApplied": "Kod rabatowy zastosowany",
+    "promoInvalid": "Ten kod rabatowy jest nieprawidłowy",
+    "discount": "Rabat",
+    "total": "Razem",
+    "totalPaid": "Zapłacono",
+    "perNight": "za noc"
+  },
+  "payment": {
+    "title": "Płatność",
+    "method": "Metoda płatności",
+    "card": "Karta",
+    "paypal": "PayPal",
+    "payNow": "Zapłać i potwierdź",
+    "processing": "Przetwarzanie…",
+    "failed": "Nie udało się zrealizować płatności. Żadne środki nie zostały pobrane."
+  },
+  "confirmation": {
+    "title": "Rezerwacja potwierdzona",
+    "sentTo": "Potwierdzenie wysłaliśmy na adres",
+    "reference": "Numer rezerwacji",
+    "addToCalendar": "Dodaj do kalendarza"
+  },
+  "errors": {
+    "unavailableTitle": "Rezerwacje chwilowo niedostępne",
+    "unavailableBody": "Rezerwacje w tym obiekcie są chwilowo niedostępne.",
+    "badLink": "Pod tym linkiem rezerwacja nie jest dostępna",
+    "noRate": "Nie ustawiono ceny za noc — tego obiektu nie można jeszcze zarezerwować.",
+    "datesTaken": "Te daty zostały właśnie zarezerwowane. Wybierz inny termin.",
+    "minNights": "Minimalna liczba nocy w tym obiekcie: {{count}}."
+  },
+  "legal": {
+    "privacyPolicy": "Polityka prywatności",
+    "terms": "Regulamin"
+  }
+}

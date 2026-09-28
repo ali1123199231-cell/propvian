@@ -16,8 +16,14 @@ import itMarketing from '@/locales/it/marketing.json'
 import itApp from '@/locales/it/app.json'
 import itGuest from '@/locales/it/guest.json'
 
+import plCommon from '@/locales/pl/common.json'
+import plAuth from '@/locales/pl/auth.json'
+import plMarketing from '@/locales/pl/marketing.json'
+import plApp from '@/locales/pl/app.json'
+import plGuest from '@/locales/pl/guest.json'
+
 /**
- * All locales are bundled rather than lazy-loaded. Three languages of flat JSON
+ * All locales are bundled rather than lazy-loaded. Four languages of flat JSON
  * is a few tens of kilobytes — far cheaper than the loading states, race
  * conditions and flash-of-untranslated-content that async backends introduce.
  * Revisit if this grows past roughly a dozen languages.
@@ -26,6 +32,7 @@ export const resources = {
   en: { common: enCommon, auth: enAuth, marketing: enMarketing, app: enApp, guest: enGuest },
   es: { common: esCommon, auth: esAuth, marketing: esMarketing, app: esApp, guest: esGuest },
   it: { common: itCommon, auth: itAuth, marketing: itMarketing, app: itApp, guest: itGuest },
+  pl: { common: plCommon, auth: plAuth, marketing: plMarketing, app: plApp, guest: plGuest },
 } as const
 
 export const NAMESPACES = ['common', 'auth', 'marketing', 'app', 'guest'] as const

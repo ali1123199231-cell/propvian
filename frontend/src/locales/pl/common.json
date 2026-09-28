@@ -1,0 +1,69 @@
+{
+  "brand": {
+    "name": "Propvian",
+    "tagline": "Rezerwacje bezpośrednie dla gospodarzy najmu krótkoterminowego"
+  },
+  "nav": {
+    "dashboard": "Pulpit",
+    "properties": "Obiekty",
+    "reservations": "Rezerwacje",
+    "calendar": "Kalendarz",
+    "messages": "Wiadomości",
+    "website": "Strona",
+    "locks": "Zamki",
+    "integrations": "Integracje",
+    "notifications": "Powiadomienia",
+    "settings": "Ustawienia",
+    "billing": "Rozliczenia",
+    "pricing": "Cennik",
+    "blog": "Blog",
+    "features": "Funkcje",
+    "login": "Zaloguj się",
+    "logout": "Wyloguj się",
+    "signup": "Zacznij za darmo"
+  },
+  "actions": {
+    "save": "Zapisz",
+    "saving": "Zapisywanie…",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "create": "Utwórz",
+    "add": "Dodaj",
+    "remove": "Usuń",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "continue": "Kontynuuj",
+    "confirm": "Potwierdź",
+    "close": "Zamknij",
+    "search": "Szukaj",
+    "filter": "Filtruj",
+    "retry": "Spróbuj ponownie",
+    "copy": "Kopiuj",
+    "copied": "Skopiowano",
+    "publish": "Opublikuj",
+    "preview": "Podgląd",
+    "viewAll": "Zobacz wszystko"
+  },
+  "states": {
+    "loading": "Ładowanie…",
+    "empty": "Nic tu jeszcze nie ma",
+    "error": "Coś poszło nie tak",
+    "errorHint": "Spróbuj ponownie. Jeśli problem się powtarza, skontaktuj się z pomocą.",
+    "notFound": "Nie znaleziono",
+    "saved": "Zapisano",
+    "required": "Wymagane"
+  },
+  "language": {
+    "label": "Język",
+    "change": "Zmień język",
+    "current": "Bieżący język: {{language}}"
+  },
+  "footer": {
+    "product": "Produkt",
+    "company": "Firma",
+    "legal": "Informacje prawne",
+    "resources": "Zasoby",
+    "rights": "Wszelkie prawa zastrzeżone."
+  }
+}

@@ -27,8 +27,8 @@
               <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;letter-spacing:-0.3px;"
                   th:text="#{email.verificationCode.title}">Verify your email</h1>
               <p style="margin:0 0 24px;font-size:15px;color:#6b7280;line-height:1.6;">
-                <span th:text="#{email.common.hi}">Hi</span>
-                <span th:text="${name != null ? name : #messages.msg('email.common.there')}">there</span>,<br/>
+                <!-- One trimmed expression: languages without a word for "there" leave it empty, and must not get "Hi ," -->
+                <span th:text="${(#messages.msg('email.common.hi') + ' ' + (name != null ? name : #messages.msg('email.common.there'))).trim()}">Hi there</span>,<br/>
                 <span th:text="#{email.verificationCode.body}">Enter the code below to verify your email and continue setup.</span>
               </p>
 
